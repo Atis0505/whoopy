@@ -1,0 +1,29 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Partner KPI{% endblock %}
+{% block page_sub %}Ajánlatok, low stock, 30 nap{% endblock %}
+{% block content %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Partner</th><th>Aktív</th><th>Ajánlatok</th><th>Low stock</th>
+      <th>30d tételek</th><th>30d bevétel</th><th>Dropship</th><th>Pref.</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for k in kpis %}
+    <tr>
+      <td><a href="/admin/partners/{{ k.id }}"><strong>{{ k.name }}</strong></a>
+        <div class="muted">{{ k.code }}</div>
+      </td>
+      <td>{% if k.active %}igen{% else %}nem{% endif %}</td>
+      <td>{{ k.active_offers }} / {{ k.offers }}</td>
+      <td>{{ k.low_stock }}</td>
+      <td>{{ k.lines_30d }}</td>
+      <td>{{ k.revenue_30d|huf }}</td>
+      <td>{% if k.dropship_available %}igen{% else %}—{% endif %}</td>
+      <td>{% if k.preferred %}★{% else %}—{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

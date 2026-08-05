@@ -181,6 +181,7 @@ def products_create(
     image_url: str = Form(""),
     supplier_id: int = Form(...),
     price: float = Form(...),
+    cost_price: float = Form(0),
     stock: int = Form(10),
     sku: str = Form(""),
     db: Session = Depends(get_db),
@@ -207,6 +208,7 @@ def products_create(
             supplier_id=supplier_id,
             sku=sku.strip() or f"SKU-{product.id}",
             price=price,
+            cost_price=cost_price,
             stock=stock,
             active=True,
         )

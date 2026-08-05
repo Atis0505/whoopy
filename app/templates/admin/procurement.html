@@ -1,0 +1,33 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Beszerzés{% endblock %}
+{% block page_sub %}Nyitott rendelések partnerenként{% endblock %}
+{% block content %}
+<p class="muted">Pending + paid rendelések tételei — melyik partnertől kell beszerezni.</p>
+
+{% for b in blocks %}
+<div class="panel" style="margin-bottom:1rem">
+  <h3>{{ b.supplier_name or ('Partner #' ~ b.supplier_id) }}</h3>
+  <p class="muted">{{ b.line_count }} tétel · {{ b.qty_total }} db · rendelések: {{ b.order_ids|join(', ') }}</p>
+  <table class="table">
+    <thead>
+      <tr><th>Rendelés</th><th>Státusz</th><th>SKU</th><th>Termék</th><th>Qty</th><th>Egység</th><th>Össz</th></tr>
+    </thead>
+    <tbody>
+    {% for L in b.lines %}
+      <tr>
+        <td><a href="/admin/orders/{{ L.order_id }}">{{ L.order_number }}</a></td>
+        <td>{{ L.order_status }}</td>
+        <td>{{ L.sku }}</td>
+        <td>{{ L.title }}</td>
+        <td>{{ L.qty }}</td>
+        <td>{{ L.unit_price|huf }}</td>
+        <td>{{ L.line_total|huf }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="muted">Nincs nyitott beszerzendő tétel.</p>
+{% endfor %}
+{% endblock %}

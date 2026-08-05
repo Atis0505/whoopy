@@ -1,0 +1,60 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Staging{% endblock %}
+{% block page_sub %}Review → Product + Offer{% endblock %}
+{% block content %}
+{% if flash %}<div class="flash-ok">{{ flash }}</div>{% endif %}
+
+<p class="muted">
+  Szűrő:
+  <a href="/admin/staging?status=pending">pending</a> ·
+  <a href="/admin/staging?status=published">published</a> ·
+  <a href="/admin/staging?status=rejected">rejected</a> ·
+  <a href="/admin/staging?status=all">mind</a>
+  · aktuális: <strong>{{ status }}</strong>
+</p>
+
+{% if status == 'pending' %}
+<form method="post" action="/admin/staging/publish-all-pending" style="margin:0.75rem 0"
+      onsubmit="return confirm('Összes pending publikálása (max 100)?')">
+  <button class="btn" type="submit">Összes pending publikálása</button>
+</form>
+{% endif %}
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>#</th><th>Partner</th><th>Cím</th><th>GTIN/SKU</th>
+      <th>Költség</th><th>Lista</th><th>Készlet</th><th>Státusz</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td>{{ r.id }}</td>
+      <td>{% set s = suppliers.get(r.supplier_id) %}{{ s.name if s else r.supplier_id }}</td>
+      <td><strong>{{ r.title }}</strong><div class="muted">{{ r.brand }}</div></td>
+      <td>{{ r.gtin or '—' }}<br/><span class="muted">{{ r.sku }}</span></td>
+      <td>{{ r.cost_price|huf }}</td>
+      <td>{{ r.list_price|huf }}</td>
+      <td>{{ r.stock }}</td>
+      <td>{{ r.status }}{% if r.reject_reason %}<div class="muted">{{ r.reject_reason }}</div>{% endif %}</td>
+      <td>
+        {% if r.status == 'pending' %}
+        <form method="post" action="/admin/staging/{{ r.id }}/publish" style="display:inline">
+          <button class="btn" type="submit">Publish</button>
+        </form>
+        <form method="post" action="/admin/staging/{{ r.id }}/reject" style="display:inline;margin-top:0.3rem">
+          <input name="reason" placeholder="indok" style="width:7rem" />
+          <button class="btn secondary" type="submit">Reject</button>
+        </form>
+        {% elif r.published_product_id %}
+        <span class="muted">→ #{{ r.published_product_id }}</span>
+        {% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="9" class="muted">Üres. Futtass feedet vagy tölts CSV-t.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

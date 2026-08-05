@@ -1,0 +1,34 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}GTIN dedup{% endblock %}
+{% block page_sub %}Duplikált termékek összevonása{% endblock %}
+{% block content %}
+{% if flash %}<div class="flash-ok">{{ flash }}</div>{% endif %}
+<p class="muted">Azonos GTIN-nel több Product → ajánlatok egy master termékre.</p>
+
+{% for d in dupes %}
+<div class="panel" style="margin-bottom:1rem">
+  <h3>GTIN {{ d.gtin }}</h3>
+  <ul>
+    {% for p in d.products %}
+    <li>#{{ p.id }} <code>{{ p.slug }}</code> — {{ p.title }} · {{ p.offers }} ajánlat
+      {% if not p.active %}<span class="muted">(inaktív)</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="/admin/dedup/merge">
+    <input type="hidden" name="gtin" value="{{ d.gtin }}" />
+    <div class="field">
+      <label>Keep product id</label>
+      <select name="keep_product_id">
+        {% for p in d.products %}
+        <option value="{{ p.id }}">#{{ p.id }} — {{ p.slug }} ({{ p.offers }} offer)</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="btn" type="submit" onclick="return confirm('Összevonás?')">Merge</button>
+  </form>
+</div>
+{% else %}
+<p class="muted">Nincs GTIN duplikátum.</p>
+{% endfor %}
+{% endblock %}

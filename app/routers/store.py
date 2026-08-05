@@ -21,6 +21,8 @@ from app.services.cart import (
 from app.services.checkout import create_order_from_cart
 from app.services.google_feed import build_google_merchant_xml
 from app.services.pricing import find_coupon, promo_discount_for_product
+from app.services.pricing_engine import select_buybox_offer
+
 
 router = APIRouter(tags=["store"])
 templates = Jinja2Templates(directory="app/templates")
@@ -36,6 +38,7 @@ def google_merchant_feed(db: Session = Depends(get_db)):
 
 def _enrich_products(db: Session, products: list[Product]) -> None:
     for p in products:
+        buy = select_buybox_offer(db, p)
         active_offers = [o for o in p.offers if o.active and o.stock > 0]
         prices = []
         for o in active_offers:
@@ -43,7 +46,13 @@ def _enrich_products(db: Session, products: list[Product]) -> None:
             prices.append(unit)
             o.display_price = unit
             o.promo = promo
-        p.best_price = min(prices) if prices else None
+        if buy and buy in active_offers:
+            unit, promo = promo_discount_for_product(db, p, buy.price)
+            p.best_price = unit
+            p.buybox_offer = buy
+        else:
+            p.best_price = min(prices) if prices else None
+            p.buybox_offer = buy
         p.offer_count = len(active_offers)
         p.has_promo = any(getattr(o, "promo", None) for o in active_offers)
 
@@ -141,8 +150,15 @@ def product_detail(slug: str, request: Request, db: Session = Depends(get_db)):
         o.list_price = o.price
         o.promo = promo
         offers.append(o)
-    offers.sort(key=lambda o: (o.display_price, o.lead_days))
-    return templates.TemplateResponse("store/product.html", store_context(request, db, product=product, offers=offers))
+    buy = select_buybox_offer(db, product)
+    if buy:
+        offers.sort(key=lambda o: (0 if o.id == buy.id else 1, o.display_price, o.lead_days))
+    else:
+        offers.sort(key=lambda o: (o.display_price, o.lead_days))
+    return templates.TemplateResponse(
+        "store/product.html",
+        store_context(request, db, product=product, offers=offers, buybox_offer=buy),
+    )
 
 
 @router.post("/cart/add")

@@ -1,0 +1,75 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Feed források{% endblock %}
+{% block page_sub %}Whoopy húzza / tölti — partnerek nem hirdetnek{% endblock %}
+{% block content %}
+{% if flash %}<div class="flash-ok">{{ flash }}</div>{% endif %}
+
+<div class="layout-2">
+  <div class="panel">
+    <h3>Források</h3>
+    <table class="table">
+      <thead>
+        <tr><th>Név</th><th>Partner</th><th>Típus</th><th>Utolsó</th><th>Futtatás</th></tr>
+      </thead>
+      <tbody>
+      {% for f in feeds %}
+        <tr>
+          <td><strong>{{ f.name }}</strong><div class="muted">{{ f.url or '—' }}</div></td>
+          <td>{{ f.supplier.name if f.supplier else f.supplier_id }}</td>
+          <td>{{ f.source_type }}</td>
+          <td>
+            {{ f.last_status or '—' }}
+            {% if f.last_run_at %}<div class="muted">{{ f.last_run_at }}</div>{% endif %}
+            <div class="muted" style="font-size:0.75rem">{{ f.last_message[:120] if f.last_message else '' }}</div>
+          </td>
+          <td>
+            <form method="post" action="/admin/feeds/{{ f.id }}/run" enctype="multipart/form-data">
+              {% if f.source_type in ('csv', 'manual', 'json') %}
+              <input type="file" name="file" accept=".csv,.json,text/csv,application/json" />
+              {% endif %}
+              <button class="btn" type="submit" style="margin-top:0.4rem">Futtatás</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="muted">Nincs feed. Hozz létre lent.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h3>Új feed</h3>
+    <form method="post" action="/admin/feeds/create">
+      <div class="field">
+        <label>Partner</label>
+        <select name="supplier_id" required>
+          {% for s in suppliers %}
+          <option value="{{ s.id }}">{{ s.code }} — {{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field"><label>Név</label><input name="name" value="CSV feed" /></div>
+      <div class="field">
+        <label>Típus</label>
+        <select name="source_type">
+          <option value="csv">csv (feltöltés)</option>
+          <option value="json">json (feltöltés)</option>
+          <option value="url_json">url_json</option>
+          <option value="manual">manual</option>
+        </select>
+      </div>
+      <div class="field"><label>URL (url_json)</label><input name="url" placeholder="https://..." /></div>
+      <div class="field">
+        <label>Field map (JSON, opcionális)</label>
+        <textarea name="field_map" rows="4" placeholder='{"sku":"sku","gtin":"ean","title":"name","cost":"net","price":"price","stock":"qty"}'></textarea>
+      </div>
+      <button class="btn" type="submit">Létrehozás</button>
+    </form>
+    <p class="muted" style="margin-top:1rem;font-size:0.85rem">
+      CSV oszlopok alapból: sku, gtin, title, description, brand, image_url, price, cost, stock, lead_days.
+      A run staging pending sorokat hoz létre.
+    </p>
+  </div>
+</div>
+{% endblock %}

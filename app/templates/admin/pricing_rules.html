@@ -1,0 +1,67 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Árazási szabályok{% endblock %}
+{% block page_sub %}Margin + buy-box mód{% endblock %}
+{% block content %}
+<div class="layout-2">
+  <div class="panel">
+    <h3>Szabályok</h3>
+    <table class="table">
+      <thead>
+        <tr><th>Név</th><th>Típus</th><th>Érték</th><th>Min %</th><th>Buy-box</th><th>Prio</th><th>Aktív</th></tr>
+      </thead>
+      <tbody>
+      {% for r in rules %}
+        <tr>
+          <td><strong>{{ r.name }}</strong>
+            {% if r.supplier_id %}<div class="muted">supplier #{{ r.supplier_id }}</div>{% endif %}
+          </td>
+          <td>{{ r.rule_type }}</td>
+          <td>{{ r.value }}</td>
+          <td>{{ r.min_margin_percent }}</td>
+          <td>{{ r.buybox_mode if r.rule_type == 'buybox' else '—' }}</td>
+          <td>{{ r.priority }}</td>
+          <td>{% if r.active %}igen{% else %}nem{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="muted">Nincs szabály — seed / létrehozás.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>Új szabály</h3>
+    <form method="post" action="/admin/pricing-rules/create">
+      <div class="field"><label>Név</label><input name="name" required placeholder="Alap 25%" /></div>
+      <div class="field">
+        <label>Típus</label>
+        <select name="rule_type">
+          <option value="margin_percent">margin_percent</option>
+          <option value="fixed_markup">fixed_markup</option>
+          <option value="buybox">buybox</option>
+        </select>
+      </div>
+      <div class="field"><label>Érték (% vagy HUF)</label><input name="value" type="number" step="0.1" value="25" /></div>
+      <div class="field"><label>Min margin %</label><input name="min_margin_percent" type="number" step="0.1" value="0" /></div>
+      <div class="field">
+        <label>Buy-box mód</label>
+        <select name="buybox_mode">
+          <option value="cheapest">cheapest</option>
+          <option value="fastest">fastest</option>
+          <option value="preferred_supplier">preferred_supplier</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Partner (opcionális)</label>
+        <select name="supplier_id">
+          <option value="0">— általános —</option>
+          {% for s in suppliers %}
+          <option value="{{ s.id }}">{{ s.code }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field"><label>Prioritás (kisebb = előbb)</label><input name="priority" type="number" value="100" /></div>
+      <button class="btn" type="submit">Mentés</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

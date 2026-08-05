@@ -64,5 +64,12 @@ API leírás: `docs/API.md` · **Magyar használati útmutató:** `docs/HASZNALA
 5. ~~Admin Shopify-szint~~ — `docs/ADMIN.md`
 6. ~~Merchant Center~~ — `docs/MERCHANT.md`
 7. ~~Prod hardening~~ — `docs/PROD.md`
+8. ~~Belső partner ops~~ — `docs/PARTNEREK.md` (staging, feed, árazás, beszerzés, dedup, KPI; **nincs** supplier portal)
 
 Tervkész. Következő opcionális: ERP autosync, CDN, éles domain.
+
+## Partner modell (fontos)
+
+- Partnerek = források, ahonnan Whoopy vásárol — nem self-listing eladók
+- Admin: `/admin/partners`, `/admin/staging`, `/admin/feeds`, `/admin/procurement`, …
+- Schema v8

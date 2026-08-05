@@ -1,0 +1,31 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Partnerek{% endblock %}
+{% block page_sub %}Belső böngésző — források, ahonnan vásárolunk{% endblock %}
+{% block content %}
+<p class="muted">A partnerek nem hirdetnek a Whoopyn. Itt látod, mit kínálnak, és melyik preferált.</p>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Kód</th><th>Név</th><th>Ajánlatok</th><th>Low stock</th>
+      <th>30 nap tétel</th><th>30 nap bevétel</th><th>Dropship</th><th>Pref.</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for k in kpis %}
+    <tr>
+      <td>{{ k.code }}</td>
+      <td><a href="/admin/partners/{{ k.id }}"><strong>{{ k.name }}</strong></a></td>
+      <td>{{ k.active_offers }}/{{ k.offers }}</td>
+      <td>{{ k.low_stock }}</td>
+      <td>{{ k.lines_30d }}</td>
+      <td>{{ k.revenue_30d|huf }}</td>
+      <td>{% if k.dropship_available %}igen{% else %}—{% endif %}</td>
+      <td>{% if k.preferred %}★{% else %}—{% endif %}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="8" class="muted">Nincs partner. Először hozd létre a Beszállítók menüben.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p style="margin-top:1rem"><a class="btn secondary" href="/admin/partner-kpi">Részletes KPI →</a></p>
+{% endblock %}

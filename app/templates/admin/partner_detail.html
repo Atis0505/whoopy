@@ -1,0 +1,62 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}{{ supplier.name }}{% endblock %}
+{% block page_sub %}{{ supplier.code }} · partner katalógus{% endblock %}
+{% block content %}
+<p><a href="/admin/partners">← Partnerek</a></p>
+
+{% if user.role == 'admin' or user.is_admin %}
+<div class="panel" style="margin-bottom:1.25rem">
+  <h3>Partner beállítások</h3>
+  <form method="post" action="/admin/partners/{{ supplier.id }}" class="layout-2">
+    <div>
+      <div class="field"><label>Jegyzet</label><textarea name="notes" rows="3">{{ supplier.notes }}</textarea></div>
+    </div>
+    <div>
+      <label class="muted"><input type="checkbox" name="active" value="1" {% if supplier.active %}checked{% endif %} /> Aktív</label><br/>
+      <label class="muted"><input type="checkbox" name="dropship_available" value="1" {% if supplier.dropship_available %}checked{% endif %} /> Dropship elérhető</label><br/>
+      <label class="muted"><input type="checkbox" name="preferred" value="1" {% if supplier.preferred %}checked{% endif %} /> Preferált partner (buy-box)</label>
+      <p style="margin-top:0.8rem"><button class="btn" type="submit">Mentés</button></p>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<div class="panel">
+  <h3>Katalógus ({{ catalog|length }})</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Termék</th><th>SKU</th><th>GTIN</th><th>Lista</th><th>Költség</th>
+        <th>Készlet</th><th>Lead</th><th>Alt.</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for c in catalog %}
+      <tr>
+        <td>
+          {% if c.product_id %}<a href="/admin/products">{{ c.title }}</a>{% else %}{{ c.title }}{% endif %}
+          {% if c.preferred_source %} ★{% endif %}
+          {% if not c.active %}<span class="muted">(inaktív)</span>{% endif %}
+        </td>
+        <td>{{ c.sku }}</td>
+        <td>{{ c.gtin or '—' }}</td>
+        <td>{{ c.price|huf }}</td>
+        <td>{{ c.cost_price|huf }}</td>
+        <td>{{ c.stock }}</td>
+        <td>{{ c.lead_days }} nap</td>
+        <td>{{ c.alt_sources }}</td>
+        <td>
+          {% if (user.role == 'admin' or user.is_admin) and not c.preferred_source %}
+          <form method="post" action="/admin/offers/{{ c.offer_id }}/preferred" style="display:inline">
+            <button class="btn secondary" type="submit" style="font-size:0.75rem">Buy-box</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="9" class="muted">Nincs ajánlat ennél a partnernél.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

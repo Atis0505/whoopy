@@ -98,6 +98,7 @@ Belépés: **`/login`** (ugyanaz a belépő, szerepkör dönti el a jogosultság
 | **Hírlevél** | Feliratkozók |
 | **Integrációk** | ERP / API állapot (őszinte státusz) |
 | **Webhook-ek** | Outbound események ERP felé |
+| **Partnerek / Staging / Feedek / Árazás / Beszerzés / Dedup / KPI** | Belső beszerzési ops — [`PARTNEREK.md`](PARTNEREK.md) |
 
 > Megjegyzés: a sidebar menüpontok **működő oldalakra** vezetnek (settings, analitika, CMS, inventory…). Részletek: [`ADMIN.md`](ADMIN.md).
 
@@ -108,10 +109,12 @@ Belépés: **`/login`** (ugyanaz a belépő, szerepkör dönti el a jogosultság
 3. **Termékkép:** Termékek → fájl feltöltés a sorban ([`KEPEK.md`](KEPEK.md)).
 4. **Rendelés feldolgozás:** Rendelések → státusz (`pending` → `paid` → `fulfilled`), tracking a szállítmányon.
 5. **Beszállító:** kód (pl. `HU-BUD-01`) legyen stabil — az API `supplier_code` ezzel egyezik.
+6. **Partner feed:** Feedek → CSV feltöltés → Staging review → Publish ([`PARTNEREK.md`](PARTNEREK.md)).
+7. **Beszerzés:** Beszerzési nézet → nyitott rendelések partnerenként.
 
 ### 2.3 Dolgozó
 
-Csak rendelés- és készletkezelés; marketing / beszállító / kampány menük nem jelennek meg.
+Rendelés, készlet, partnerek böngésző, beszerzési nézet; marketing / staging / feed menük nem.
 
 ---
 

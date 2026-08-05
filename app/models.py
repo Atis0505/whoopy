@@ -68,10 +68,14 @@ class Supplier(Base):
     address: Mapped[str] = mapped_column(String(255), default="")
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     notes: Mapped[str] = mapped_column(Text, default="")
+    # Belső beszerzés: a partner dropshipet kínál-e (nem kötelező használni)
+    dropship_available: Mapped[bool] = mapped_column(Boolean, default=False)
+    preferred: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     offers: Mapped[list["Offer"]] = relationship(back_populates="supplier")
     shipping_rates: Mapped[list["ShippingRate"]] = relationship(back_populates="supplier")
+    feed_sources: Mapped[list["FeedSource"]] = relationship(back_populates="supplier")
 
 
 class Product(Base):
@@ -122,11 +126,14 @@ class Offer(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
     supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), index=True)
     sku: Mapped[str] = mapped_column(String(128), default="")
-    price: Mapped[float] = mapped_column(Float)  # always stored in HUF
+    price: Mapped[float] = mapped_column(Float)  # listaár HUF (bolt)
+    cost_price: Mapped[float] = mapped_column(Float, default=0.0)  # beszerzési nettó HUF
     currency: Mapped[str] = mapped_column(String(3), default="HUF")
     stock: Mapped[int] = mapped_column(Integer, default=0)
     lead_days: Mapped[int] = mapped_column(Integer, default=2)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # buy-box: kézzel kiemelt forrás ehhez a termékhez
+    preferred_source: Mapped[bool] = mapped_column(Boolean, default=False)
 
     product: Mapped[Product] = relationship(back_populates="offers")
     supplier: Mapped[Supplier] = relationship(back_populates="offers")
@@ -400,4 +407,90 @@ class WebhookDelivery(Base):
     response_body: Mapped[str] = mapped_column(Text, default="")
     success: Mapped[bool] = mapped_column(Boolean, default=False)
     error: Mapped[str] = mapped_column(String(512), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class FeedSource(Base):
+    """Partner katalógus forrás (mi húzzuk / töltjük — ők nem hirdetnek)."""
+
+    __tablename__ = "feed_sources"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), index=True)
+    name: Mapped[str] = mapped_column(String(128), default="Feed")
+    # csv | json | url_json | manual
+    source_type: Mapped[str] = mapped_column(String(32), default="csv")
+    url: Mapped[str] = mapped_column(String(512), default="")
+    # JSON map: {"sku":"sku","gtin":"ean","title":"name","price":"price","stock":"qty","cost":"net"}
+    field_map: Mapped[str] = mapped_column(Text, default="")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_run_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    last_status: Mapped[str] = mapped_column(String(64), default="")
+    last_message: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    supplier: Mapped[Supplier] = relationship(back_populates="feed_sources")
+    runs: Mapped[list["FeedRun"]] = relationship(back_populates="feed_source", cascade="all, delete-orphan")
+
+
+class FeedRun(Base):
+    __tablename__ = "feed_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    feed_source_id: Mapped[int] = mapped_column(ForeignKey("feed_sources.id"), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    success: Mapped[bool] = mapped_column(Boolean, default=False)
+    rows_ok: Mapped[int] = mapped_column(Integer, default=0)
+    rows_failed: Mapped[int] = mapped_column(Integer, default=0)
+    message: Mapped[str] = mapped_column(Text, default="")
+
+    feed_source: Mapped[FeedSource] = relationship(back_populates="runs")
+
+
+class StagingListing(Base):
+    """Staging: review előtt — publish → Product+Offer."""
+
+    __tablename__ = "staging_listings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), index=True)
+    feed_source_id: Mapped[Optional[int]] = mapped_column(ForeignKey("feed_sources.id"), nullable=True)
+    # pending | approved | rejected | published
+    status: Mapped[str] = mapped_column(String(32), default="pending", index=True)
+    gtin: Mapped[str] = mapped_column(String(32), default="", index=True)
+    sku: Mapped[str] = mapped_column(String(128), default="")
+    title: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(Text, default="")
+    brand: Mapped[str] = mapped_column(String(128), default="")
+    image_url: Mapped[str] = mapped_column(String(512), default="")
+    cost_price: Mapped[float] = mapped_column(Float, default=0.0)
+    list_price: Mapped[float] = mapped_column(Float, default=0.0)
+    stock: Mapped[int] = mapped_column(Integer, default=0)
+    lead_days: Mapped[int] = mapped_column(Integer, default=2)
+    google_taxonomy_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    ship_mode: Mapped[str] = mapped_column(String(16), default="combinable")
+    reject_reason: Mapped[str] = mapped_column(String(512), default="")
+    published_product_id: Mapped[Optional[int]] = mapped_column(ForeignKey("products.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class PricingRule(Base):
+    """Listaár számítás / buy-box preferencia (belső)."""
+
+    __tablename__ = "pricing_rules"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(128))
+    # margin_percent | fixed_markup | buybox
+    rule_type: Mapped[str] = mapped_column(String(32), default="margin_percent")
+    value: Mapped[float] = mapped_column(Float, default=20.0)  # % vagy HUF
+    min_margin_percent: Mapped[float] = mapped_column(Float, default=0.0)
+    # buybox: cheapest | fastest | preferred_supplier
+    buybox_mode: Mapped[str] = mapped_column(String(32), default="cheapest")
+    supplier_id: Mapped[Optional[int]] = mapped_column(ForeignKey("suppliers.id"), nullable=True)
+    category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"), nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    priority: Mapped[int] = mapped_column(Integer, default=100)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

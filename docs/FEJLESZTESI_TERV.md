@@ -11,7 +11,8 @@ A bővítések **ebben a sorrendben** készülnek. Az 1. lépés (ERP kliens) el
 | 5 | **Admin Shopify-szint** | kész | Settings, ügyfelek, analitika, CMS… (`docs/ADMIN.md`) |
 | 6 | **Merchant Center éles** | kész | Feed validáció + taxonomy import (`docs/MERCHANT.md`) |
 | 7 | **Prod hardening** | kész | Secrets, Postgres, rate limit, HTTPS (`docs/PROD.md`) |
+| 8 | **Belső partner ops** | kész | Staging, feed, árazás, beszerzés, dedup, KPI (`docs/PARTNEREK.md`) — **nincs** supplier portal |
 
 **A tervezett bővítési sor kész.** További ötletek: SimplePay sandbox teszt, ERP master autosync, CDN képek.
 
-Használati útmutató: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · API: [`API.md`](API.md) · Fizetés: [`FIZETES.md`](FIZETES.md) · Képek: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md) · Admin: [`ADMIN.md`](ADMIN.md) · Merchant: [`MERCHANT.md`](MERCHANT.md) · Prod: [`PROD.md`](PROD.md)
+Használati útmutató: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · API: [`API.md`](API.md) · Fizetés: [`FIZETES.md`](FIZETES.md) · Képek: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md) · Admin: [`ADMIN.md`](ADMIN.md) · Merchant: [`MERCHANT.md`](MERCHANT.md) · Prod: [`PROD.md`](PROD.md) · Partnerek: [`PARTNEREK.md`](PARTNEREK.md)

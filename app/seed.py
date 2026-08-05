@@ -9,8 +9,10 @@ from app.models import (
     Campaign,
     Category,
     Coupon,
+    FeedSource,
     NewsletterSubscriber,
     Offer,
+    PricingRule,
     Product,
     Promotion,
     ShippingRate,
@@ -34,6 +36,7 @@ def seed_all(db: Session) -> None:
 
     if db.query(Supplier).count() > 0:
         _seed_marketing(db)
+        _seed_marketplace_ops(db)
         return
 
     suppliers = [
@@ -46,6 +49,8 @@ def seed_all(db: Session) -> None:
             city="Budapest",
             address="Váci út 12.",
             notes="Gyors hazai feltöltés, 1–2 nap.",
+            dropship_available=True,
+            preferred=True,
         ),
         Supplier(
             code="EU-DE-02",
@@ -56,6 +61,7 @@ def seed_all(db: Session) -> None:
             city="Berlin",
             address="Alexanderplatz 1",
             notes="EU raktár, 3–5 nap.",
+            dropship_available=True,
         ),
         Supplier(
             code="ASIA-CN-03",
@@ -66,6 +72,7 @@ def seed_all(db: Session) -> None:
             city="Shanghai",
             address="Pudong Ave 88",
             notes="Olcsó nagyker, hosszabb átfutás.",
+            dropship_available=False,
         ),
     ]
     db.add_all(suppliers)
@@ -276,12 +283,14 @@ def seed_all(db: Session) -> None:
         db.add(product)
         db.flush()
         for supplier_idx, sku, price, stock, lead in spec["offers"]:
+            cost = round(price * 0.72, 0)
             db.add(
                 Offer(
                     product_id=product.id,
                     supplier_id=suppliers[supplier_idx].id,
                     sku=sku,
                     price=price,
+                    cost_price=cost,
                     currency="HUF",
                     stock=stock,
                     lead_days=lead,
@@ -291,6 +300,7 @@ def seed_all(db: Session) -> None:
 
     db.commit()
     _seed_marketing(db)
+    _seed_marketplace_ops(db)
 
 
 def _seed_users(db: Session) -> None:
@@ -388,4 +398,42 @@ def _seed_marketing(db: Session) -> None:
         )
     if db.query(NewsletterSubscriber).filter(NewsletterSubscriber.email == "demo@whoopy.local").first() is None:
         db.add(NewsletterSubscriber(email="demo@whoopy.local", lang="hu", active=True, source="seed"))
+    db.commit()
+
+
+def _seed_marketplace_ops(db: Session) -> None:
+    """Árazás / feed seed — idempotens."""
+    if db.query(PricingRule).count() == 0:
+        db.add_all(
+            [
+                PricingRule(
+                    name="Alap árrés 25%",
+                    rule_type="margin_percent",
+                    value=25,
+                    min_margin_percent=15,
+                    priority=100,
+                    active=True,
+                ),
+                PricingRule(
+                    name="Buy-box: legolcsóbb",
+                    rule_type="buybox",
+                    value=0,
+                    buybox_mode="cheapest",
+                    priority=10,
+                    active=True,
+                ),
+            ]
+        )
+    first = db.query(Supplier).order_by(Supplier.id).first()
+    if first and db.query(FeedSource).count() == 0:
+        db.add(
+            FeedSource(
+                supplier_id=first.id,
+                name="Minta CSV feltöltés",
+                source_type="csv",
+                url="",
+                field_map="",
+                active=True,
+            )
+        )
     db.commit()
