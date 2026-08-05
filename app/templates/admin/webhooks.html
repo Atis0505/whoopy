@@ -1,0 +1,68 @@
+{% extends "admin/base_admin.html" %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Webhook-ek</h1>
+<p class="muted">Whoopy → ERP / külső rendszer események. Config: <code>WEBHOOK_ENABLED</code>, <code>WEBHOOK_URL</code>.</p>
+
+<div class="layout-2">
+  <div class="panel">
+    <h3>Konfig (env)</h3>
+    <p>Enabled: <strong>{{ webhook_enabled }}</strong></p>
+    <p class="muted" style="word-break:break-all">URL: {{ webhook_url or '—' }}</p>
+    <form method="post" action="/admin/webhooks/test">
+      <button class="btn" type="submit">Teszt ping (order.created)</button>
+    </form>
+    {% if test_result %}
+    <pre style="margin-top:1rem;font-size:0.8rem;overflow:auto">{{ test_result }}</pre>
+    {% endif %}
+
+    <h3 style="margin-top:1.5rem">Extra endpointok</h3>
+    <table class="table">
+      <thead><tr><th>Név</th><th>URL</th><th>Események</th><th></th></tr></thead>
+      <tbody>
+      {% for ep in endpoints %}
+        <tr>
+          <td>{{ ep.name }} {% if not ep.active %}<span class="muted">(inaktív)</span>{% endif %}</td>
+          <td class="muted" style="word-break:break-all">{{ ep.url }}</td>
+          <td class="muted">{{ ep.events or 'összes' }}</td>
+          <td>
+            <form method="post" action="/admin/webhooks/{{ ep.id }}/delete" onsubmit="return confirm('Törlés?')">
+              <button class="btn secondary" type="submit">×</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="muted">Nincs DB endpoint — a config URL elég.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:1.5rem">Új endpoint</h3>
+    <form method="post" action="/admin/webhooks/create">
+      <div class="field"><label>Név</label><input name="name" value="ERP" /></div>
+      <div class="field"><label>URL</label><input name="url" required placeholder="http://127.0.0.1:8010/api/v1/webhooks/whoopy" /></div>
+      <div class="field"><label>Secret</label><input name="secret" placeholder="üres = config secret" /></div>
+      <div class="field"><label>Események (üres = mind)</label><input name="events" placeholder="order.created,order.paid" /></div>
+      <button class="btn" type="submit">Hozzáadás</button>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h3>Utolsó delivery-k</h3>
+    <table class="table">
+      <thead><tr><th>Idő</th><th>Event</th><th>HTTP</th><th>OK</th></tr></thead>
+      <tbody>
+      {% for d in deliveries %}
+        <tr>
+          <td class="muted">{{ d.created_at }}</td>
+          <td>{{ d.event }}</td>
+          <td>{{ d.status_code }}</td>
+          <td>{% if d.success %}✓{% else %}<span class="muted">{{ d.error or 'fail' }}</span>{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="muted">Még nincs küldés.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

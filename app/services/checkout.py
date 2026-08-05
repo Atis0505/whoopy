@@ -134,4 +134,8 @@ def create_order_from_cart(
     db.commit()
     clear_cart(db, cart)
     db.refresh(order)
+    from app.services.webhooks import emit_order_event, load_order
+
+    full = load_order(db, order.id) or order
+    emit_order_event(db, "order.created", full)
     return order

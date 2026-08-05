@@ -32,6 +32,7 @@ python run.py
 - **Management API** `/api/v1` — termék, ár, készlet, rendelés (lásd `docs/API.md`)
 - **Fizetés** — demo / Stripe / SimplePay (`docs/FIZETES.md`)
 - **Képfeltöltés** — admin + `/api/v1/products/{id}/images` (`docs/KEPEK.md`)
+- **Webhook-ek** — rendelés/fizetés/státusz → ERP (`docs/WEBHOOKOK.md`)
 - ERP reverse-bridge stub; ERP → Whoopy push az API-n / `whoopy-sync`
 
 ## ERP

@@ -97,6 +97,7 @@ Belépés: **`/login`** (ugyanaz a belépő, szerepkör dönti el a jogosultság
 | **Kampányok** | Főoldali hero / strip / tile |
 | **Hírlevél** | Feliratkozók |
 | **Integrációk** | ERP / API állapot (őszinte státusz) |
+| **Webhook-ek** | Outbound események ERP felé |
 
 > Megjegyzés: a sidebarban megjelenő néhány menüpont (analitika, CMS, settings…) részben még fejlesztés alatt lehet — a fenti tábla a ténylegesen használt mag.
 

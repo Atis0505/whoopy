@@ -18,6 +18,8 @@ from app.models import (
     Product,
     ProductImage,
     Supplier,
+    WebhookDelivery,
+    WebhookEndpoint,
 )
 from app.schemas import (
     BulkPriceRequest,
@@ -43,8 +45,13 @@ from app.schemas import (
     StockPatch,
     SupplierCreate,
     SupplierOut,
+    WebhookDeliveryOut,
+    WebhookEndpointCreate,
+    WebhookEndpointOut,
+    WebhookTestIn,
 )
 from app.services.media import delete_product_image, save_product_image, set_primary_image
+from app.services.webhooks import ALL_EVENTS, dispatch_event
 
 router = APIRouter(
     prefix="/api/v1",
@@ -651,6 +658,7 @@ def patch_order_status(order_id: int, body: OrderStatusPatch, db: Session = Depe
     o = db.get(Order, order_id)
     if not o:
         raise HTTPException(404, "Rendelés nem található")
+    old = o.status
     o.status = body.status
     db.commit()
     o = (
@@ -659,6 +667,9 @@ def patch_order_status(order_id: int, body: OrderStatusPatch, db: Session = Depe
         .filter(Order.id == order_id)
         .first()
     )
+    from app.services.webhooks import emit_order_event
+
+    emit_order_event(db, "order.status_changed", o, extra={"previous_status": old})
     return _order_out(o)
 
 
@@ -672,6 +683,10 @@ def patch_shipment(shipment_id: int, body: ShipmentTrackPatch, db: Session = Dep
     if body.tracking_code is not None:
         sh.tracking_code = body.tracking_code
     db.commit()
+    db.refresh(sh)
+    from app.services.webhooks import emit_shipment_updated
+
+    emit_shipment_updated(db, sh)
     o = (
         db.query(Order)
         .options(joinedload(Order.lines), joinedload(Order.shipments))
@@ -719,3 +734,73 @@ def create_coupon(body: CouponCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(c)
     return CouponOut.model_validate(c)
+
+
+# ── Webhooks ─────────────────────────────────────────────────────────────────
+
+@router.get("/webhooks/events", tags=["Webhooks"])
+def list_webhook_events():
+    return {"events": list(ALL_EVENTS)}
+
+
+@router.get("/webhooks/deliveries", response_model=list[WebhookDeliveryOut], tags=["Webhooks"])
+def list_webhook_deliveries(limit: int = Query(50, le=200), db: Session = Depends(get_db)):
+    rows = (
+        db.query(WebhookDelivery)
+        .order_by(WebhookDelivery.id.desc())
+        .limit(limit)
+        .all()
+    )
+    return [WebhookDeliveryOut.model_validate(r) for r in rows]
+
+
+@router.post("/webhooks/test", tags=["Webhooks"])
+def test_webhook(body: WebhookTestIn, db: Session = Depends(get_db)):
+    event = body.event if body.event in ALL_EVENTS else "order.created"
+    sample = {
+        "id": 0,
+        "order_number": "TEST-WHOOPY",
+        "status": "pending",
+        "payment_method": "prepaid",
+        "payment_status": "awaiting",
+        "email": "test@whoopy.local",
+        "full_name": "Webhook Teszt",
+        "grand_total": 1990,
+        "currency": "HUF",
+        "lines": [],
+        "shipments": [],
+        "note": "Whoopy webhook test ping",
+    }
+    results = dispatch_event(db, event, sample)
+    return {
+        "ok": True,
+        "event": event,
+        "config_enabled": settings.webhook_enabled,
+        "config_url": settings.webhook_url,
+        "results": results,
+    }
+
+
+@router.get("/webhooks", response_model=list[WebhookEndpointOut], tags=["Webhooks"])
+def list_webhooks(db: Session = Depends(get_db)):
+    rows = db.query(WebhookEndpoint).order_by(WebhookEndpoint.id).all()
+    return [WebhookEndpointOut.model_validate(r) for r in rows]
+
+
+@router.post("/webhooks", response_model=WebhookEndpointOut, status_code=201, tags=["Webhooks"])
+def create_webhook(body: WebhookEndpointCreate, db: Session = Depends(get_db)):
+    ep = WebhookEndpoint(**body.model_dump())
+    db.add(ep)
+    db.commit()
+    db.refresh(ep)
+    return WebhookEndpointOut.model_validate(ep)
+
+
+@router.delete("/webhooks/{endpoint_id}", status_code=204, tags=["Webhooks"])
+def delete_webhook(endpoint_id: int, db: Session = Depends(get_db)):
+    ep = db.get(WebhookEndpoint, endpoint_id)
+    if not ep:
+        raise HTTPException(404, "Webhook endpoint nem található")
+    db.delete(ep)
+    db.commit()
+    return None

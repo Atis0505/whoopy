@@ -371,3 +371,33 @@ class OrderShipment(Base):
     tracking_code: Mapped[str] = mapped_column(String(128), default="")
 
     order: Mapped[Order] = relationship(back_populates="shipments")
+
+
+class WebhookEndpoint(Base):
+    """Outbound webhook cél (ERP / külső rendszer)."""
+
+    __tablename__ = "webhook_endpoints"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(128), default="ERP")
+    url: Mapped[str] = mapped_column(String(512))
+    secret: Mapped[str] = mapped_column(String(255), default="")
+    # comma-separated event names; empty = all
+    events: Mapped[str] = mapped_column(String(512), default="")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class WebhookDelivery(Base):
+    __tablename__ = "webhook_deliveries"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    endpoint_id: Mapped[Optional[int]] = mapped_column(ForeignKey("webhook_endpoints.id"), nullable=True)
+    event: Mapped[str] = mapped_column(String(64), index=True)
+    target_url: Mapped[str] = mapped_column(String(512), default="")
+    payload: Mapped[str] = mapped_column(Text, default="")
+    status_code: Mapped[int] = mapped_column(Integer, default=0)
+    response_body: Mapped[str] = mapped_column(Text, default="")
+    success: Mapped[bool] = mapped_column(Boolean, default=False)
+    error: Mapped[str] = mapped_column(String(512), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

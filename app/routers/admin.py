@@ -21,8 +21,11 @@ from app.models import (
     ShippingRate,
     Supplier,
     User,
+    WebhookDelivery,
+    WebhookEndpoint,
 )
 from app.services.media import delete_product_image, save_product_image, set_primary_image
+from app.services.webhooks import dispatch_event
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 templates = Jinja2Templates(directory="app/templates")
@@ -467,8 +470,14 @@ def order_status(
         return user
     order = db.query(Order).filter(Order.id == order_id).first()
     if order:
+        old = order.status
         order.status = status
         db.commit()
+        from app.services.webhooks import emit_order_event, load_order
+
+        full = load_order(db, order.id)
+        if full:
+            emit_order_event(db, "order.status_changed", full, extra={"previous_status": old})
     return RedirectResponse(f"/admin/orders/{order_id}", status_code=303)
 
 
@@ -513,3 +522,99 @@ def campaigns_create(
     )
     db.commit()
     return RedirectResponse("/admin/campaigns", status_code=303)
+
+
+@router.get("/webhooks", response_class=HTMLResponse)
+def webhooks_admin(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    endpoints = db.query(WebhookEndpoint).order_by(WebhookEndpoint.id).all()
+    deliveries = db.query(WebhookDelivery).order_by(WebhookDelivery.id.desc()).limit(30).all()
+    return templates.TemplateResponse(
+        "admin/webhooks.html",
+        {
+            "request": request,
+            "user": user,
+            "app_name": settings.app_name,
+            "webhook_enabled": settings.webhook_enabled,
+            "webhook_url": settings.webhook_url,
+            "endpoints": endpoints,
+            "deliveries": deliveries,
+            "test_result": request.session.pop("webhook_test_result", None),
+        },
+    )
+
+
+@router.post("/webhooks/create")
+def webhooks_create(
+    request: Request,
+    name: str = Form("ERP"),
+    url: str = Form(...),
+    secret: str = Form(""),
+    events: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    db.add(
+        WebhookEndpoint(
+            name=name.strip() or "ERP",
+            url=url.strip(),
+            secret=secret.strip(),
+            events=events.strip(),
+            active=True,
+        )
+    )
+    db.commit()
+    return RedirectResponse("/admin/webhooks", status_code=303)
+
+
+@router.post("/webhooks/{endpoint_id}/delete")
+def webhooks_delete(endpoint_id: int, request: Request, db: Session = Depends(get_db)):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    ep = db.get(WebhookEndpoint, endpoint_id)
+    if ep:
+        db.delete(ep)
+        db.commit()
+    return RedirectResponse("/admin/webhooks", status_code=303)
+
+
+@router.post("/webhooks/test")
+def webhooks_test(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    import json
+
+    results = dispatch_event(
+        db,
+        "order.created",
+        {
+            "id": 0,
+            "order_number": "TEST-ADMIN",
+            "status": "pending",
+            "email": "test@whoopy.local",
+            "grand_total": 1000,
+            "currency": "HUF",
+            "lines": [],
+            "shipments": [],
+        },
+    )
+    request.session["webhook_test_result"] = json.dumps(
+        {"config_enabled": settings.webhook_enabled, "results": results},
+        ensure_ascii=False,
+        indent=2,
+    )
+    return RedirectResponse("/admin/webhooks", status_code=303)
+
+
+@router.get("/integrations", response_class=HTMLResponse)
+def integrations_page(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    return RedirectResponse("/admin/webhooks", status_code=302)

@@ -286,3 +286,33 @@ class CouponOut(CouponCreate):
     used_count: int = 0
 
     model_config = {"from_attributes": True}
+
+class WebhookEndpointCreate(BaseModel):
+    name: str = "ERP"
+    url: str
+    secret: str = ""
+    events: str = ""  # empty = all; comma-separated
+    active: bool = True
+
+
+class WebhookEndpointOut(WebhookEndpointCreate):
+    id: int
+
+    model_config = {"from_attributes": True}
+
+
+class WebhookDeliveryOut(BaseModel):
+    id: int
+    endpoint_id: Optional[int] = None
+    event: str
+    target_url: str
+    status_code: int
+    success: bool
+    error: str = ""
+    created_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
+class WebhookTestIn(BaseModel):
+    event: str = "order.created"

@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     simplepay_secret_key: str = ""
     simplepay_sandbox: bool = True
     simplepay_currency: str = "HUF"
+    # Outbound webhooks (Whoopy → ERP / external)
+    webhook_enabled: bool = False
+    webhook_url: str = "http://127.0.0.1:8010/api/v1/webhooks/whoopy"
+    webhook_secret: str = "whoopy-webhook-secret-change-me"
+    webhook_timeout_sec: float = 8.0
 
 
 settings = Settings()

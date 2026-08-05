@@ -132,8 +132,11 @@ curl -s -X PATCH http://127.0.0.1:8090/api/v1/orders/1/status \
 | Media | GET/POST | `/api/v1/products/{id}/images` | Képlista / feltöltés |
 | Media | POST | `/api/v1/products/{id}/images/{img}/primary` | Elsődleges kép |
 | Media | DELETE | `/api/v1/products/{id}/images/{img}` | Kép törlés |
+| Webhooks | GET/POST | `/api/v1/webhooks` | Endpoint lista / létrehozás |
+| Webhooks | GET | `/api/v1/webhooks/deliveries` | Küldési napló |
+| Webhooks | POST | `/api/v1/webhooks/test` | Teszt ping |
 
-Részletes képfeltöltés: [`KEPEK.md`](KEPEK.md)
+Részletes képfeltöltés: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md)
 
 
 ## ERP státusz

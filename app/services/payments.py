@@ -54,6 +54,10 @@ def mark_order_paid(db: Session, order: Order, *, provider: str, payment_ref: st
     order.paid_at = datetime.utcnow()
     db.commit()
     db.refresh(order)
+    from app.services.webhooks import emit_order_event, load_order
+
+    full = load_order(db, order.id) or order
+    emit_order_event(db, "order.paid", full)
     return order
 
 
@@ -64,6 +68,10 @@ def mark_order_failed(db: Session, order: Order, *, provider: str, payment_ref: 
         order.payment_ref = payment_ref
     db.commit()
     db.refresh(order)
+    from app.services.webhooks import emit_order_event, load_order
+
+    full = load_order(db, order.id) or order
+    emit_order_event(db, "order.payment_failed", full)
     return order
 
 

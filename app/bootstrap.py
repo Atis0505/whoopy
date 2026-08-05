@@ -3,7 +3,7 @@ from pathlib import Path
 from app.config import BASE_DIR, settings
 from app.database import Base, engine
 
-SCHEMA_VERSION = "6"
+SCHEMA_VERSION = "7"
 VERSION_FILE = BASE_DIR / ".schema_version"
 DB_PATH = BASE_DIR / "marketplace.db"
 
