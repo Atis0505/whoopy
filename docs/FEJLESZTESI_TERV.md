@@ -8,8 +8,8 @@ A bővítések **ebben a sorrendben** készülnek. Az 1. lépés (ERP kliens) el
 | 2 | **Fizetés** | kész | Demo + Stripe + SimplePay (`docs/FIZETES.md`) |
 | 3 | **Képfeltöltés** | kész | Helyi media + API + admin (`docs/KEPEK.md`) |
 | 4 | **Webhook-ek** | kész | Whoopy → ERP (`docs/WEBHOOKOK.md`) |
-| 5 | **Admin Shopify-szint** | várakozik | Settings, ügyfelek, analitika, CMS |
+| 5 | **Admin Shopify-szint** | kész | Settings, ügyfelek, analitika, CMS… (`docs/ADMIN.md`) |
 | 6 | **Merchant Center éles** | várakozik | Teljes taxonomy + GMC |
 | 7 | **Prod hardening** | várakozik | Postgres, secret-ek, rate limit, HTTPS |
 
-Használati útmutató: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · API: [`API.md`](API.md) · Fizetés: [`FIZETES.md`](FIZETES.md) · Képek: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md)
+Használati útmutató: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · API: [`API.md`](API.md) · Fizetés: [`FIZETES.md`](FIZETES.md) · Képek: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md) · Admin: [`ADMIN.md`](ADMIN.md)

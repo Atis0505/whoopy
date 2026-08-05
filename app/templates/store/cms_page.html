@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} – Whoopy{% endblock %}
+{% block content %}
+<article class="panel" style="margin:1.5rem 0; max-width:800px">
+  <h1 style="font-family:var(--font-display)">{{ page.title }}</h1>
+  <div class="cms-body">{{ page.body|safe }}</div>
+  <p style="margin-top:1.5rem"><a class="btn secondary" href="/">← Vissza a boltba</a></p>
+</article>
+{% endblock %}

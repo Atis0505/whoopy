@@ -1,0 +1,26 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Kategóriák{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Taxonomy kategóriák</h1>
+<form method="get" action="/admin/categories" style="margin-bottom:1rem;display:flex;gap:0.5rem">
+  <input name="q" value="{{ q }}" placeholder="Keresés…" style="max-width:280px" />
+  <button class="btn secondary" type="submit">Keres</button>
+</form>
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>ID</th><th>Google ID</th><th>Útvonal</th><th>Termékek</th></tr></thead>
+    <tbody>
+    {% for c in categories %}
+      <tr>
+        <td>{{ c.id }}</td>
+        <td>{{ c.google_id }}</td>
+        <td>{{ c.full_path }}</td>
+        <td>{{ counts.get(c.id, 0) }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="muted">Nincs találat</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

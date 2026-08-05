@@ -1,0 +1,37 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Integrációk{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Integrációk</h1>
+<p class="muted">Őszinte státusz — mi van bekötve, mi nincs.</p>
+<div class="admin-grid" style="margin:1rem 0">
+  <div class="admin-card">
+    <b>{% if cfg.erp_enabled %}ON{% else %}OFF{% endif %}</b>
+    <div class="muted">ERP reverse-bridge (config)</div>
+  </div>
+  <div class="admin-card">
+    <b>{% if store.erp_enabled %}ON{% else %}OFF{% endif %}</b>
+    <div class="muted">ERP flag (store settings)</div>
+  </div>
+  <div class="admin-card">
+    <b>{% if cfg.webhook_enabled %}ON{% else %}OFF{% endif %}</b>
+    <div class="muted">Outbound webhook</div>
+  </div>
+  <div class="admin-card">
+    <b>{{ cfg.payment_provider }}</b>
+    <div class="muted">Fizetés provider</div>
+  </div>
+</div>
+<div class="panel">
+  <h3>Részletek</h3>
+  <ul>
+    <li><strong>Management API</strong> — kész (`/api/v1`, X-API-Key)</li>
+    <li><strong>ERP → Whoopy</strong> — ERP `whoopy-sync` kliens (külön projekt)</li>
+    <li><strong>Whoopy → ERP webhook</strong> — {{ cfg.webhook_url or 'nincs URL' }}</li>
+    <li><strong>Google Merchant feed</strong> — {% if store.google_feed_enabled %}<a href="/feeds/google-merchant.xml">/feeds/google-merchant.xml</a>{% else %}kikapcsolva{% endif %}</li>
+    <li><strong>Stripe / SimplePay</strong> — kulcsok env-ben; különben demo fizetés</li>
+  </ul>
+  <p><a class="btn secondary" href="/admin/webhooks">Webhook kezelés</a>
+     <a class="btn secondary" href="/admin/settings">Beállítások</a>
+     <a class="btn secondary" href="/docs" target="_blank">API docs</a></p>
+</div>
+{% endblock %}

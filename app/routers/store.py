@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app.deps import cart_for_request, get_current_user, post_login_redirect, store_context, try_login
 from app.i18n import normalize_lang
-from app.models import CartItem, Category, NewsletterSubscriber, Offer, Order, Product, User
+from app.models import CartItem, Category, CmsPage, NewsletterSubscriber, Offer, Order, Product, User
 from app.seed_auth import hash_password
 from app.services.cart import (
     add_to_cart,
@@ -454,3 +454,11 @@ def newsletter_subscribe(
         db.add(NewsletterSubscriber(email=email_n, lang=normalize_lang(lang), active=True, source="footer"))
     db.commit()
     return RedirectResponse(request.headers.get("referer", "/"), status_code=303)
+
+
+@router.get("/p/{slug}", response_class=HTMLResponse)
+def cms_page(slug: str, request: Request, db: Session = Depends(get_db)):
+    page = db.query(CmsPage).filter(CmsPage.slug == slug, CmsPage.published.is_(True)).first()
+    if not page:
+        return RedirectResponse("/", status_code=302)
+    return templates.TemplateResponse("store/cms_page.html", store_context(request, db, page=page))

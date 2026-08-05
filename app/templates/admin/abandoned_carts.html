@@ -1,0 +1,21 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Elhagyott kosarak{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Elhagyott kosarak</h1>
+<p class="muted">2 óránál régebben frissített, nem üres kosarak.</p>
+<div class="panel">
+  {% for c in carts %}
+  <div class="shipment" style="margin-bottom:0.8rem">
+    <strong>Cart #{{ c.id }}</strong>
+    <span class="muted">· {{ c.updated_at }} · {{ c.country }} · {{ c.currency }}</span>
+    <ul>
+      {% for it in c.items %}
+      <li>{{ it.quantity }}× {{ it.offer.product.title if it.offer and it.offer.product else it.offer_id }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <p class="muted">Nincs elhagyott kosár.</p>
+  {% endfor %}
+</div>
+{% endblock %}

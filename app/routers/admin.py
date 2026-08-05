@@ -610,11 +610,3 @@ def webhooks_test(request: Request, db: Session = Depends(get_db)):
         indent=2,
     )
     return RedirectResponse("/admin/webhooks", status_code=303)
-
-
-@router.get("/integrations", response_class=HTMLResponse)
-def integrations_page(request: Request, db: Session = Depends(get_db)):
-    user = _require_admin_html(request, db)
-    if isinstance(user, RedirectResponse):
-        return user
-    return RedirectResponse("/admin/webhooks", status_code=302)

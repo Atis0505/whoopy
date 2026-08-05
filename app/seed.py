@@ -19,12 +19,15 @@ from app.models import (
 )
 from app.services.currency import ensure_currency_rates
 from app.services.taxonomy import load_taxonomy_into_db
+from app.services.store_settings import ensure_default_cms_pages, get_store_settings
 from app.seed_auth import hash_password
 
 
 def seed_all(db: Session) -> None:
     ensure_currency_rates(db)
     _seed_users(db)
+    get_store_settings(db)
+    ensure_default_cms_pages(db)
 
     if db.query(Category).count() == 0:
         load_taxonomy_into_db(db)

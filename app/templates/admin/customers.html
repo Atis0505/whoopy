@@ -1,0 +1,23 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Vásárlók{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Vásárlók</h1>
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Név</th><th>Email</th><th>Rendelések</th><th>Nyelv</th><th>Regisztráció</th></tr></thead>
+    <tbody>
+    {% for c in customers %}
+      <tr>
+        <td>{{ c.full_name or '—' }}</td>
+        <td>{{ c.email }}</td>
+        <td>{{ order_counts.get(c.id, 0) }}</td>
+        <td>{{ c.preferred_lang }} / {{ c.preferred_currency }}</td>
+        <td class="muted">{{ c.created_at }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="muted">Nincs vásárlói fiók.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

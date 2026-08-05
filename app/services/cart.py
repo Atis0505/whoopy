@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy.orm import Session, joinedload
@@ -81,6 +82,7 @@ def add_to_cart(db: Session, cart: Cart, offer_id: int, quantity: int = 1) -> Ca
     else:
         item = CartItem(cart_id=cart.id, offer_id=offer_id, quantity=quantity)
         db.add(item)
+    cart.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(item)
     return item
@@ -96,6 +98,7 @@ def update_cart_item(db: Session, cart: Cart, item_id: int, quantity: int) -> No
         if item.offer.stock < quantity:
             raise ValueError("Not enough stock")
         item.quantity = quantity
+    cart.updated_at = datetime.utcnow()
     db.commit()
 
 

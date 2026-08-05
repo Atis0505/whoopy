@@ -1,0 +1,38 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Személyzet{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Személyzet</h1>
+{% if request.query_params.get('error') %}<div class="flash-error">Ez az email már foglalt.</div>{% endif %}
+{% if request.query_params.get('ok') %}<div class="flash-ok">Felhasználó létrehozva.</div>{% endif %}
+<div class="layout-2">
+  <div class="panel">
+    <table class="table">
+      <thead><tr><th>Név</th><th>Email</th><th>Szerep</th></tr></thead>
+      <tbody>
+      {% for s in staff %}
+        <tr>
+          <td>{{ s.full_name or '—' }}</td>
+          <td>{{ s.email }}</td>
+          <td>{{ s.role }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>Új admin / dolgozó</h3>
+    <form method="post" action="/admin/staff/create">
+      <div class="field"><label>Email</label><input type="email" name="email" required /></div>
+      <div class="field"><label>Név</label><input name="full_name" /></div>
+      <div class="field"><label>Jelszó</label><input type="password" name="password" required minlength="6" /></div>
+      <div class="field"><label>Szerep</label>
+        <select name="role">
+          <option value="worker">worker</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+      <button class="btn" type="submit">Létrehozás</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

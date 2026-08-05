@@ -1,0 +1,44 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Analitika{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Analitika</h1>
+<div class="admin-grid" style="margin:1rem 0 1.5rem">
+  <div class="admin-card"><b>{{ revenue_30d|huf }}</b><div class="muted">30 nap forgalom</div></div>
+  <div class="admin-card"><b>{{ paid_revenue|huf }}</b><div class="muted">Befizetett összesen</div></div>
+  <div class="admin-card"><b>{{ order_count }}</b><div class="muted">Összes rendelés</div></div>
+</div>
+<div class="layout-2">
+  <div class="panel">
+    <h3>Utolsó 7 nap</h3>
+    {% for d in recent_days %}
+    <div style="margin-bottom:0.65rem">
+      <div style="display:flex;justify-content:space-between;font-size:0.9rem">
+        <span>{{ d.day }}</span>
+        <span class="muted">{{ d.orders }} db · {{ d.revenue|huf }}</span>
+      </div>
+      <div class="stat-bar"><span style="width:{{ (d.orders / max_orders * 100)|int }}%"></span></div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="panel">
+    <h3>Státuszok</h3>
+    <ul>
+      {% for st, cnt in by_status.items() %}
+      <li>{{ st }}: <strong>{{ cnt }}</strong></li>
+      {% else %}
+      <li class="muted">Nincs adat</li>
+      {% endfor %}
+    </ul>
+    <h3 style="margin-top:1.25rem">Top termékek (sold_count)</h3>
+    <table class="table">
+      <tbody>
+      {% for p in top_products %}
+        <tr><td>{{ p.title }}</td><td>{{ p.sold_count }}</td></tr>
+      {% else %}
+        <tr><td class="muted" colspan="2">Még nincs eladás</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

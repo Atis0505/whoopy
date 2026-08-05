@@ -1,0 +1,438 @@
+"""Shopify-szerű admin bővítések: settings, customers, staff, analytics, CMS, inventory."""
+
+from __future__ import annotations
+
+from datetime import datetime, timedelta
+
+from fastapi import APIRouter, Depends, Form, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import func
+from sqlalchemy.orm import Session, joinedload
+
+from app.config import settings
+from app.database import get_db
+from app.deps import get_current_user
+from app.models import (
+    Cart,
+    CartItem,
+    Category,
+    CmsPage,
+    Offer,
+    Order,
+    Product,
+    User,
+)
+from app.seed_auth import hash_password
+from app.services.store_settings import get_store_settings, touch_settings
+
+router = APIRouter(prefix="/admin", tags=["admin-extra"])
+templates = Jinja2Templates(directory="app/templates")
+
+
+def _money(value: float) -> str:
+    return f"{value:,.0f} Ft".replace(",", " ")
+
+
+templates.env.filters["huf"] = _money
+
+
+def _require_admin(request: Request, db: Session) -> User | RedirectResponse:
+    user = get_current_user(request, db)
+    if not user or not (user.role == "admin" or user.is_admin):
+        return RedirectResponse("/login", status_code=303)
+    return user
+
+
+def _require_staff(request: Request, db: Session) -> User | RedirectResponse:
+    user = get_current_user(request, db)
+    if not user or not user.is_staff:
+        return RedirectResponse("/login", status_code=303)
+    return user
+
+
+# ── Settings ─────────────────────────────────────────────────────────────────
+
+@router.get("/settings", response_class=HTMLResponse)
+def settings_page(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    store = get_store_settings(db)
+    return templates.TemplateResponse(
+        "admin/settings.html",
+        {
+            "request": request,
+            "user": user,
+            "store": store,
+            "app_name": settings.app_name,
+            "cfg": settings,
+        },
+    )
+
+
+@router.post("/settings")
+def settings_save(
+    request: Request,
+    store_name: str = Form(...),
+    domain: str = Form(""),
+    support_email: str = Form(""),
+    support_phone: str = Form(""),
+    default_currency: str = Form("HUF"),
+    default_country: str = Form("HU"),
+    default_lang: str = Form("hu"),
+    tax_rate_percent: float = Form(27.0),
+    low_stock_threshold: int = Form(5),
+    order_prefix: str = Form("TM"),
+    erp_enabled: str = Form(""),
+    erp_api_base: str = Form(""),
+    google_feed_enabled: str = Form(""),
+    maintenance_mode: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    store = get_store_settings(db)
+    store.store_name = store_name.strip() or "Whoopy"
+    store.domain = domain.strip() or "whoopy.hu"
+    store.support_email = support_email.strip()
+    store.support_phone = support_phone.strip()
+    store.default_currency = default_currency.strip().upper()[:3]
+    store.default_country = default_country.strip().upper()[:2]
+    store.default_lang = default_lang.strip().lower()[:5]
+    store.tax_rate_percent = tax_rate_percent
+    store.low_stock_threshold = max(0, low_stock_threshold)
+    store.order_prefix = order_prefix.strip() or "TM"
+    store.erp_enabled = erp_enabled == "1"
+    store.erp_api_base = erp_api_base.strip() or store.erp_api_base
+    store.google_feed_enabled = google_feed_enabled == "1"
+    store.maintenance_mode = maintenance_mode == "1"
+    touch_settings(store)
+    db.commit()
+    return RedirectResponse("/admin/settings?saved=1", status_code=303)
+
+
+# ── Customers / staff ────────────────────────────────────────────────────────
+
+@router.get("/customers", response_class=HTMLResponse)
+def customers_list(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    customers = (
+        db.query(User)
+        .filter(User.role == "customer")
+        .order_by(User.created_at.desc())
+        .all()
+    )
+    order_counts = dict(
+        db.query(Order.customer_id, func.count(Order.id))
+        .filter(Order.customer_id.isnot(None))
+        .group_by(Order.customer_id)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "admin/customers.html",
+        {
+            "request": request,
+            "user": user,
+            "customers": customers,
+            "order_counts": order_counts,
+            "app_name": settings.app_name,
+        },
+    )
+
+
+@router.get("/staff", response_class=HTMLResponse)
+def staff_list(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    staff = (
+        db.query(User)
+        .filter(User.role.in_(("admin", "worker")))
+        .order_by(User.role, User.email)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "admin/staff.html",
+        {"request": request, "user": user, "staff": staff, "app_name": settings.app_name},
+    )
+
+
+@router.post("/staff/create")
+def staff_create(
+    request: Request,
+    email: str = Form(...),
+    full_name: str = Form(""),
+    password: str = Form(...),
+    role: str = Form("worker"),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    role = role if role in ("admin", "worker") else "worker"
+    email_n = email.strip().lower()
+    if db.query(User).filter(User.email == email_n).first():
+        return RedirectResponse("/admin/staff?error=exists", status_code=303)
+    db.add(
+        User(
+            email=email_n,
+            password_hash=hash_password(password),
+            full_name=full_name.strip(),
+            role=role,
+            is_admin=(role == "admin"),
+        )
+    )
+    db.commit()
+    return RedirectResponse("/admin/staff?ok=1", status_code=303)
+
+
+# ── Analytics ────────────────────────────────────────────────────────────────
+
+@router.get("/analytics", response_class=HTMLResponse)
+def analytics_page(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    since = datetime.utcnow() - timedelta(days=30)
+    revenue = (
+        db.query(func.coalesce(func.sum(Order.grand_total), 0.0))
+        .filter(Order.created_at >= since, Order.status.in_(("paid", "fulfilled", "pending")))
+        .scalar()
+        or 0.0
+    )
+    paid_revenue = (
+        db.query(func.coalesce(func.sum(Order.grand_total), 0.0))
+        .filter(Order.payment_status == "paid")
+        .scalar()
+        or 0.0
+    )
+    by_status = dict(db.query(Order.status, func.count(Order.id)).group_by(Order.status).all())
+    top_products = (
+        db.query(Product)
+        .filter(Product.sold_count > 0)
+        .order_by(Product.sold_count.desc())
+        .limit(10)
+        .all()
+    )
+    recent_days = []
+    for i in range(6, -1, -1):
+        day = (datetime.utcnow() - timedelta(days=i)).date()
+        start = datetime.combine(day, datetime.min.time())
+        end = start + timedelta(days=1)
+        cnt = (
+            db.query(func.count(Order.id))
+            .filter(Order.created_at >= start, Order.created_at < end)
+            .scalar()
+            or 0
+        )
+        total = (
+            db.query(func.coalesce(func.sum(Order.grand_total), 0.0))
+            .filter(Order.created_at >= start, Order.created_at < end)
+            .scalar()
+            or 0.0
+        )
+        recent_days.append({"day": day.isoformat(), "orders": cnt, "revenue": total})
+    max_orders = max((d["orders"] for d in recent_days), default=1) or 1
+    return templates.TemplateResponse(
+        "admin/analytics.html",
+        {
+            "request": request,
+            "user": user,
+            "app_name": settings.app_name,
+            "revenue_30d": revenue,
+            "paid_revenue": paid_revenue,
+            "by_status": by_status,
+            "top_products": top_products,
+            "recent_days": recent_days,
+            "max_orders": max_orders,
+            "order_count": db.query(Order).count(),
+        },
+    )
+
+
+# ── Inventory ────────────────────────────────────────────────────────────────
+
+@router.get("/inventory", response_class=HTMLResponse)
+def inventory_page(request: Request, db: Session = Depends(get_db)):
+    user = _require_staff(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    store = get_store_settings(db)
+    threshold = store.low_stock_threshold
+    offers = (
+        db.query(Offer)
+        .options(joinedload(Offer.product), joinedload(Offer.supplier))
+        .order_by(Offer.stock.asc(), Offer.id.desc())
+        .limit(200)
+        .all()
+    )
+    low = [o for o in offers if o.stock <= threshold]
+    return templates.TemplateResponse(
+        "admin/inventory.html",
+        {
+            "request": request,
+            "user": user,
+            "offers": offers,
+            "low": low,
+            "threshold": threshold,
+            "app_name": settings.app_name,
+        },
+    )
+
+
+@router.post("/inventory/{offer_id}")
+def inventory_update(
+    offer_id: int,
+    request: Request,
+    stock: int = Form(...),
+    db: Session = Depends(get_db),
+):
+    user = _require_staff(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    offer = db.get(Offer, offer_id)
+    if offer:
+        offer.stock = max(0, stock)
+        db.commit()
+    return RedirectResponse("/admin/inventory", status_code=303)
+
+
+# ── Categories ───────────────────────────────────────────────────────────────
+
+@router.get("/categories", response_class=HTMLResponse)
+def categories_page(request: Request, q: str = "", db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    query = db.query(Category)
+    if q.strip():
+        like = f"%{q.strip()}%"
+        query = query.filter((Category.name.ilike(like)) | (Category.full_path.ilike(like)))
+    cats = query.order_by(Category.full_path).limit(200).all()
+    counts = dict(
+        db.query(Product.category_id, func.count(Product.id))
+        .filter(Product.category_id.isnot(None))
+        .group_by(Product.category_id)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "admin/categories.html",
+        {
+            "request": request,
+            "user": user,
+            "categories": cats,
+            "counts": counts,
+            "q": q,
+            "app_name": settings.app_name,
+        },
+    )
+
+
+# ── CMS pages ────────────────────────────────────────────────────────────────
+
+@router.get("/pages", response_class=HTMLResponse)
+def pages_list(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    pages = db.query(CmsPage).order_by(CmsPage.slug).all()
+    return templates.TemplateResponse(
+        "admin/pages.html",
+        {"request": request, "user": user, "pages": pages, "app_name": settings.app_name},
+    )
+
+
+@router.post("/pages/create")
+def pages_create(
+    request: Request,
+    slug: str = Form(...),
+    title: str = Form(...),
+    body: str = Form(""),
+    published: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    slug_n = slug.strip().lower().replace(" ", "-")
+    if db.query(CmsPage).filter(CmsPage.slug == slug_n).first():
+        return RedirectResponse("/admin/pages?error=exists", status_code=303)
+    db.add(
+        CmsPage(
+            slug=slug_n,
+            title=title.strip(),
+            body=body,
+            published=published == "1",
+        )
+    )
+    db.commit()
+    return RedirectResponse("/admin/pages", status_code=303)
+
+
+@router.post("/pages/{page_id}")
+def pages_update(
+    page_id: int,
+    request: Request,
+    title: str = Form(...),
+    body: str = Form(""),
+    published: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    page = db.get(CmsPage, page_id)
+    if page:
+        page.title = title.strip()
+        page.body = body
+        page.published = published == "1"
+        page.updated_at = datetime.utcnow()
+        db.commit()
+    return RedirectResponse("/admin/pages", status_code=303)
+
+
+# ── Abandoned carts ──────────────────────────────────────────────────────────
+
+@router.get("/abandoned-carts", response_class=HTMLResponse)
+def abandoned_carts(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    cutoff = datetime.utcnow() - timedelta(hours=2)
+    carts = (
+        db.query(Cart)
+        .options(joinedload(Cart.items).joinedload(CartItem.offer).joinedload(Offer.product))
+        .filter(Cart.updated_at < cutoff)
+        .order_by(Cart.updated_at.desc())
+        .limit(50)
+        .all()
+    )
+    carts = [c for c in carts if c.items]
+    return templates.TemplateResponse(
+        "admin/abandoned_carts.html",
+        {"request": request, "user": user, "carts": carts, "app_name": settings.app_name},
+    )
+
+
+# ── Integrations (honest) ────────────────────────────────────────────────────
+
+@router.get("/integrations", response_class=HTMLResponse)
+def integrations_page(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    store = get_store_settings(db)
+    return templates.TemplateResponse(
+        "admin/integrations.html",
+        {
+            "request": request,
+            "user": user,
+            "store": store,
+            "cfg": settings,
+            "app_name": settings.app_name,
+        },
+    )

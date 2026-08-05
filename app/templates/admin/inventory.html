@@ -1,0 +1,37 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Készlet{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Készlet</h1>
+<p class="muted">Alacsony készlet küszöb: ≤ {{ threshold }} db</p>
+{% if low %}
+<div class="panel" style="border-color:#fca5a5">
+  <h3>Alacsony készlet ({{ low|length }})</h3>
+  <ul>
+    {% for o in low %}
+    <li>{{ o.product.title if o.product else o.product_id }} · {{ o.supplier.name if o.supplier else '' }} · <strong>{{ o.stock }}</strong> db</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Termék</th><th>Beszállító</th><th>SKU</th><th>Készlet</th><th></th></tr></thead>
+    <tbody>
+    {% for o in offers %}
+      <tr {% if o.stock <= threshold %}style="background:#fff7ed"{% endif %}>
+        <td>{{ o.product.title if o.product else o.product_id }}</td>
+        <td>{{ o.supplier.name if o.supplier else o.supplier_id }}</td>
+        <td class="muted">{{ o.sku }}</td>
+        <td>
+          <form method="post" action="/admin/inventory/{{ o.id }}" style="display:flex;gap:0.4rem;align-items:center">
+            <input type="number" name="stock" value="{{ o.stock }}" min="0" style="width:5rem" />
+            <button class="btn secondary" type="submit" style="padding:0.3rem 0.6rem;font-size:0.8rem">Ment</button>
+          </form>
+        </td>
+        <td class="muted">#{{ o.id }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

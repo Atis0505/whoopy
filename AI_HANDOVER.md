@@ -61,6 +61,6 @@ API leírás: `docs/API.md` · **Magyar használati útmutató:** `docs/HASZNALA
 2. ~~Fizetés (demo / Stripe / SimplePay)~~ — `docs/FIZETES.md`
 3. ~~Képfeltöltés~~ — `docs/KEPEK.md`
 4. ~~Webhook-ek~~ — `docs/WEBHOOKOK.md`
-5. Admin Shopify-szint
+5. ~~Admin Shopify-szint~~ — `docs/ADMIN.md`
 6. Merchant Center éles
 7. Prod hardening

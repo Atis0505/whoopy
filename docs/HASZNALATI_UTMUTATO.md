@@ -99,7 +99,7 @@ Belépés: **`/login`** (ugyanaz a belépő, szerepkör dönti el a jogosultság
 | **Integrációk** | ERP / API állapot (őszinte státusz) |
 | **Webhook-ek** | Outbound események ERP felé |
 
-> Megjegyzés: a sidebarban megjelenő néhány menüpont (analitika, CMS, settings…) részben még fejlesztés alatt lehet — a fenti tábla a ténylegesen használt mag.
+> Megjegyzés: a sidebar menüpontok **működő oldalakra** vezetnek (settings, analitika, CMS, inventory…). Részletek: [`ADMIN.md`](ADMIN.md).
 
 ### 2.2 Tipikus admin feladatok
 
