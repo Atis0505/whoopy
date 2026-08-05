@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ t('account') }} – Whoopy{% endblock %}
+{% block content %}
+<section class="layout-2">
+  <div class="panel">
+    <h2>{{ t('welcome_back') }}{% if user.full_name %}, {{ user.full_name }}{% endif %}</h2>
+    <p class="muted">{{ t('role_label') }}:
+      {% if user.role == 'admin' or user.is_admin %}{{ t('admin') }}
+      {% elif user.role == 'worker' %}{{ t('worker') }}
+      {% else %}{{ t('customer') }}{% endif %}
+    </p>
+    <p><strong>{{ user.email }}</strong></p>
+    {% if user.phone %}<p class="muted">{{ t('phone') }}: {{ user.phone }}</p>{% endif %}
+    <form method="post" action="/account/newsletter">
+      <label class="muted">
+        <input type="checkbox" name="newsletter" value="1" {% if user.newsletter_opt_in %}checked{% endif %} />
+        {{ t('newsletter') }}
+      </label>
+      <p><button class="btn ghost" type="submit">{{ t('apply') }}</button></p>
+    </form>
+    {% if user.is_staff %}
+    <p style="margin-top:1rem">
+      {% if user.role == 'admin' or user.is_admin %}
+      <a class="btn secondary" href="/admin">{{ t('admin') }}</a>
+      {% else %}
+      <a class="btn secondary" href="/admin/orders">{{ t('worker') }}</a>
+      {% endif %}
+    </p>
+    {% endif %}
+  </div>
+  <div class="panel">
+    <h3>{{ t('my_orders') }}</h3>
+    <table class="table">
+      <tbody>
+      {% for o in orders %}
+        <tr>
+          <td><a href="/order/{{ o.order_number }}">{{ o.order_number }}</a></td>
+          <td>{{ o.status }}</td>
+          <td>{{ money(o.grand_total) }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="muted">Még nincs rendelésed.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p><a href="/">{{ t('continue_shopping') }}</a></p>
+  </div>
+</section>
+{% endblock %}

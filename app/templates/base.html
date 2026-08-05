@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="{{ lang or 'hu' }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}{{ app_name }} – {{ app_domain }}{% endblock %}</title>
+  <meta name="description" content="Whoopy.hu – minden egy helyen. Google Taxonomy alapú marketplace EU szállítással." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="wrap topbar-inner">
+      <div>whoopy.hu · EU szállítás · Google Taxonomy katalógus</div>
+      <form method="post" action="/prefs" class="prefs-form">
+        <input type="hidden" name="next" value="{{ request.url.path }}" />
+        <label>{{ t('language') }}
+          <select name="lang" onchange="this.form.submit()">
+            {% for code, label in langs.items() %}
+            <option value="{{ code }}" {% if lang==code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>{{ t('currency') }}
+          <select name="currency" onchange="this.form.submit()">
+            {% for c in currencies %}
+            <option value="{{ c.code }}" {% if currency==c.code %}selected{% endif %}>{{ c.code }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>{{ t('country') }}
+          <select name="country" onchange="this.form.submit()">
+            {% for code, label in countries.items() %}
+            <option value="{{ code }}" {% if cart and cart.country==code %}selected{% endif %}>{{ code }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </form>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="/">
+        <div class="brand-mark">W</div>
+        Whoopy<span>.hu</span>
+      </a>
+      {% block search %}
+      <form class="search-bar" action="/" method="get">
+        <input type="search" name="q" placeholder="{{ t('search') }} – termék, márka, kategória…" value="{{ q or '' }}" />
+        <button type="submit">{{ t('search') }}</button>
+      </form>
+      {% endblock %}
+      <div class="header-actions">
+        <a class="icon-btn" href="/taxonomy">{{ t('taxonomy') }}</a>
+        {% if user %}
+          <a class="icon-btn" href="/account">{{ t('account') }}</a>
+          {% if user.role == 'admin' or user.is_admin %}
+          <a class="icon-btn" href="/admin">{{ t('admin') }}</a>
+          {% elif user.role == 'worker' %}
+          <a class="icon-btn" href="/admin/orders">{{ t('worker') }}</a>
+          {% endif %}
+          <a class="icon-btn" href="/logout">{{ t('logout') }}</a>
+        {% else %}
+          <a class="icon-btn" href="/login">{{ t('login') }}</a>
+          <a class="icon-btn" href="/register">{{ t('register') }}</a>
+        {% endif %}
+        <a class="icon-btn cart" href="/cart">{{ t('cart') }} · {{ quote.item_count if quote else 0 }}</a>
+      </div>
+    </div>
+    {% if categories is defined and categories %}
+    <div class="wrap">
+      <div class="cat-strip">
+        {% for c in categories %}
+        <a class="cat-chip" href="/c/{{ c.google_id }}">{{ c.name }}</a>
+        {% endfor %}
+        <a class="cat-chip" href="/taxonomy">{{ t('all_categories') }} →</a>
+      </div>
+    </div>
+    {% endif %}
+  </header>
+
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-grid">
+      <div>
+        <strong>Whoopy.hu</strong>
+        <p>Mindent egy helyen – beszállítói marketplace, Google Taxonomy, EU csomaglogisztika.</p>
+        <p class="muted"><a href="/feeds/google-merchant.xml">Google Merchant feed</a></p>
+      </div>
+      <div>
+        <h4>Vásárlás</h4>
+        <p><a href="/cart">{{ t('cart') }}</a></p>
+        <p><a href="/taxonomy">{{ t('taxonomy') }}</a></p>
+        <p><a href="/account">{{ t('account') }}</a></p>
+      </div>
+      <div>
+        <h4>{{ t('newsletter') }}</h4>
+        <p>{{ t('newsletter_cta') }}</p>
+        <form method="post" action="/newsletter" class="newsletter-form">
+          <input type="hidden" name="lang" value="{{ lang }}" />
+          <input type="email" name="email" required placeholder="email@" />
+          <button class="btn" type="submit">{{ t('subscribe') }}</button>
+        </form>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

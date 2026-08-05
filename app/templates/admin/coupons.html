@@ -1,0 +1,40 @@
+{% extends "admin/base_admin.html" %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Kuponok</h1>
+<div class="layout-2">
+  <div class="panel">
+    <table class="table">
+      <thead><tr><th>Kód</th><th>Típus</th><th>Érték</th><th>Min</th><th>Használat</th></tr></thead>
+      <tbody>
+      {% for c in coupons %}
+        <tr>
+          <td><strong>{{ c.code }}</strong><div class="muted">{{ c.description }}</div></td>
+          <td>{{ c.coupon_type }}</td>
+          <td>{{ c.value }}</td>
+          <td>{{ c.min_order }}</td>
+          <td>{{ c.used_count }}{% if c.max_uses %}/{{ c.max_uses }}{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>Új kupon</h3>
+    <form method="post" action="/admin/coupons/create">
+      <div class="field"><label>Kód</label><input name="code" required /></div>
+      <div class="field"><label>Típus</label>
+        <select name="coupon_type">
+          <option value="percent">percent %</option>
+          <option value="fixed">fixed HUF</option>
+          <option value="free_shipping">free_shipping</option>
+        </select>
+      </div>
+      <div class="field"><label>Érték</label><input name="value" type="number" step="0.01" value="10" /></div>
+      <div class="field"><label>Min. rendelés</label><input name="min_order" type="number" value="0" /></div>
+      <div class="field"><label>Max uses (0=∞)</label><input name="max_uses" type="number" value="0" /></div>
+      <div class="field"><label>Leírás</label><input name="description" /></div>
+      <button class="btn" type="submit">Mentés</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

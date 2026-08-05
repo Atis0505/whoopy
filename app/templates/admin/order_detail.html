@@ -1,0 +1,47 @@
+{% extends "admin/base_admin.html" %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">{{ order.order_number }}</h1>
+<p class="muted">{{ order.created_at }} · {{ order.status }}</p>
+<div class="layout-2">
+  <div class="panel">
+    <h3>Vásárló</h3>
+    <p>{{ order.full_name }}<br />{{ order.email }} · {{ order.phone }}<br />
+    {{ order.zip_code }} {{ order.city }}, {{ order.address }} ({{ order.country }})</p>
+    <h3>Tételek</h3>
+    <table class="table">
+      <thead><tr><th>Termék</th><th>Beszállító</th><th>Db</th><th>Összeg</th></tr></thead>
+      <tbody>
+      {% for line in order.lines %}
+        <tr>
+          <td>{{ line.product_title }}<div class="muted">{{ line.sku }}</div></td>
+          <td>{{ line.supplier_name }}</td>
+          <td>{{ line.quantity }}</td>
+          <td>{{ line.line_total|huf }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>Szállítmányok</h3>
+    {% for s in order.shipments %}
+    <div class="shipment">
+      <strong>{{ s.supplier_name }}</strong>
+      <div>{{ s.method }} · {{ s.weight_kg }} kg · {{ s.shipping_price|huf }}</div>
+      <div class="muted">Státusz: {{ s.status }}{% if s.tracking_code %} · {{ s.tracking_code }}{% endif %}</div>
+    </div>
+    {% endfor %}
+    <p><strong>Végösszeg:</strong> {{ order.grand_total|huf }}</p>
+    <form method="post" action="/admin/orders/{{ order.id }}/status">
+      <div class="field"><label>Státusz módosítás</label>
+        <select name="status">
+          {% for st in ['pending','paid','fulfilled','cancelled'] %}
+          <option value="{{ st }}" {% if order.status==st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn" type="submit">Mentés</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

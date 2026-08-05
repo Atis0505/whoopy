@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Whoopy.hu – Minden egy helyen{% endblock %}
+{% block content %}
+<section class="promo-row">
+  {% set hero = hero_campaigns[0] if hero_campaigns else None %}
+  <div class="promo-hero" {% if hero and hero.image_url %}style="background-image:linear-gradient(120deg, rgba(15,23,42,0.78), rgba(0,119,168,0.55)), url('{{ hero.image_url }}')"{% endif %}>
+    {% if hero and hero.badge %}<span class="badge sale">{{ hero.badge }}</span>{% endif %}
+    <h1>{{ hero.title if hero else t('hero_title') }}</h1>
+    <p>{{ hero.subtitle if hero else t('hero_sub') }}</p>
+    <a class="btn" href="{{ hero.link_url if hero else '/taxonomy' }}">{{ t('browse_categories') }}</a>
+  </div>
+  <div class="promo-side">
+    {% for c in strip_campaigns[:2] %}
+    <a class="promo-card {% if loop.first %}orange{% else %}green{% endif %}" href="{{ c.link_url }}">
+      {% if c.badge %}<span class="badge sale">{{ c.badge }}</span>{% endif %}
+      <h3>{{ c.title }}</h3>
+      <p class="muted">{{ c.subtitle }}</p>
+    </a>
+    {% else %}
+    <div class="promo-card orange">
+      <h3>{{ t('demo_coupons') }}</h3>
+      <p class="muted"><code>WELCOME10</code> · <code>SAVE2000</code> · <code>FREESHIP</code></p>
+    </div>
+    <div class="promo-card green">
+      <h3>{{ t('google_ready') }}</h3>
+      <p class="muted">{{ t('google_ready_sub') }}</p>
+      <a href="/feeds/google-merchant.xml">{{ t('open_feed') }} →</a>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% if tile_campaigns %}
+<section class="campaign-tiles">
+  {% for c in tile_campaigns %}
+  <a class="campaign-tile" href="{{ c.link_url }}">
+    <span class="badge">{{ c.badge or t('campaigns') }}</span>
+    <strong>{{ c.title }}</strong>
+    <span class="muted">{{ c.subtitle }}</span>
+  </a>
+  {% endfor %}
+</section>
+{% endif %}
+
+<div class="trust-bar">
+  <div class="trust-item"><span>🚚</span> {{ t('trust_eu') }}</div>
+  <div class="trust-item"><span>📦</span> {{ t('trust_pack') }}</div>
+  <div class="trust-item"><span>💳</span> {{ t('trust_pay') }}</div>
+  <div class="trust-item"><span>🏪</span> {{ t('trust_multi') }}</div>
+</div>
+
+{% if bestsellers %}
+<section>
+  <div class="section-head">
+    <h2>{{ t('bestsellers') }}</h2>
+  </div>
+  <div class="grid">
+    {% for p in bestsellers %}
+    <a class="product-card" href="/p/{{ p.slug }}">
+      <img class="thumb" src="{{ p.image_url or 'https://placehold.co/600x600/e2e8f0/0f172a?text=Whoopy' }}" alt="{{ p.title }}" loading="lazy" />
+      <div class="body">
+        <div class="muted">{{ p.brand }} · {{ p.sold_count }}× rendelve</div>
+        <div class="title">{{ p.title }}</div>
+        {% if p.best_price %}
+        <div class="price"><span class="from">{{ t('from_price') }}</span>{{ money(p.best_price) }}</div>
+        <div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.25rem">
+          <span class="badge">{{ p.offer_count }} {{ t('offers_count') }}</span>
+          {% if p.has_promo %}<span class="badge sale">{{ t('promo') }}</span>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section>
+  <div class="section-head">
+    <h2>{{ t('products') }}</h2>
+    {% if q %}<span class="muted">„{{ q }}”</span>{% endif %}
+  </div>
+  <div class="grid">
+    {% for p in products %}
+    <a class="product-card" href="/p/{{ p.slug }}">
+      <img class="thumb" src="{{ p.image_url or 'https://placehold.co/600x600/e2e8f0/0f172a?text=Whoopy' }}" alt="{{ p.title }}" loading="lazy" />
+      <div class="body">
+        <div class="muted">{{ p.brand }}{% if p.category %} · {{ p.category.name }}{% endif %}</div>
+        <div class="title">{{ p.title }}</div>
+        {% if p.best_price %}
+        <div class="price"><span class="from">{{ t('from_price') }}</span>{{ money(p.best_price) }}</div>
+        <div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.25rem">
+          <span class="badge">{{ p.offer_count }} {{ t('offers_count') }}</span>
+          {% if p.has_promo %}<span class="badge sale">{{ t('promo') }}</span>{% endif %}
+          <span class="badge ship">{{ p.ship_mode }}</span>
+        </div>
+        {% else %}
+        <div class="muted">{{ t('out_of_stock') }}</div>
+        {% endif %}
+      </div>
+    </a>
+    {% else %}
+    <p>{{ t('no_results') }}</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

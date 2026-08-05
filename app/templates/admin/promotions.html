@@ -1,0 +1,38 @@
+{% extends "admin/base_admin.html" %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Csoportos akciók</h1>
+<div class="layout-2">
+  <div class="panel">
+    <table class="table">
+      <thead><tr><th>Név</th><th>Típus</th><th>Érték</th><th>Termék ID-k</th><th>Aktív</th></tr></thead>
+      <tbody>
+      {% for p in promos %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td>{{ p.promo_type }}</td>
+          <td>{{ p.value }}</td>
+          <td class="muted">{{ p.product_ids or 'összes / szűrt' }}</td>
+          <td>{{ p.active }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>Új akció</h3>
+    <form method="post" action="/admin/promotions/create">
+      <div class="field"><label>Név</label><input name="name" required /></div>
+      <div class="field"><label>Típus</label>
+        <select name="promo_type"><option value="percent">percent</option><option value="fixed">fixed</option></select>
+      </div>
+      <div class="field"><label>Érték</label><input name="value" type="number" step="0.01" value="15" /></div>
+      <div class="field"><label>Termékek (multi-select)</label>
+        <select name="product_ids" multiple size="8" style="width:100%">
+          {% for p in products %}<option value="{{ p.id }}">{{ p.title }}</option>{% endfor %}
+        </select>
+      </div>
+      <button class="btn" type="submit">Mentés</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

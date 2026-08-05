@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}{{ t('cart') }} – {{ app_name }}{% endblock %}
+{% block content %}
+<section class="layout-2">
+  <div class="panel">
+    <h2>{{ t('cart') }}</h2>
+    {% if coupon_error %}<div class="flash-error">{{ t('invalid_coupon') }}</div>{% endif %}
+    {% if items %}
+    <table class="table">
+      <thead><tr><th></th><th></th><th></th><th></th></tr></thead>
+      <tbody>
+      {% for item in items %}
+        <tr>
+          <td>
+            <strong>{{ item.offer.product.title }}</strong>
+            <div class="muted">
+              {{ item.offer.supplier.name }} ·
+              {% if item.offer.product.ship_mode == 'separate' %}{{ t('separate') }}{% else %}{{ t('combinable') }}{% endif %}
+              {% if item.promo %}<span class="badge">{{ t('promo') }}</span>{% endif %}
+            </div>
+          </td>
+          <td>
+            <form method="post" action="/cart/update" style="display:flex;gap:0.35rem;align-items:center">
+              <input type="hidden" name="item_id" value="{{ item.id }}" />
+              <input type="number" name="quantity" value="{{ item.quantity }}" min="0" style="width:4rem" />
+              <button class="btn ghost" type="submit">OK</button>
+            </form>
+          </td>
+          <td><strong>{{ money(item.line_total) }}</strong></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <form method="post" action="/cart/coupon" style="display:flex;gap:0.5rem;margin-top:1rem;align-items:end">
+      <div class="field" style="flex:1;margin:0">
+        <label>{{ t('coupon') }}</label>
+        <input name="coupon_code" value="{{ cart.coupon_code }}" placeholder="WELCOME10 / FREESHIP" />
+      </div>
+      <button class="btn secondary" type="submit">{{ t('apply') }}</button>
+    </form>
+
+    <form method="post" action="/cart/payment" style="margin-top:1rem">
+      <div class="field">
+        <label>{{ t('payment') }}</label>
+        <select name="payment_preference" onchange="this.form.submit()">
+          <option value="prepaid" {% if cart.payment_preference=='prepaid' %}selected{% endif %}>{{ t('payment_prepaid') }}</option>
+          <option value="cod" {% if cart.payment_preference=='cod' %}selected{% endif %}>{{ t('payment_cod') }}</option>
+          <option value="invoice" {% if cart.payment_preference=='invoice' %}selected{% endif %}>{{ t('payment_invoice') }}</option>
+        </select>
+      </div>
+    </form>
+    {% else %}
+    <p>{{ t('empty_cart') }} <a href="/">{{ t('continue_shopping') }}</a></p>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <h2>{{ t('shipping_by_supplier') }}</h2>
+    <form method="post" action="/cart/shipping">
+      {% for s in quote.shipments %}
+      <div class="shipment">
+        <strong>{{ s.supplier_name }}</strong>
+        <div class="muted">
+          {{ t('combinable') }}: {{ s.combinable_weight }} kg ·
+          {{ t('separate') }}: {{ s.separate_units }} db ·
+          áru: {{ money(s.items_subtotal) }}
+        </div>
+        <label class="muted">{{ t('choose_shipping') }}</label>
+        <select name="ship_{{ s.supplier_id }}" style="width:100%;margin:0.4rem 0">
+          {% for o in s.options %}
+          <option value="{{ o.rate_id }}" {% if s.selected and s.selected.rate_id==o.rate_id %}selected{% endif %}>
+            {{ o.name }} ({{ o.payment_method }}) — {{ money(o.shipping_price) }}{% if o.cod_fee %} + {{ t('cod_fee') }} {{ money(o.cod_fee) }}{% endif %} · {{ o.package_count }} csomag
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      {% else %}
+      <p class="muted">—</p>
+      {% endfor %}
+      {% if quote.shipments %}
+      <button class="btn ghost" type="submit">{{ t('apply') }}</button>
+      {% endif %}
+    </form>
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:1rem 0" />
+    <div>{{ t('subtotal') }}: {{ money(quote.items_subtotal) }}</div>
+    {% if quote.discount_total %}<div>{{ t('discount') }}: −{{ money(quote.discount_total) }}</div>{% endif %}
+    <div>{{ t('shipping') }}: {{ money(quote.shipping_total) }}</div>
+    {% if quote.cod_fee_total %}<div>{{ t('cod_fee') }}: {{ money(quote.cod_fee_total) }}</div>{% endif %}
+    <div class="price" style="margin-top:0.5rem">{{ t('grand_total') }}: {{ money(quote.grand_total) }}</div>
+    {% if quote.item_count > 0 %}
+    <p style="margin-top:1rem"><a class="btn" href="/checkout">{{ t('checkout') }}</a></p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

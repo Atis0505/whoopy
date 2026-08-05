@@ -1,0 +1,14 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Belépés – Admin{% endblock %}
+{% block content %}
+<section class="panel" style="max-width:420px;margin:3rem auto">
+  <h1 style="font-family:var(--font-display)">Admin belépés</h1>
+  {% if error %}<div class="flash-error">{{ error }}</div>{% endif %}
+  <form method="post" action="/admin/login">
+    <div class="field"><label>E-mail</label><input type="email" name="email" value="admin@market.local" required /></div>
+    <div class="field"><label>Jelszó</label><input type="password" name="password" value="admin1234" required /></div>
+    <button class="btn" type="submit">Belépés</button>
+  </form>
+  <p class="muted">Demo: admin@market.local / admin1234</p>
+</section>
+{% endblock %}

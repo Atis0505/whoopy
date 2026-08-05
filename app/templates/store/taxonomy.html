@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ t('taxonomy') }} – {{ app_name }}{% endblock %}
+{% block content %}
+<section style="padding:1.5rem 0">
+  <h1 style="font-family:var(--font-display)">{{ t('taxonomy') }}</h1>
+  <div class="panel tree">
+    <ul>
+      {% for root in roots %}
+      <li>
+        <a href="/c/{{ root.google_id }}"><strong>{{ root.name }}</strong></a>
+        <span class="muted">#{{ root.google_id }}</span>
+        {% if root.children %}
+        <ul>
+          {% for child in root.children %}
+          <li>
+            <a href="/c/{{ child.google_id }}">{{ child.name }}</a>
+            {% if child.children %}
+            <ul>
+              {% for leaf in child.children %}
+              <li><a href="/c/{{ leaf.google_id }}">{{ leaf.name }}</a></li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

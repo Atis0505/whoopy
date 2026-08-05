@@ -1,0 +1,22 @@
+{% extends "admin/base_admin.html" %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Hírlevél feliratkozók</h1>
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>E-mail</th><th>Nyelv</th><th>Forrás</th><th>Aktív</th><th>Dátum</th></tr></thead>
+    <tbody>
+    {% for s in subs %}
+      <tr>
+        <td>{{ s.email }}</td>
+        <td>{{ s.lang }}</td>
+        <td>{{ s.source }}</td>
+        <td>{{ s.active }}</td>
+        <td class="muted">{{ s.created_at }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5">Nincs feliratkozó.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

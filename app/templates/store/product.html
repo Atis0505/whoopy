@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ product.title }} – {{ app_name }}{% endblock %}
+{% block content %}
+<section class="layout-2">
+  <div class="panel">
+    <img src="{{ product.image_url or 'https://placehold.co/800x600/ebe3d4/14213d?text=Product' }}" alt="{{ product.title }}" style="border-radius:12px;margin-bottom:1rem" />
+    <p class="muted">{{ product.brand }}{% if product.category %} · <a href="/c/{{ product.category.google_id }}">{{ product.category.full_path }}</a>{% endif %}</p>
+    <h1 style="font-family:var(--font-display);margin:0.3rem 0 0.8rem">{{ product.title }}</h1>
+    <p>{{ product.description }}</p>
+    <p class="muted">
+      {{ product.weight_kg }} kg ·
+      {% if product.ship_mode == 'separate' %}{{ t('separate') }}{% else %}{{ t('combinable') }}{% endif %}
+    </p>
+  </div>
+  <div class="panel">
+    <h2>{{ t('supplier_offers') }}</h2>
+    {% for o in offers %}
+    <div class="offer-row">
+      <div>
+        <strong>{{ o.supplier.name }}</strong>
+        <div class="muted">SKU {{ o.sku }} · {{ o.lead_days }} {{ t('days') }} · {{ t('stock') }} {{ o.stock }}</div>
+        <div class="price">
+          {{ money(o.display_price) }}
+          {% if o.promo %}<span class="badge">{{ t('promo') }}</span>
+          <span class="muted" style="text-decoration:line-through">{{ money(o.list_price) }}</span>{% endif %}
+        </div>
+      </div>
+      <form method="post" action="/cart/add">
+        <input type="hidden" name="offer_id" value="{{ o.id }}" />
+        <input type="number" name="quantity" value="1" min="1" max="{{ o.stock }}" style="width:4rem;margin-right:0.4rem" {% if o.stock < 1 %}disabled{% endif %} />
+        <button class="btn" type="submit" {% if o.stock < 1 %}disabled{% endif %}>{{ t('add_to_cart') }}</button>
+      </form>
+    </div>
+    {% else %}
+    <p>—</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

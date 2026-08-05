@@ -1,0 +1,31 @@
+{% extends "admin/base_admin.html" %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Dashboard</h1>
+<div class="admin-grid" style="margin:1rem 0 1.5rem">
+  <div class="admin-card"><b>{{ stats.products }}</b><div class="muted">termék</div></div>
+  <div class="admin-card"><b>{{ stats.suppliers }}</b><div class="muted">beszállító</div></div>
+  <div class="admin-card"><b>{{ stats.offers }}</b><div class="muted">ajánlat</div></div>
+  <div class="admin-card"><b>{{ stats.orders }}</b><div class="muted">rendelés</div></div>
+  <div class="admin-card"><b>{{ stats.categories }}</b><div class="muted">taxonomy node</div></div>
+  <div class="admin-card"><b>{{ stats.coupons }}</b><div class="muted">kupon</div></div>
+  <div class="admin-card"><b>{{ stats.subscribers }}</b><div class="muted">hírlevél</div></div>
+</div>
+<div class="panel">
+  <h3>Legutóbbi rendelések</h3>
+  <table class="table">
+    <thead><tr><th>Szám</th><th>Vásárló</th><th>Összeg</th><th>Státusz</th></tr></thead>
+    <tbody>
+    {% for o in recent %}
+      <tr>
+        <td><a href="/admin/orders/{{ o.id }}">{{ o.order_number }}</a></td>
+        <td>{{ o.full_name }}</td>
+        <td>{{ o.grand_total|huf }}</td>
+        <td>{{ o.status }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4">Még nincs rendelés.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

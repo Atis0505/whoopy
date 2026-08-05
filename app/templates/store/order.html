@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ order.order_number }}{% endblock %}
+{% block content %}
+<section class="panel" style="margin:1.5rem 0">
+  <h1 style="font-family:var(--font-display)">{{ t('thank_you') }}</h1>
+  <p><strong>{{ order.order_number }}</strong> · {{ order.status }} · {{ order.payment_method }} · {{ order.currency }}</p>
+  <p class="muted">{{ order.full_name }} · {{ order.email }} · {{ order.country }} {{ order.zip_code }} {{ order.city }}</p>
+  {% if order.coupon_code %}<p class="badge">{{ order.coupon_code }}</p>{% endif %}
+  <table class="table">
+    <tbody>
+    {% for line in order.lines %}
+      <tr>
+        <td>{{ line.product_title }} <span class="muted">({{ line.ship_mode }})</span></td>
+        <td>{{ line.supplier_name }}</td>
+        <td>{{ line.quantity }}</td>
+        <td>{{ money(line.line_total) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <h3>{{ t('shipping_by_supplier') }}</h3>
+  {% for s in order.shipments %}
+  <div class="shipment">
+    <strong>{{ s.supplier_name }}</strong> — {{ s.rate_name }} · {{ s.method }} · {{ s.payment_method }}
+    · {{ s.package_count }} pkg · {{ money(s.shipping_price) }}
+    {% if s.cod_fee %} + COD {{ money(s.cod_fee) }}{% endif %}
+  </div>
+  {% endfor %}
+  <p>{{ t('subtotal') }} {{ money(order.subtotal) }}
+    {% if order.discount_total %} − {{ t('discount') }} {{ money(order.discount_total) }}{% endif %}
+    + {{ t('shipping') }} {{ money(order.shipping_total) }}
+    {% if order.cod_fee_total %} + {{ t('cod_fee') }} {{ money(order.cod_fee_total) }}{% endif %}
+    = <span class="price">{{ money(order.grand_total) }}</span>
+  </p>
+  <p><a class="btn secondary" href="/">{{ t('continue_shopping') }}</a></p>
+</section>
+{% endblock %}

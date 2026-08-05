@@ -1,0 +1,23 @@
+{% extends "admin/base_admin.html" %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Rendelések</h1>
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Szám</th><th>Dátum</th><th>Vásárló</th><th>Szállítmányok</th><th>Összeg</th><th>Státusz</th></tr></thead>
+    <tbody>
+    {% for o in orders %}
+      <tr>
+        <td><a href="/admin/orders/{{ o.id }}">{{ o.order_number }}</a></td>
+        <td class="muted">{{ o.created_at }}</td>
+        <td>{{ o.full_name }}<div class="muted">{{ o.email }}</div></td>
+        <td>{{ o.shipments|length }} beszállító</td>
+        <td>{{ o.grand_total|huf }}</td>
+        <td>{{ o.status }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6">Nincs rendelés.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "admin/base_admin.html" %}
+{% block content %}
+<h1 style="font-family:var(--display)">Kampányok</h1>
+<p class="muted">Hero / sáv / csempe megjelenés a Whoopy főoldalon.</p>
+<div class="layout-2">
+  <div class="panel">
+    <table class="table">
+      <thead><tr><th>Cím</th><th>Hely</th><th>Badge</th><th>Aktív</th></tr></thead>
+      <tbody>
+      {% for c in campaigns %}
+        <tr>
+          <td><strong>{{ c.title }}</strong><div class="muted">{{ c.subtitle }}</div></td>
+          <td>{{ c.placement }}</td>
+          <td>{{ c.badge }}</td>
+          <td>{{ 'igen' if c.active else 'nem' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>Új kampány</h3>
+    <form method="post" action="/admin/campaigns/create">
+      <div class="field"><label>Cím</label><input name="title" required /></div>
+      <div class="field"><label>Alcím</label><input name="subtitle" /></div>
+      <div class="field"><label>Badge</label><input name="badge" value="Kampány" /></div>
+      <div class="field"><label>Link</label><input name="link_url" value="/" /></div>
+      <div class="field"><label>Kép URL (hero-hoz)</label><input name="image_url" /></div>
+      <div class="field"><label>Megjelenés</label>
+        <select name="placement">
+          <option value="hero">hero (fő banner)</option>
+          <option value="strip">strip (oldalsáv kártya)</option>
+          <option value="tile">tile (alsó csempesáv)</option>
+        </select>
+      </div>
+      <div class="field"><label>Sorrend</label><input name="sort_order" type="number" value="10" /></div>
+      <button class="btn" type="submit">Mentés</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Whoopy Admin{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body class="admin-body">
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <a class="admin-logo" href="/admin">
+        <span class="brand-mark">W</span>
+        <div>
+          <strong>Whoopy</strong>
+          <small>Admin</small>
+        </div>
+      </a>
+      {% if user %}
+      <nav class="admin-side-nav">
+        {% if user.role == 'admin' or user.is_admin %}
+        <div class="nav-group">Áttekintés</div>
+        <a href="/admin" class="{% if request.url.path == '/admin' or request.url.path == '/admin/' %}active{% endif %}">Dashboard</a>
+        <a href="/admin/analytics">Analitika</a>
+
+        <div class="nav-group">Értékesítés</div>
+        <a href="/admin/orders">Rendelések</a>
+        <a href="/admin/customers">Vásárlók</a>
+        <a href="/admin/abandoned-carts">Elhagyott kosarak</a>
+
+        <div class="nav-group">Katalógus</div>
+        <a href="/admin/products">Termékek</a>
+        <a href="/admin/inventory">Készlet</a>
+        <a href="/admin/categories">Kategóriák</a>
+        <a href="/admin/suppliers">Beszállítók</a>
+
+        <div class="nav-group">Marketing</div>
+        <a href="/admin/coupons">Kedvezmények</a>
+        <a href="/admin/promotions">Termékakciók</a>
+        <a href="/admin/campaigns">Kampányok</a>
+        <a href="/admin/newsletter">Hírlevél</a>
+
+        <div class="nav-group">Tartalom & csatornák</div>
+        <a href="/admin/pages">Oldalak (CMS)</a>
+        <a href="/admin/shipping">Szállítás</a>
+        <a href="/admin/integrations">Integrációk</a>
+        <a href="/admin/settings">Beállítások</a>
+        <a href="/admin/staff">Személyzet</a>
+        {% else %}
+        <div class="nav-group">Dolgozó</div>
+        <a href="/admin/orders">Rendelések</a>
+        <a href="/admin/inventory">Készlet</a>
+        {% endif %}
+      </nav>
+      {% endif %}
+      <div class="admin-side-foot">
+        <a href="/">← Bolt megnyitása</a>
+        <a href="/admin/logout">Kijelentkezés</a>
+      </div>
+    </aside>
+    <div class="admin-main">
+      <header class="admin-top">
+        <div>
+          <h1 class="admin-page-title">{% block page_title %}Admin{% endblock %}</h1>
+          <p class="muted">{% block page_sub %}Whoopy.hu backoffice{% endblock %}</p>
+        </div>
+        {% if user %}
+        <div class="admin-user-chip">{{ user.full_name or user.email }} · {{ user.role }}</div>
+        {% endif %}
+      </header>
+      <div class="admin-content">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,62 @@
+{% extends "admin/base_admin.html" %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Termékek & ajánlatok</h1>
+<div class="layout-2">
+  <div class="panel">
+    <table class="table">
+      <thead><tr><th>Termék</th><th>Kategória</th><th>Ajánlatok</th></tr></thead>
+      <tbody>
+      {% for p in products %}
+        <tr>
+          <td>
+            <strong>{{ p.title }}</strong>
+            <div class="muted">{{ p.slug }} · {{ p.weight_kg }} kg</div>
+          </td>
+          <td class="muted">{{ p.category.full_path if p.category else '—' }}</td>
+          <td>
+            {% for o in p.offers %}
+              <div>{{ o.supplier.name if o.supplier else o.supplier_id }}: {{ o.price|huf }} ({{ o.stock }} db)</div>
+            {% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>Új termék + első ajánlat</h3>
+    <form method="post" action="/admin/products/create">
+      <div class="field"><label>Cím</label><input name="title" required /></div>
+      <div class="field"><label>Slug</label><input name="slug" required placeholder="termek-nev" /></div>
+      <div class="field"><label>Márka</label><input name="brand" /></div>
+      <div class="field"><label>Leírás</label><textarea name="description" rows="3"></textarea></div>
+      <div class="field"><label>Súly (kg)</label><input name="weight_kg" type="number" step="0.01" value="0.5" /></div>
+      <div class="field"><label>Szállítási mód</label>
+        <select name="ship_mode">
+          <option value="combinable">combinable (összecsomagolható)</option>
+          <option value="separate">separate (pl. szekrény / db)</option>
+        </select>
+      </div>
+      <div class="field"><label>Taxonomy kategória</label>
+        <select name="category_id">
+          <option value="0">—</option>
+          {% for c in categories %}
+          <option value="{{ c.id }}">{{ c.full_path }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field"><label>Kép URL</label><input name="image_url" /></div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:1rem 0" />
+      <div class="field"><label>Beszállító</label>
+        <select name="supplier_id" required>
+          {% for s in suppliers %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field"><label>Ár (HUF)</label><input name="price" type="number" step="1" required /></div>
+      <div class="field"><label>Készlet</label><input name="stock" type="number" value="10" /></div>
+      <div class="field"><label>SKU</label><input name="sku" /></div>
+      <button class="btn" type="submit">Létrehozás</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

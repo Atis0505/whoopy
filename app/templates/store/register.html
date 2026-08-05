@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ t('register') }} – Whoopy{% endblock %}
+{% block content %}
+<section class="panel" style="max-width:480px;margin:2rem auto">
+  <h1 style="font-family:var(--display)">{{ t('register') }}</h1>
+  <p class="muted">Vásárlói fiók létrehozása a Whoopy.hu-n.</p>
+  {% if error %}<div class="flash-error">{{ t(error) if error in ['bad_login','email_taken','password_short'] else error }}</div>{% endif %}
+  <form method="post" action="/register">
+    <div class="field"><label>{{ t('name') }}</label><input name="full_name" /></div>
+    <div class="field"><label>{{ t('email') }}</label><input type="email" name="email" required /></div>
+    <div class="field"><label>{{ t('phone') }}</label><input name="phone" /></div>
+    <div class="field"><label>{{ t('password') }}</label><input type="password" name="password" required minlength="6" /></div>
+    <label class="muted"><input type="checkbox" name="newsletter" value="1" /> {{ t('newsletter_cta') }}</label>
+    <p style="margin-top:1rem"><button class="btn" type="submit">{{ t('register') }}</button></p>
+  </form>
+  <p class="muted"><a href="/login">{{ t('login') }}</a></p>
+</section>
+{% endblock %}

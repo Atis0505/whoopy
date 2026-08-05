@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ t('login') }} – Whoopy{% endblock %}
+{% block content %}
+<section class="panel" style="max-width:440px;margin:2rem auto">
+  <h1 style="font-family:var(--display)">{{ t('login') }}</h1>
+  <p class="muted">Vásárló, dolgozó vagy admin – ugyanitt tudsz belépni.</p>
+  {% if error %}<div class="flash-error">{{ t(error) if error in ['bad_login','email_taken','password_short'] else error }}</div>{% endif %}
+  <form method="post" action="/login">
+    <div class="field"><label>{{ t('email') }}</label><input type="email" name="email" required /></div>
+    <div class="field"><label>{{ t('password') }}</label><input type="password" name="password" required /></div>
+    <button class="btn" type="submit">{{ t('login') }}</button>
+  </form>
+  <p class="muted" style="margin-top:1rem">
+    Demo: <code>vasarlo@whoopy.local</code> / vasarlo123 ·
+    <code>dolgozo@whoopy.local</code> / worker123 ·
+    <code>admin@whoopy.local</code> / admin1234
+  </p>
+  <p class="muted"><a href="/register">{{ t('register') }}</a></p>
+</section>
+{% endblock %}

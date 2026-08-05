@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ category.name }} – {{ app_name }}{% endblock %}
+{% block content %}
+<section style="padding:1.5rem 0">
+  <p class="muted">{{ category.full_path }}</p>
+  <h1 style="font-family:var(--font-display)">{{ category.name }}</h1>
+  {% if children %}
+  <div class="nav" style="margin:1rem 0">
+    {% for ch in children %}
+    <a class="badge" href="/c/{{ ch.google_id }}">{{ ch.name }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="grid">
+    {% for p in products %}
+    <a class="product-card" href="/p/{{ p.slug }}">
+      <img class="thumb" src="{{ p.image_url or 'https://placehold.co/600x400/ebe3d4/14213d?text=Product' }}" alt="{{ p.title }}" />
+      <div class="body">
+        <strong>{{ p.title }}</strong>
+        {% if p.best_price %}<div class="price">{{ money(p.best_price) }}</div>{% endif %}
+      </div>
+    </a>
+    {% else %}
+    <p>—</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
