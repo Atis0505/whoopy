@@ -52,6 +52,8 @@ from app.schemas import (
 )
 from app.services.media import delete_product_image, save_product_image, set_primary_image
 from app.services.webhooks import ALL_EVENTS, dispatch_event
+from app.services.google_feed import validate_and_collect
+from app.services.taxonomy import import_official_taxonomy
 
 router = APIRouter(
     prefix="/api/v1",
@@ -741,6 +743,31 @@ def create_coupon(body: CouponCreate, db: Session = Depends(get_db)):
 @router.get("/webhooks/events", tags=["Webhooks"])
 def list_webhook_events():
     return {"events": list(ALL_EVENTS)}
+
+
+# ── Merchant / taxonomy ──────────────────────────────────────────────────────
+
+@router.get("/merchant/feed-report", tags=["Merchant"])
+def merchant_feed_report(db: Session = Depends(get_db)):
+    _items, report = validate_and_collect(db)
+    return {
+        "ok_for_gmc": report.ok_for_gmc,
+        "total_products": report.total_products,
+        "included": report.included,
+        "skipped": report.skipped,
+        "errors": [{"slug": e.slug, "message": e.message} for e in report.errors],
+        "warnings": [{"slug": w.slug, "message": w.message} for w in report.warnings],
+        "feed_url": f"{settings.public_base_url.rstrip('/')}/feeds/google-merchant.xml",
+    }
+
+
+@router.post("/merchant/import-taxonomy", tags=["Merchant"])
+def merchant_import_taxonomy_api(download: bool = True, db: Session = Depends(get_db)):
+    """Teljes Google Product Taxonomy import (letöltés opcionális)."""
+    try:
+        return import_official_taxonomy(db, download=download)
+    except Exception as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @router.get("/webhooks/deliveries", response_model=list[WebhookDeliveryOut], tags=["Webhooks"])

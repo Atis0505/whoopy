@@ -8,13 +8,13 @@
     {% for p in pages %}
     <div style="border-bottom:1px solid #e2e8f0;padding:1rem 0">
       <strong>{{ p.title }}</strong>
-      <div class="muted">/p/{{ p.slug }} · {% if p.published %}publikált{% else %}vázlat{% endif %}</div>
+      <div class="muted">/pages/{{ p.slug }} · {% if p.published %}publikált{% else %}vázlat{% endif %}</div>
       <form method="post" action="/admin/pages/{{ p.id }}" style="margin-top:0.6rem">
         <div class="field"><label>Cím</label><input name="title" value="{{ p.title }}" required /></div>
         <div class="field"><label>Törzs (HTML ok)</label><textarea name="body" rows="4">{{ p.body }}</textarea></div>
         <label class="muted"><input type="checkbox" name="published" value="1" {% if p.published %}checked{% endif %} /> Publikált</label>
         <p><button class="btn secondary" type="submit">Mentés</button>
-           <a href="/p/{{ p.slug }}" target="_blank">Megnyitás</a></p>
+           <a href="/pages/{{ p.slug }}" target="_blank">Megnyitás</a></p>
       </form>
     </div>
     {% else %}

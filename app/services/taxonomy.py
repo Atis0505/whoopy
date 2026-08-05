@@ -1,31 +1,25 @@
+"""Google Product Taxonomy import (curated + full file / download)."""
+
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterable
 
+import httpx
 from sqlalchemy.orm import Session
 
+from app.config import BASE_DIR
 from app.models import Category
 
+TAXONOMY_DIR = BASE_DIR / "data" / "taxonomy"
+TAXONOMY_FILE = TAXONOMY_DIR / "taxonomy-with-ids.en-US.txt"
+TAXONOMY_URL = "https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt"
+
 # Official Google taxonomy format (sample / offline subset).
-# Full file can be downloaded later: https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt
 SAMPLE_TAXONOMY = """
 # Taxonomy Market – Google Product Taxonomy subset (with IDs)
 1 - Animals & Pet Supplies
-3237 - Animals & Pet Supplies > Pet Supplies
-5 - Arts & Entertainment
-8 - Arts & Entertainment > Hobbies & Creative Arts
-469 - Baby & Toddler
-166 - Business & Industrial
-141 - Cameras & Optics
-222 - Clothing & Accessories
-1604 - Clothing & Accessories > Clothing
-212 - Electronics
-222 - Electronics > Audio  # duplicate id avoided below
-267 - Electronics > Computers
-278 - Electronics & > Computers > Laptops
 """
-
 
 # Clean curated subset used for seeding (valid unique IDs)
 CURATED_LINES = [
@@ -65,6 +59,20 @@ CURATED_LINES = [
     "436 - Furniture > Beds & Accessories",
     "632 - Hardware",
     "127 - Hardware > Tools",
+    # Extra common Shopping categories
+    "1239 - Home & Garden > Household Appliances",
+    "604 - Home & Garden > Kitchen & Dining",
+    "696 - Home & Garden > Decor",
+    "436 - Furniture > Beds & Accessories",
+    "464 - Furniture > Cabinets & Storage",
+    "443 - Furniture > Chairs",
+    "639 - Furniture > Tables",
+    "2082 - Home & Garden > Lawn & Garden",
+    "2635 - Vehicles & Parts",
+    "5613 - Vehicles & Parts > Vehicle Parts & Accessories",
+    "922 - Office Supplies",
+    "950 - Office Supplies > Office Equipment",
+    "1239 - Home & Garden > Household Appliances",
 ]
 
 
@@ -84,14 +92,12 @@ def parse_taxonomy_line(line: str) -> tuple[int, str, list[str]] | None:
 
 
 def load_taxonomy_into_db(db: Session, lines: Iterable[str] | None = None) -> int:
-    """Upsert taxonomy nodes. Returns number of categories created/updated."""
+    """Upsert taxonomy nodes. Returns number of categories created."""
     source = list(lines) if lines is not None else CURATED_LINES
-    # google_id -> Category
     by_path: dict[str, Category] = {}
     existing = {c.google_id: c for c in db.query(Category).all()}
     created = 0
 
-    # Process shorter paths first so parents exist
     parsed = []
     seen_ids: set[int] = set()
     for line in source:
@@ -142,3 +148,43 @@ def load_taxonomy_into_db(db: Session, lines: Iterable[str] | None = None) -> in
 def load_taxonomy_file(db: Session, path: Path) -> int:
     text = path.read_text(encoding="utf-8")
     return load_taxonomy_into_db(db, text.splitlines())
+
+
+def download_official_taxonomy(timeout: float = 120.0) -> Path:
+    """Letölti a hivatalos Google taxonomy fájlt `data/taxonomy/` alá."""
+    TAXONOMY_DIR.mkdir(parents=True, exist_ok=True)
+    with httpx.Client(timeout=timeout, follow_redirects=True) as client:
+        resp = client.get(TAXONOMY_URL)
+        resp.raise_for_status()
+        TAXONOMY_FILE.write_bytes(resp.content)
+    return TAXONOMY_FILE
+
+
+def import_official_taxonomy(db: Session, *, download: bool = True) -> dict:
+    """
+    Teljes (vagy cache-elt) taxonomy import.
+    Ha a fájl nincs meg és download=True → letölti.
+    """
+    path = TAXONOMY_FILE
+    downloaded = False
+    if download and (not path.exists() or path.stat().st_size < 1000):
+        path = download_official_taxonomy()
+        downloaded = True
+    if not path.exists():
+        created = load_taxonomy_into_db(db, CURATED_LINES)
+        return {
+            "ok": True,
+            "source": "curated",
+            "created": created,
+            "total": db.query(Category).count(),
+            "downloaded": False,
+        }
+    created = load_taxonomy_file(db, path)
+    return {
+        "ok": True,
+        "source": str(path),
+        "created": created,
+        "total": db.query(Category).count(),
+        "downloaded": downloaded,
+        "bytes": path.stat().st_size,
+    }

@@ -456,7 +456,7 @@ def newsletter_subscribe(
     return RedirectResponse(request.headers.get("referer", "/"), status_code=303)
 
 
-@router.get("/p/{slug}", response_class=HTMLResponse)
+@router.get("/pages/{slug}", response_class=HTMLResponse)
 def cms_page(slug: str, request: Request, db: Session = Depends(get_db)):
     page = db.query(CmsPage).filter(CmsPage.slug == slug, CmsPage.published.is_(True)).first()
     if not page:

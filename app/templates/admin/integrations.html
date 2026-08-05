@@ -27,7 +27,7 @@
     <li><strong>Management API</strong> — kész (`/api/v1`, X-API-Key)</li>
     <li><strong>ERP → Whoopy</strong> — ERP `whoopy-sync` kliens (külön projekt)</li>
     <li><strong>Whoopy → ERP webhook</strong> — {{ cfg.webhook_url or 'nincs URL' }}</li>
-    <li><strong>Google Merchant feed</strong> — {% if store.google_feed_enabled %}<a href="/feeds/google-merchant.xml">/feeds/google-merchant.xml</a>{% else %}kikapcsolva{% endif %}</li>
+    <li><strong>Google Merchant feed</strong> — {% if store.google_feed_enabled %}<a href="/feeds/google-merchant.xml">/feeds/google-merchant.xml</a> · <a href="/admin/merchant">Merchant admin</a>{% else %}kikapcsolva{% endif %}</li>
     <li><strong>Stripe / SimplePay</strong> — kulcsok env-ben; különben demo fizetés</li>
   </ul>
   <p><a class="btn secondary" href="/admin/webhooks">Webhook kezelés</a>

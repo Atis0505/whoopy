@@ -1,0 +1,52 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Merchant Center{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Google Merchant Center</h1>
+<p class="muted">Feed + taxonomy állapot. Éles GMC-hez add meg a feed URL-t a Merchant Centerben.</p>
+
+<div class="admin-grid" style="margin:1rem 0">
+  <div class="admin-card"><b>{{ report.included }}</b><div class="muted">feed item</div></div>
+  <div class="admin-card"><b>{{ report.skipped }}</b><div class="muted">kihagyva</div></div>
+  <div class="admin-card"><b>{{ report.errors|length }}</b><div class="muted">hiba</div></div>
+  <div class="admin-card"><b>{{ report.warnings|length }}</b><div class="muted">figyelmeztetés</div></div>
+  <div class="admin-card"><b>{{ category_count }}</b><div class="muted">taxonomy node</div></div>
+  <div class="admin-card"><b>{% if store.google_feed_enabled %}ON{% else %}OFF{% endif %}</b><div class="muted">feed enabled</div></div>
+</div>
+
+<div class="layout-2">
+  <div class="panel">
+    <h3>Feed</h3>
+    <p><a href="{{ feed_url }}" target="_blank">{{ feed_url }}</a></p>
+    <p class="muted">GMC: Products → Feeds → add scheduled fetch (napi).</p>
+    <p>GMC-kész: <strong>{% if report.ok_for_gmc %}igen{% else %}nem — javítsd a hibákat{% endif %}</strong></p>
+
+    <h3 style="margin-top:1.25rem">Taxonomy</h3>
+    <p class="muted">Fájl: {% if taxonomy_file_exists %}megvan{% else %}nincs cache{% endif %}<br/><code style="font-size:0.75rem">{{ taxonomy_file }}</code></p>
+    <form method="post" action="/admin/merchant/import-taxonomy">
+      <label class="muted"><input type="checkbox" name="download" value="1" checked /> Hivatalos fájl letöltése Google-ról (nagy)</label>
+      <p style="margin-top:0.6rem"><button class="btn" type="submit">Taxonomy import</button></p>
+    </form>
+    {% if import_result %}
+    <pre style="margin-top:1rem;font-size:0.8rem;overflow:auto">{{ import_result }}</pre>
+    {% endif %}
+  </div>
+  <div class="panel">
+    <h3>Hibák</h3>
+    <ul>
+      {% for e in report.errors[:40] %}
+      <li><code>{{ e.slug }}</code> — {{ e.message }}</li>
+      {% else %}
+      <li class="muted">Nincs error</li>
+      {% endfor %}
+    </ul>
+    <h3 style="margin-top:1rem">Figyelmeztetések</h3>
+    <ul>
+      {% for w in report.warnings[:40] %}
+      <li><code>{{ w.slug }}</code> — {{ w.message }}</li>
+      {% else %}
+      <li class="muted">Nincs warning</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

@@ -14,6 +14,8 @@ Thumbs.db
 .mypy_cache/
 .ruff_cache/
 data/uploads/
+data/taxonomy/*.txt
+!data/taxonomy/.gitkeep
 *.log
 .idea/
 .vscode/

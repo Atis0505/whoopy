@@ -436,3 +436,54 @@ def integrations_page(request: Request, db: Session = Depends(get_db)):
             "app_name": settings.app_name,
         },
     )
+
+
+# ── Google Merchant Center ───────────────────────────────────────────────────
+
+@router.get("/merchant", response_class=HTMLResponse)
+def merchant_page(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.models import Category
+    from app.services.google_feed import validate_and_collect
+    from app.services.taxonomy import TAXONOMY_FILE
+
+    store = get_store_settings(db)
+    _items, report = validate_and_collect(db)
+    return templates.TemplateResponse(
+        "admin/merchant.html",
+        {
+            "request": request,
+            "user": user,
+            "store": store,
+            "report": report,
+            "category_count": db.query(Category).count(),
+            "taxonomy_file_exists": TAXONOMY_FILE.exists(),
+            "taxonomy_file": str(TAXONOMY_FILE),
+            "feed_url": f"{settings.public_base_url.rstrip('/')}/feeds/google-merchant.xml",
+            "app_name": settings.app_name,
+            "import_result": request.session.pop("taxonomy_import_result", None),
+        },
+    )
+
+
+@router.post("/merchant/import-taxonomy")
+def merchant_import_taxonomy(
+    request: Request,
+    download: str = Form("1"),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    import json
+
+    from app.services.taxonomy import import_official_taxonomy
+
+    try:
+        result = import_official_taxonomy(db, download=download == "1")
+    except Exception as exc:
+        result = {"ok": False, "error": str(exc)}
+    request.session["taxonomy_import_result"] = json.dumps(result, ensure_ascii=False, indent=2)
+    return RedirectResponse("/admin/merchant", status_code=303)

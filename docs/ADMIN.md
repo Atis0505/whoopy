@@ -18,7 +18,8 @@ Demo dolgozó: `dolgozo@whoopy.local` / `worker123`
 | Kategóriák | `/admin/categories` | Google taxonomy kereső |
 | Beszállítók | `/admin/suppliers` | Supplier kódok |
 | Kedvezmények / akciók / kampányok / hírlevél | … | Marketing |
-| Oldalak (CMS) | `/admin/pages` | ÁSZF, adatvédelem… → bolt `/p/{slug}` |
+| Oldalak (CMS) | `/admin/pages` | ÁSZF, adatvédelem… → bolt `/pages/{slug}` |
+| Merchant Center | `/admin/merchant` | Feed report + taxonomy import |
 | Szállítás | `/admin/shipping` | Rate-ek |
 | Integrációk | `/admin/integrations` | Őszinte ERP / fizetés / webhook státusz |
 | Webhook-ek | `/admin/webhooks` | Outbound célok + delivery log |
@@ -27,7 +28,7 @@ Demo dolgozó: `dolgozo@whoopy.local` / `worker123`
 
 ## Bolt CMS
 
-Publikált oldalak: `/p/aszf`, `/p/adatvedelem`, `/p/rolunk` (seed).
+Publikált oldalak: `/pages/aszf`, `/pages/adatvedelem`, `/pages/rolunk` (seed).
 
 ## Megjegyzés
 

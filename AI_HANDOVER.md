@@ -62,5 +62,5 @@ API leírás: `docs/API.md` · **Magyar használati útmutató:** `docs/HASZNALA
 3. ~~Képfeltöltés~~ — `docs/KEPEK.md`
 4. ~~Webhook-ek~~ — `docs/WEBHOOKOK.md`
 5. ~~Admin Shopify-szint~~ — `docs/ADMIN.md`
-6. Merchant Center éles
+6. ~~Merchant Center~~ — `docs/MERCHANT.md`
 7. Prod hardening
