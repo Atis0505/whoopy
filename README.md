@@ -8,7 +8,7 @@
 Alza / eMAG / Pepita jellegű, **Google Taxonomy** alapú, többbeszállítós marketplace webshop.
 Később az `e_commerce_erp` rendszerhez kapcsolódik (lásd `docs/WHOOPY_ERP_INTEGRATION.md`).
 
-> AI: [`AI_HANDOVER.md`](AI_HANDOVER.md)
+> AI: [`AI_HANDOVER.md`](AI_HANDOVER.md) · Használat: [`docs/HASZNALATI_UTMUTATO.md`](docs/HASZNALATI_UTMUTATO.md) · Terv: [`docs/FEJLESZTESI_TERV.md`](docs/FEJLESZTESI_TERV.md)
 
 ## Indítás
 

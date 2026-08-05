@@ -56,15 +56,23 @@ Az ERP (vagy bármely kliens) **pusholhat** Whoopy-ra:
 - ár + készlet (egyedi és bulk)
 - rendelés státusz / tracking olvasás
 
-Dokumentáció: [`docs/API.md`](API.md) · Swagger: `http://127.0.0.1:8090/docs`  
+Dokumentáció: [`docs/API.md`](API.md) · Használat: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · Swagger: `http://127.0.0.1:8090/docs`  
 Auth: `X-API-Key` (`API_KEY` / `settings.api_key`).
 
-## Bekapcsolás (majd — reverse bridge)
+**ERP kliens (kész):** `e_commerce_erp` → `/api/v1/whoopy-sync/*` · leírás: ERP `Documentation/ai/WHOOPY_SYNC.md`
+
+## Bekapcsolás (ERP → Whoopy)
 
 ```env
-ERP_ENABLED=true
-ERP_API_BASE=http://127.0.0.1:8010/api/v1
+# Whoopy
 API_KEY=whoopy-dev-api-key-change-me
+
+# ERP .env
+WHOOPY_ENABLED=true
+WHOOPY_API_BASE=http://127.0.0.1:8010/api/v1
+WHOOPY_API_URL=http://127.0.0.1:8090/api/v1
+WHOOPY_API_KEY=whoopy-dev-api-key-change-me
 ```
 
-Addig Whoopy **önálló SQLite katalógussal** fut (demo). Az ERP → Whoopy irányhoz az ERP-nek a Whoopy `/api/v1` végpontokat kell hívnia.
+Whoopy önálló SQLite katalógussal fut; az ERP a fenti sync API-n tolja a listingeket.
+

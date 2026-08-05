@@ -46,19 +46,21 @@ Demo: `vasarlo@whoopy.local` / vasarlo123 · `dolgozo@whoopy.local` / worker123 
 | `/admin` | Admin |
 | `/cart` | Kosár + multi shipping |
 
-API leírás: `docs/API.md`
+API leírás: `docs/API.md` · **Magyar használati útmutató:** `docs/HASZNALATI_UTMUTATO.md` · Terv: `docs/FEJLESZTESI_TERV.md`
 
 ## ERP kötés állapota
 
-- `erp_enabled=False` (config) — helyi SQLite katalógus
-- **Whoopy Management API kész** (`/api/v1`) — termék upsert, ár/készlet, rendelés
+- Whoopy Management API kész (`/api/v1`)
+- **ERP adapter kész:** `e_commerce_erp` → `WhoopyAdapter` + `/api/v1/whoopy-sync/*` (`WHOOPY_ENABLED`)
 - Stub reverse bridge: `app/services/erp_bridge.py`
-- Később: ERP whoopy_* táblák + ERP kliens → Whoopy API push
+- Részletek: ERP `Documentation/ai/WHOOPY_SYNC.md`
 
-## Következő lépések
+## Következő lépések (lásd FEJLESZTESI_TERV)
 
-1. ERP-ben Whoopy channel + kliens a Whoopy `/api/v1`-hez
-2. Order push / tracking kétirányú
-3. Teljes taxonomy import + Merchant Center csatolás
-4. Domain / HTTPS whoopy.hu
-5. Shopify-szerű admin bővítés (settings, analytics) — opcionális
+1. ~~ERP Whoopy kliens~~ (alap kész) → master katalógus automata szinkron
+2. Fizetés (SimplePay / Stripe)
+3. Képfeltöltés
+4. Webhook-ek
+5. Admin Shopify-szint
+6. Merchant Center éles
+7. Prod hardening
