@@ -294,6 +294,12 @@ class Order(Base):
     zip_code: Mapped[str] = mapped_column(String(16), default="")
     status: Mapped[str] = mapped_column(String(32), default="pending")
     payment_method: Mapped[str] = mapped_column(String(16), default="prepaid")
+    # pending | awaiting | paid | failed | cancelled | refunded
+    payment_status: Mapped[str] = mapped_column(String(32), default="pending", index=True)
+    # none | demo | stripe | simplepay
+    payment_provider: Mapped[str] = mapped_column(String(32), default="none")
+    payment_ref: Mapped[str] = mapped_column(String(255), default="")
+    paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     subtotal: Mapped[float] = mapped_column(Float, default=0)
     discount_total: Mapped[float] = mapped_column(Float, default=0)
     shipping_total: Mapped[float] = mapped_column(Float, default=0)

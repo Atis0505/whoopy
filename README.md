@@ -30,7 +30,8 @@ python run.py
 - Csomaglogisztika: összecsomagolható vs külön (bútor), COD díj
 - Merchant Center XML feed taxonomy path-okkal
 - **Management API** `/api/v1` — termék, ár, készlet, rendelés (lásd `docs/API.md`)
-- ERP reverse-bridge stub (kikapcsolva); ERP → Whoopy push az API-n
+- **Fizetés** — demo / Stripe / SimplePay (`docs/FIZETES.md`)
+- ERP reverse-bridge stub; ERP → Whoopy push az API-n / `whoopy-sync`
 
 ## ERP
 

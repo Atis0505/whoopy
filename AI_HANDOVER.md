@@ -57,8 +57,8 @@ API leírás: `docs/API.md` · **Magyar használati útmutató:** `docs/HASZNALA
 
 ## Következő lépések (lásd FEJLESZTESI_TERV)
 
-1. ~~ERP Whoopy kliens~~ (alap kész) → master katalógus automata szinkron
-2. Fizetés (SimplePay / Stripe)
+1. ~~ERP Whoopy kliens~~
+2. ~~Fizetés (demo / Stripe / SimplePay)~~ — `docs/FIZETES.md`
 3. Képfeltöltés
 4. Webhook-ek
 5. Admin Shopify-szint

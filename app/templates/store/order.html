@@ -3,9 +3,20 @@
 {% block content %}
 <section class="panel" style="margin:1.5rem 0">
   <h1 style="font-family:var(--font-display)">{{ t('thank_you') }}</h1>
-  <p><strong>{{ order.order_number }}</strong> · {{ order.status }} · {{ order.payment_method }} · {{ order.currency }}</p>
+  {% set pay = request.query_params.get('pay') %}
+  {% if pay == 'ok' %}<div class="flash-ok">Fizetés sikeresen megtörtént.</div>{% endif %}
+  {% if pay == 'failed' %}<div class="flash-error">A fizetés sikertelen volt. Próbáld újra a gombbal.</div>{% endif %}
+  {% if pay == 'cancelled' %}<div class="flash-error">A fizetést megszakítottad.</div>{% endif %}
+  {% if pay == 'pending' %}<div class="muted">A fizetés visszaigazolása folyamatban…</div>{% endif %}
+  <p><strong>{{ order.order_number }}</strong> · {{ order.status }} · {{ order.payment_method }}
+    {% if order.payment_status %} · fizetés: {{ order.payment_status }}{% endif %}
+    {% if order.payment_provider and order.payment_provider != 'none' %} ({{ order.payment_provider }}){% endif %}
+    · {{ order.currency }}</p>
   <p class="muted">{{ order.full_name }} · {{ order.email }} · {{ order.country }} {{ order.zip_code }} {{ order.city }}</p>
   {% if order.coupon_code %}<p class="badge">{{ order.coupon_code }}</p>{% endif %}
+  {% if order.payment_method == 'prepaid' and order.payment_status != 'paid' %}
+  <p><a class="btn" href="/pay/{{ order.order_number }}">Online fizetés folytatása</a></p>
+  {% endif %}
   <table class="table">
     <tbody>
     {% for line in order.lines %}

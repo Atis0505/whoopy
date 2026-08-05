@@ -271,6 +271,10 @@ code {
   background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
   border-radius: 10px; padding: 0.8rem; margin-bottom: 1rem;
 }
+.flash-ok {
+  background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;
+  border-radius: 10px; padding: 0.8rem; margin-bottom: 1rem;
+}
 
 .site-footer {
   margin-top: 1rem; background: #0b1220; color: #94a3b8; padding: 2.2rem 0 2.5rem;

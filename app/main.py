@@ -5,7 +5,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.bootstrap import ensure_fresh_schema
 from app.config import settings
 from app.database import SessionLocal
-from app.routers import admin, api_v1, store
+from app.routers import admin, api_v1, payments, store
 from app.seed import seed_all
 
 app = FastAPI(
@@ -22,6 +22,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(store.router)
 app.include_router(admin.router)
 app.include_router(api_v1.router)
+app.include_router(payments.router)
 
 
 @app.on_event("startup")

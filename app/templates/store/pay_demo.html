@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Fizetés – {{ order.order_number }}{% endblock %}
+{% block content %}
+<section class="panel" style="margin:1.5rem 0; max-width:520px">
+  <h1 style="font-family:var(--font-display)">Demo fizetés</h1>
+  <p class="muted">Nincs Stripe / SimplePay kulcs beállítva — fejlesztői kártyás fizetés szimuláció.</p>
+  <p><strong>{{ order.order_number }}</strong></p>
+  <p class="price">{{ money(order.grand_total) }} {{ order.currency }}</p>
+  <form method="post" action="/pay/{{ order.order_number }}/demo" style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:1.25rem">
+    <button class="btn" type="submit" name="action" value="pay">Fizetés sikeres</button>
+    <button class="btn secondary" type="submit" name="action" value="fail">Sikertelen fizetés</button>
+  </form>
+  <p style="margin-top:1rem"><a href="/order/{{ order.order_number }}">Vissza a rendeléshez</a></p>
+</section>
+{% endblock %}

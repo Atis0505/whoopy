@@ -43,7 +43,8 @@ A termékoldalon válaszd ki a kívánt **ajánlatot** (beszállító), majd add
 1. **Kosár** (`/cart`): mennyiség, kupon, ország, fizetési preferencia (előre / utánvét / számla).
 2. Több beszállító esetén **több szállítmány** jelenik meg – szállítási mód szállítmányonként választható.
 3. **Checkout** (`/checkout`): szállítási adatok → rendelés leadása.
-4. **Rendelés visszaigazolás** (`/order/{szám}`): tételek + szállítmányok.
+4. Ha **Online / bankkártya** volt kiválasztva → `/pay/...` fizetési kapu ([`FIZETES.md`](FIZETES.md)).
+5. **Rendelés visszaigazolás** (`/order/{szám}`): tételek + szállítmányok + fizetés státusz.
 
 **Tippek**
 

@@ -49,7 +49,14 @@ def create_order_from_cart(
     db.commit()
 
     quote = quote_cart(db, cart, country=country)
-    status = "pending" if cart.payment_preference in ("cod", "invoice") else "paid"
+    payment_method = cart.payment_preference or "prepaid"
+    if payment_method == "prepaid":
+        status = "pending"
+        payment_status = "awaiting"
+    else:
+        # COD / számla — online fizetés nélkül
+        status = "pending"
+        payment_status = "pending"
 
     order = Order(
         order_number=_next_order_number(db),
@@ -62,7 +69,10 @@ def create_order_from_cart(
         address=address.strip(),
         zip_code=zip_code.strip(),
         status=status,
-        payment_method=cart.payment_preference or "prepaid",
+        payment_method=payment_method,
+        payment_status=payment_status,
+        payment_provider="none",
+        payment_ref="",
         subtotal=quote.items_subtotal,
         discount_total=quote.discount_total,
         shipping_total=quote.shipping_total,

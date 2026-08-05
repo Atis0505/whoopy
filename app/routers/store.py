@@ -298,6 +298,9 @@ def checkout_submit(
             user.newsletter_opt_in = True
         db.commit()
 
+    # Online fizetés (prepaid) → fizetési kapu
+    if order.payment_method == "prepaid":
+        return RedirectResponse(f"/pay/{order.order_number}", status_code=303)
     return RedirectResponse(f"/order/{order.order_number}", status_code=303)
 
 

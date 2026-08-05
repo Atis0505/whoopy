@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     public_base_url: str = "http://127.0.0.1:8090"
     # Whoopy Management API (ERP / automation) — header: X-API-Key
     api_key: str = "whoopy-dev-api-key-change-me"
+    # Payments: demo | stripe | simplepay | auto
+    payment_provider: str = "auto"
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+    stripe_currency: str = "huf"
+    simplepay_merchant: str = ""
+    simplepay_secret_key: str = ""
+    simplepay_sandbox: bool = True
+    simplepay_currency: str = "HUF"
 
 
 settings = Settings()

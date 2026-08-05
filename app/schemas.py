@@ -211,6 +211,10 @@ class OrderOut(BaseModel):
     zip_code: str
     status: str
     payment_method: str
+    payment_status: str = "pending"
+    payment_provider: str = "none"
+    payment_ref: str = ""
+    paid_at: Optional[datetime] = None
     subtotal: float
     discount_total: float
     shipping_total: float

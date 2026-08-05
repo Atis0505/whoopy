@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Fizetési hiba{% endblock %}
+{% block content %}
+<section class="panel" style="margin:1.5rem 0">
+  <h1 style="font-family:var(--font-display)">Fizetés nem indítható</h1>
+  {% if error %}<div class="flash-error">{{ error }}</div>{% endif %}
+  {% if order %}
+  <p>Rendelés: <strong>{{ order.order_number }}</strong></p>
+  <p><a class="btn" href="/pay/{{ order.order_number }}/demo">Demo fizetés</a>
+     <a class="btn secondary" href="/order/{{ order.order_number }}">Rendelés megtekintése</a></p>
+  {% endif %}
+</section>
+{% endblock %}
