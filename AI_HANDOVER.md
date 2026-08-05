@@ -63,4 +63,6 @@ API leírás: `docs/API.md` · **Magyar használati útmutató:** `docs/HASZNALA
 4. ~~Webhook-ek~~ — `docs/WEBHOOKOK.md`
 5. ~~Admin Shopify-szint~~ — `docs/ADMIN.md`
 6. ~~Merchant Center~~ — `docs/MERCHANT.md`
-7. Prod hardening
+7. ~~Prod hardening~~ — `docs/PROD.md`
+
+Tervkész. Következő opcionális: ERP autosync, CDN, éles domain.
