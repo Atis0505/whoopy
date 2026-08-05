@@ -59,7 +59,7 @@ API leírás: `docs/API.md` · **Magyar használati útmutató:** `docs/HASZNALA
 
 1. ~~ERP Whoopy kliens~~
 2. ~~Fizetés (demo / Stripe / SimplePay)~~ — `docs/FIZETES.md`
-3. Képfeltöltés
+3. ~~Képfeltöltés~~ — `docs/KEPEK.md`
 4. Webhook-ek
 5. Admin Shopify-szint
 6. Merchant Center éles

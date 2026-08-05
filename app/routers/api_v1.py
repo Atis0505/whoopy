@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session, joinedload
 
 from app.api_auth import require_api_key
@@ -16,6 +16,7 @@ from app.models import (
     Order,
     OrderShipment,
     Product,
+    ProductImage,
     Supplier,
 )
 from app.schemas import (
@@ -34,6 +35,7 @@ from app.schemas import (
     OrderStatusPatch,
     PricePatch,
     ProductCreate,
+    ProductImageOut,
     ProductOut,
     ProductUpdate,
     ProductUpsert,
@@ -42,6 +44,7 @@ from app.schemas import (
     SupplierCreate,
     SupplierOut,
 )
+from app.services.media import delete_product_image, save_product_image, set_primary_image
 
 router = APIRouter(
     prefix="/api/v1",
@@ -95,7 +98,20 @@ def _product_out(p: Product) -> ProductOut:
         category_id=p.category_id,
         active=p.active,
         offers=[OfferOut.model_validate(o) for o in (p.offers or [])],
+        images=[ProductImageOut.model_validate(i) for i in (p.images or [])],
     )
+
+
+def _load_product(db: Session, product_id: int) -> Product:
+    p = (
+        db.query(Product)
+        .options(joinedload(Product.offers), joinedload(Product.images))
+        .filter(Product.id == product_id)
+        .first()
+    )
+    if not p:
+        raise HTTPException(404, "Termék nem található")
+    return p
 
 
 def _order_out(o: Order) -> OrderOut:
@@ -211,7 +227,7 @@ def list_products(
     offset: int = 0,
     db: Session = Depends(get_db),
 ):
-    query = db.query(Product).options(joinedload(Product.offers))
+    query = db.query(Product).options(joinedload(Product.offers), joinedload(Product.images))
     if q:
         like = f"%{q}%"
         query = query.filter(
@@ -229,7 +245,7 @@ def list_products(
 def get_product_by_slug(slug: str, db: Session = Depends(get_db)):
     p = (
         db.query(Product)
-        .options(joinedload(Product.offers))
+        .options(joinedload(Product.offers), joinedload(Product.images))
         .filter(Product.slug == slug)
         .first()
     )
@@ -242,7 +258,7 @@ def get_product_by_slug(slug: str, db: Session = Depends(get_db)):
 def get_product(product_id: int, db: Session = Depends(get_db)):
     p = (
         db.query(Product)
-        .options(joinedload(Product.offers))
+        .options(joinedload(Product.offers), joinedload(Product.images))
         .filter(Product.id == product_id)
         .first()
     )
@@ -277,7 +293,7 @@ def create_product(body: ProductCreate, db: Session = Depends(get_db)):
     db.commit()
     p = (
         db.query(Product)
-        .options(joinedload(Product.offers))
+        .options(joinedload(Product.offers), joinedload(Product.images))
         .filter(Product.id == p.id)
         .first()
     )
@@ -330,7 +346,7 @@ def upsert_product(body: ProductUpsert, db: Session = Depends(get_db)):
     db.commit()
     p = (
         db.query(Product)
-        .options(joinedload(Product.offers))
+        .options(joinedload(Product.offers), joinedload(Product.images))
         .filter(Product.id == p.id)
         .first()
     )
@@ -355,7 +371,7 @@ def update_product(product_id: int, body: ProductUpdate, db: Session = Depends(g
     db.commit()
     p = (
         db.query(Product)
-        .options(joinedload(Product.offers))
+        .options(joinedload(Product.offers), joinedload(Product.images))
         .filter(Product.id == product_id)
         .first()
     )
@@ -372,6 +388,71 @@ def delete_product(product_id: int, hard: bool = False, db: Session = Depends(ge
     else:
         p.active = False
     db.commit()
+    return None
+
+
+# ── Product images ───────────────────────────────────────────────────────────
+
+@router.get(
+    "/products/{product_id}/images",
+    response_model=list[ProductImageOut],
+    tags=["Media"],
+)
+def list_product_images(product_id: int, db: Session = Depends(get_db)):
+    p = _load_product(db, product_id)
+    return [ProductImageOut.model_validate(i) for i in (p.images or [])]
+
+
+@router.post(
+    "/products/{product_id}/images",
+    response_model=ProductImageOut,
+    status_code=201,
+    tags=["Media"],
+)
+async def upload_product_image(
+    product_id: int,
+    file: UploadFile = File(...),
+    alt: str = Form(""),
+    set_primary: bool = Form(False),
+    db: Session = Depends(get_db),
+):
+    """Multipart feltöltés: jpg/png/webp/gif, max 5 MB."""
+    p = db.get(Product, product_id)
+    if not p:
+        raise HTTPException(404, "Termék nem található")
+    image = await save_product_image(db, p, file, alt=alt, set_primary=set_primary)
+    return ProductImageOut.model_validate(image)
+
+
+@router.post(
+    "/products/{product_id}/images/{image_id}/primary",
+    response_model=ProductImageOut,
+    tags=["Media"],
+)
+def make_primary_image(product_id: int, image_id: int, db: Session = Depends(get_db)):
+    p = db.get(Product, product_id)
+    if not p:
+        raise HTTPException(404, "Termék nem található")
+    image = db.get(ProductImage, image_id)
+    if not image or image.product_id != product_id:
+        raise HTTPException(404, "Kép nem található")
+    image = set_primary_image(db, p, image)
+    return ProductImageOut.model_validate(image)
+
+
+@router.delete(
+    "/products/{product_id}/images/{image_id}",
+    status_code=204,
+    tags=["Media"],
+)
+def remove_product_image(product_id: int, image_id: int, db: Session = Depends(get_db)):
+    p = db.get(Product, product_id)
+    if not p:
+        raise HTTPException(404, "Termék nem található")
+    image = db.get(ProductImage, image_id)
+    if not image or image.product_id != product_id:
+        raise HTTPException(404, "Kép nem található")
+    delete_product_image(db, p, image)
     return None
 
 

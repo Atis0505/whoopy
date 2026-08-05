@@ -4,13 +4,35 @@
 <div class="layout-2">
   <div class="panel">
     <table class="table">
-      <thead><tr><th>Termék</th><th>Kategória</th><th>Ajánlatok</th></tr></thead>
+      <thead><tr><th>Termék</th><th>Képek</th><th>Kategória</th><th>Ajánlatok</th></tr></thead>
       <tbody>
       {% for p in products %}
         <tr>
           <td>
             <strong>{{ p.title }}</strong>
-            <div class="muted">{{ p.slug }} · {{ p.weight_kg }} kg</div>
+            <div class="muted">{{ p.slug }} · {{ p.weight_kg }} kg · #{{ p.id }}</div>
+          </td>
+          <td style="min-width:220px">
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.5rem">
+              {% for img in p.images %}
+              <div style="text-align:center">
+                <img src="{{ img.url }}" alt="{{ img.alt }}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:2px solid {% if img.is_primary %}#0f766e{% else %}#e2e8f0{% endif %}" />
+                <div style="display:flex;gap:0.2rem;justify-content:center;margin-top:0.2rem">
+                  {% if not img.is_primary %}
+                  <form method="post" action="/admin/products/{{ p.id }}/images/{{ img.id }}/primary"><button class="btn secondary" type="submit" style="padding:0.15rem 0.4rem;font-size:0.7rem">★</button></form>
+                  {% endif %}
+                  <form method="post" action="/admin/products/{{ p.id }}/images/{{ img.id }}/delete" onsubmit="return confirm('Törlöd a képet?')"><button class="btn secondary" type="submit" style="padding:0.15rem 0.4rem;font-size:0.7rem">×</button></form>
+                </div>
+              </div>
+              {% else %}
+              <span class="muted">nincs feltöltött kép</span>
+              {% endfor %}
+            </div>
+            <form method="post" action="/admin/products/{{ p.id }}/images" enctype="multipart/form-data" style="display:flex;flex-direction:column;gap:0.35rem">
+              <input type="file" name="file" accept="image/jpeg,image/png,image/webp,image/gif" required />
+              <label class="muted" style="font-size:0.8rem"><input type="checkbox" name="set_primary" value="1" /> elsődleges</label>
+              <button class="btn secondary" type="submit" style="align-self:flex-start;padding:0.35rem 0.7rem;font-size:0.8rem">Feltöltés</button>
+            </form>
           </td>
           <td class="muted">{{ p.category.full_path if p.category else '—' }}</td>
           <td>
@@ -45,7 +67,8 @@
           {% endfor %}
         </select>
       </div>
-      <div class="field"><label>Kép URL</label><input name="image_url" /></div>
+      <div class="field"><label>Kép URL (külső)</label><input name="image_url" placeholder="https://…" /></div>
+      <p class="muted" style="font-size:0.85rem">Fájlfeltöltés a létrehozás után a listában.</p>
       <hr style="border:0;border-top:1px solid var(--line);margin:1rem 0" />
       <div class="field"><label>Beszállító</label>
         <select name="supplier_id" required>

@@ -144,6 +144,18 @@ class ProductUpdate(BaseModel):
     active: Optional[bool] = None
 
 
+class ProductImageOut(BaseModel):
+    id: int
+    product_id: int
+    filename: str
+    url: str
+    alt: str = ""
+    sort_order: int = 10
+    is_primary: bool = False
+
+    model_config = {"from_attributes": True}
+
+
 class ProductOut(BaseModel):
     id: int
     slug: str
@@ -158,6 +170,7 @@ class ProductOut(BaseModel):
     category_id: Optional[int] = None
     active: bool
     offers: list[OfferOut] = []
+    images: list[ProductImageOut] = []
 
     model_config = {"from_attributes": True}
 

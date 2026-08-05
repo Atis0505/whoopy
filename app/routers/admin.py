@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
@@ -16,11 +16,13 @@ from app.models import (
     Offer,
     Order,
     Product,
+    ProductImage,
     Promotion,
     ShippingRate,
     Supplier,
     User,
 )
+from app.services.media import delete_product_image, save_product_image, set_primary_image
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 templates = Jinja2Templates(directory="app/templates")
@@ -143,6 +145,7 @@ def products_list(request: Request, db: Session = Depends(get_db)):
         .options(
             joinedload(Product.category),
             joinedload(Product.offers).joinedload(Offer.supplier),
+            joinedload(Product.images),
         )
         .order_by(Product.title)
         .all()
@@ -206,6 +209,65 @@ def products_create(
         )
     )
     db.commit()
+    return RedirectResponse("/admin/products", status_code=303)
+
+
+@router.post("/products/{product_id}/images")
+async def admin_upload_image(
+    product_id: int,
+    request: Request,
+    file: UploadFile = File(...),
+    alt: str = Form(""),
+    set_primary: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    product = db.get(Product, product_id)
+    if not product:
+        return RedirectResponse("/admin/products", status_code=303)
+    await save_product_image(
+        db,
+        product,
+        file,
+        alt=alt,
+        set_primary=set_primary == "1",
+    )
+    return RedirectResponse("/admin/products", status_code=303)
+
+
+@router.post("/products/{product_id}/images/{image_id}/primary")
+def admin_primary_image(
+    product_id: int,
+    image_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    product = db.get(Product, product_id)
+    image = db.get(ProductImage, image_id)
+    if product and image and image.product_id == product_id:
+        set_primary_image(db, product, image)
+    return RedirectResponse("/admin/products", status_code=303)
+
+
+@router.post("/products/{product_id}/images/{image_id}/delete")
+def admin_delete_image(
+    product_id: int,
+    image_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    product = db.get(Product, product_id)
+    image = db.get(ProductImage, image_id)
+    if product and image and image.product_id == product_id:
+        delete_product_image(db, product, image)
     return RedirectResponse("/admin/products", status_code=303)
 
 

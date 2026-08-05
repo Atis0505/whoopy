@@ -104,8 +104,9 @@ Belépés: **`/login`** (ugyanaz a belépő, szerepkör dönti el a jogosultság
 
 1. **Új kampány:** Kampányok → cím, badge, kép URL, link, placement (`hero` / `strip` / `tile`).
 2. **Kupon:** Kedvezmények → kód, típus (`percent` / `fixed` / `free_shipping`), minimum kosár.
-3. **Rendelés feldolgozás:** Rendelések → státusz (`pending` → `paid` → `fulfilled`), tracking a szállítmányon.
-4. **Beszállító:** kód (pl. `HU-BUD-01`) legyen stabil — az API `supplier_code` ezzel egyezik.
+3. **Termékkép:** Termékek → fájl feltöltés a sorban ([`KEPEK.md`](KEPEK.md)).
+4. **Rendelés feldolgozás:** Rendelések → státusz (`pending` → `paid` → `fulfilled`), tracking a szállítmányon.
+5. **Beszállító:** kód (pl. `HU-BUD-01`) legyen stabil — az API `supplier_code` ezzel egyezik.
 
 ### 2.3 Dolgozó
 

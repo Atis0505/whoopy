@@ -94,6 +94,24 @@ class Product(Base):
 
     category: Mapped[Optional[Category]] = relationship(back_populates="products")
     offers: Mapped[list["Offer"]] = relationship(back_populates="product", cascade="all, delete-orphan")
+    images: Mapped[list["ProductImage"]] = relationship(
+        back_populates="product", cascade="all, delete-orphan", order_by="ProductImage.sort_order"
+    )
+
+
+class ProductImage(Base):
+    __tablename__ = "product_images"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
+    filename: Mapped[str] = mapped_column(String(255))
+    url: Mapped[str] = mapped_column(String(512))  # public path e.g. /media/products/1/abc.jpg
+    alt: Mapped[str] = mapped_column(String(255), default="")
+    sort_order: Mapped[int] = mapped_column(Integer, default=10)
+    is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    product: Mapped[Product] = relationship(back_populates="images")
 
 
 class Offer(Base):

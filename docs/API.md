@@ -129,6 +129,12 @@ curl -s -X PATCH http://127.0.0.1:8090/api/v1/orders/1/status \
 | Orders | PATCH | `/api/v1/shipments/{id}` | Tracking / státusz |
 | Marketing | GET/POST | `/api/v1/campaigns` | Kampányok |
 | Marketing | GET/POST | `/api/v1/coupons` | Kuponok |
+| Media | GET/POST | `/api/v1/products/{id}/images` | Képlista / feltöltés |
+| Media | POST | `/api/v1/products/{id}/images/{img}/primary` | Elsődleges kép |
+| Media | DELETE | `/api/v1/products/{id}/images/{img}` | Kép törlés |
+
+Részletes képfeltöltés: [`KEPEK.md`](KEPEK.md)
+
 
 ## ERP státusz
 
