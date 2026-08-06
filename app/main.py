@@ -33,9 +33,13 @@ app = FastAPI(
 )
 
 # Middleware order: last added = outermost
+from app.middleware_maintenance import MaintenanceMiddleware
+
 app.add_middleware(SecurityHeadersMiddleware)
 if settings.rate_limit_enabled:
     app.add_middleware(ApiRateLimitMiddleware)
+# Maintenance inner to Session so request.session elérhető staff bypasshoz
+app.add_middleware(MaintenanceMiddleware)
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.secret_key,

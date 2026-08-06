@@ -1,11 +1,32 @@
 {% extends "admin/base_admin.html" %}
 {% block content %}
 <h1 style="font-family:var(--font-display)">Dashboard</h1>
+
+<div class="panel" style="margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
+  <div>
+    <strong>Bolt státusz:</strong>
+    {% if store.maintenance_mode %}
+    <span style="color:#b91c1c">ZÁRVA (karbantartás)</span>
+    {% else %}
+    <span style="color:#047857">NYITVA</span>
+    {% endif %}
+    <div class="muted" style="font-size:0.85rem;margin-top:0.25rem">1 gombbal elérhetetlenné teheted a vásárlók felé (admin tovább működik).</div>
+  </div>
+  <form method="post" action="/admin/maintenance/toggle">
+    {% if store.maintenance_mode %}
+    <button class="btn" type="submit">Bolt megnyitása</button>
+    {% else %}
+    <button class="btn secondary" type="submit" style="background:#b91c1c;border-color:#b91c1c;color:#fff">Bolt zárása</button>
+    {% endif %}
+  </form>
+</div>
+
 <div class="admin-grid" style="margin:1rem 0 1.5rem">
   <div class="admin-card"><b>{{ stats.products }}</b><div class="muted">termék</div></div>
   <div class="admin-card"><b>{{ stats.suppliers }}</b><div class="muted">beszállító</div></div>
   <div class="admin-card"><b>{{ stats.offers }}</b><div class="muted">ajánlat</div></div>
   <div class="admin-card"><b>{{ stats.orders }}</b><div class="muted">rendelés</div></div>
+  <div class="admin-card"><b>{{ stats.pending }}</b><div class="muted">nyitott rendelés</div></div>
   <div class="admin-card"><b>{{ stats.categories }}</b><div class="muted">taxonomy node</div></div>
   <div class="admin-card"><b>{{ stats.coupons }}</b><div class="muted">kupon</div></div>
   <div class="admin-card"><b>{{ stats.subscribers }}</b><div class="muted">hírlevél</div></div>

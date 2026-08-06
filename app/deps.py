@@ -116,6 +116,32 @@ def store_context(request: Request, db: Session, **extra):
     except Exception:
         store = None
 
+    announcement = None
+    ticker_items = []
+    free_ship = {"enabled": False}
+    is_dev = True
+    try:
+        from app.config import settings as app_settings
+        from app.services.storefront_ops import (
+            announcement_active,
+            free_shipping_progress,
+            social_ticker_items,
+        )
+
+        if announcement_active(store):
+            announcement = {
+                "text": store.announcement_text,
+                "link": store.announcement_link or "",
+                "label": store.announcement_link_label or "Részletek",
+                "bg": store.announcement_bg or "#0f766e",
+            }
+        if store and getattr(store, "ticker_enabled", True):
+            ticker_items = social_ticker_items(db)
+        free_ship = free_shipping_progress(store, quote.items_subtotal if quote else 0)
+        is_dev = getattr(app_settings, "environment", "development") != "production"
+    except Exception:
+        pass
+
     ctx = {
         "request": request,
         "user": get_current_user(request, db),
@@ -133,6 +159,12 @@ def store_context(request: Request, db: Session, **extra):
         "app_domain": settings.app_domain,
         "chat_enabled": bool(getattr(store, "chat_enabled", True)) if store else True,
         "chat_widget_html": (getattr(store, "chat_widget_html", "") or "") if store else "",
+        "store": store,
+        "announcement": announcement,
+        "ticker_items": ticker_items,
+        "free_ship": free_ship,
+        "demo_badge": is_dev,
+        "business_hours": (getattr(store, "business_hours", "") or "") if store else "",
     }
     ctx.update(extra)
     return ctx

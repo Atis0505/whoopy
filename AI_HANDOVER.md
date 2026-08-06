@@ -2,7 +2,7 @@
 
 > **Olvasd el session elején.** Részletes rendszerkép: [`docs/AI_SYSTEM.md`](docs/AI_SYSTEM.md)  
 > Használat (embernek): [`docs/HASZNALATI_UTMUTATO.md`](docs/HASZNALATI_UTMUTATO.md)  
-> Frissítve: 2026-08 · Schema **v13** · utolsó csomag: Logisztika + Compliance
+> Frissítve: 2026-08 · Schema **v14** · utolsó csomag: Storefront ops (banner/ticker/maintenance)
 
 ---
 
@@ -49,7 +49,7 @@ Docker: `docker compose up --build` — `docs/DEPLOY.md`.
 
 ---
 
-## Hogyan haladtunk (roadmap 1–18 = kész)
+## Hogyan haladtunk (roadmap 1–19 = kész)
 
 | # | Csomag | Doc |
 |---|--------|-----|
@@ -60,10 +60,11 @@ Docker: `docker compose up --build` — `docs/DEPLOY.md`.
 | 16 | Vásárlói UX (search, pickup, billing, gift, loyalty, compare…) | `UX.md` |
 | 17 | Marketing (Meta + Árukereső, UTM, affiliate, hero A/B) | `MARKETING.md` |
 | 18 | **Logisztika + Compliance** (futár/RMA stub, warehouse, CMP, GDPR export/törlés, B2B ÁFA, Omnibus) | `LOGISTICS_COMPLIANCE.md` |
+| 19 | **Storefront ops** (announcement, social ticker, maintenance 1-gomb, kampány toggle, free-ship, responsive) | `STOREFRONT_OPS.md` |
 
-Tipikus commit minta a `main`-en: EU → checkout/Számlázz → UX → marketing → logistics/compliance (`4078ce9` környék).
+Tipikus commit minta a `main`-en: … → logistics/compliance → storefront ops.
 
-**Schema:** `app/bootstrap.py` `SCHEMA_VERSION = "13"` + `.schema_version`.  
+**Schema:** `app/bootstrap.py` `SCHEMA_VERSION = "14"` + `.schema_version`.  
 Dev SQLite: version bump → **wipe + reseed**. Prod/Postgres: **soha nem wipe**.
 
 ---
@@ -128,7 +129,8 @@ Ne csináld: supplier portal · Whoopy→ERP katalógus pull · prod schema wipe
 | `AI_HANDOVER.md` | **Ez** — session start |
 | `docs/AI_SYSTEM.md` | Teljes rendszer + roadmap |
 | `docs/HASZNALATI_UTMUTATO.md` | Magyar használat |
-| `docs/FEJLESZTESI_TERV.md` | 1–18 tábla |
+| `docs/FEJLESZTESI_TERV.md` | 1–19 tábla |
 | `docs/LOGISTICS_COMPLIANCE.md` | v13 logisztika/compliance |
+| `docs/STOREFRONT_OPS.md` | v14 banner / ticker / maintenance |
 | `docs/UX.md` / `MARKETING.md` / `EU_SHOP.md` / `SZAMLAZZ.md` | Feature csomagok |
 | `docs/PARTNEREK.md` / `API.md` / `ADMIN.md` / `PROD.md` / `DEPLOY.md` | Ops |

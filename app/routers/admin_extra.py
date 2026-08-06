@@ -80,12 +80,22 @@ def settings_save(
     domain: str = Form(""),
     support_email: str = Form(""),
     support_phone: str = Form(""),
+    business_hours: str = Form(""),
     default_currency: str = Form("HUF"),
     default_country: str = Form("HU"),
     default_lang: str = Form("hu"),
     tax_rate_percent: float = Form(27.0),
     low_stock_threshold: int = Form(5),
+    free_shipping_threshold_huf: float = Form(25000.0),
     order_prefix: str = Form("TM"),
+    announcement_enabled: str = Form(""),
+    announcement_text: str = Form(""),
+    announcement_link: str = Form(""),
+    announcement_link_label: str = Form("Részletek"),
+    announcement_bg: str = Form("#0f766e"),
+    announcement_starts_at: str = Form(""),
+    announcement_ends_at: str = Form(""),
+    ticker_enabled: str = Form(""),
     company_name: str = Form(""),
     company_address: str = Form(""),
     company_tax_id: str = Form(""),
@@ -100,22 +110,47 @@ def settings_save(
     erp_api_base: str = Form(""),
     google_feed_enabled: str = Form(""),
     maintenance_mode: str = Form(""),
+    maintenance_message: str = Form(""),
     db: Session = Depends(get_db),
 ):
     user = _require_admin(request, db)
     if isinstance(user, RedirectResponse):
         return user
+    from datetime import datetime
+
     store = get_store_settings(db)
     store.store_name = store_name.strip() or "Whoopy"
     store.domain = domain.strip() or "whoopy.hu"
     store.support_email = support_email.strip()
     store.support_phone = support_phone.strip()
+    store.business_hours = business_hours.strip()[:255]
     store.default_currency = default_currency.strip().upper()[:3]
     store.default_country = default_country.strip().upper()[:2]
     store.default_lang = default_lang.strip().lower()[:5]
     store.tax_rate_percent = tax_rate_percent
     store.low_stock_threshold = max(0, low_stock_threshold)
+    store.free_shipping_threshold_huf = max(0.0, float(free_shipping_threshold_huf or 0))
     store.order_prefix = order_prefix.strip() or "TM"
+    store.announcement_enabled = announcement_enabled == "1"
+    store.announcement_text = announcement_text.strip()[:512]
+    store.announcement_link = announcement_link.strip()[:512]
+    store.announcement_link_label = (announcement_link_label.strip() or "Részletek")[:64]
+    store.announcement_bg = (announcement_bg.strip() or "#0f766e")[:32]
+    store.ticker_enabled = ticker_enabled == "1"
+
+    def _parse_dt(raw: str):
+        raw = (raw or "").strip()
+        if not raw:
+            return None
+        for fmt in ("%Y-%m-%d %H:%M", "%Y-%m-%d"):
+            try:
+                return datetime.strptime(raw, fmt)
+            except ValueError:
+                continue
+        return None
+
+    store.announcement_starts_at = _parse_dt(announcement_starts_at)
+    store.announcement_ends_at = _parse_dt(announcement_ends_at)
     store.company_name = company_name.strip() or store.company_name
     store.company_address = company_address.strip()
     store.company_tax_id = company_tax_id.strip()
@@ -130,6 +165,8 @@ def settings_save(
     store.erp_api_base = erp_api_base.strip() or store.erp_api_base
     store.google_feed_enabled = google_feed_enabled == "1"
     store.maintenance_mode = maintenance_mode == "1"
+    if maintenance_message.strip():
+        store.maintenance_message = maintenance_message.strip()
     touch_settings(store)
     db.commit()
     return RedirectResponse("/admin/settings?saved=1", status_code=303)

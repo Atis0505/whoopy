@@ -169,6 +169,42 @@ def test_cookie_consent_v2():
     assert r.status_code in (302, 303)
 
 
+def test_announcement_and_ticker_on_home():
+    r = client.get("/")
+    assert r.status_code == 200
+    # seed announcement or ticker markup present
+    assert "announce-bar" in r.text or "social-ticker" in r.text or "Whoopy" in r.text
+
+
+def test_maintenance_blocks_store():
+    from app.database import SessionLocal
+    from app.services.store_settings import get_store_settings, touch_settings
+
+    db = SessionLocal()
+    try:
+        store = get_store_settings(db)
+        store.maintenance_mode = True
+        touch_settings(store)
+        db.commit()
+    finally:
+        db.close()
+
+    r = client.get("/", follow_redirects=False)
+    assert r.status_code == 503
+    assert "zárva" in r.text.lower() or "Whoopy" in r.text
+
+    db = SessionLocal()
+    try:
+        store = get_store_settings(db)
+        store.maintenance_mode = False
+        touch_settings(store)
+        db.commit()
+    finally:
+        db.close()
+
+    assert client.get("/").status_code == 200
+
+
 def test_b2b_vat_and_omnibus():
     from app.database import SessionLocal
     from app.models import Offer, Warehouse

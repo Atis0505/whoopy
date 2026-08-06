@@ -313,9 +313,10 @@ def seed_all(db: Session) -> None:
 
 
 def _seed_logistics_compliance(db: Session) -> None:
-    """Raktárak + Omnibus árarchívum snapshot."""
+    """Raktárak + Omnibus árarchívum snapshot + announcement seed."""
     from app.models import Warehouse
     from app.services.compliance import snapshot_active_prices
+    from app.services.store_settings import get_store_settings
 
     if db.query(Warehouse).count() == 0:
         db.add_all(
@@ -340,6 +341,17 @@ def _seed_logistics_compliance(db: Session) -> None:
                 ),
             ]
         )
+        db.commit()
+    store = get_store_settings(db)
+    if not (store.announcement_text or "").strip():
+        store.announcement_enabled = True
+        store.announcement_text = "Ingyenes szállítás 25 000 Ft felett · EU csomaglogisztika"
+        store.announcement_link = "/cart"
+        store.announcement_link_label = "Kosár"
+        store.announcement_bg = "#0f766e"
+        store.ticker_enabled = True
+        store.business_hours = "H–P 9:00–17:00"
+        store.free_shipping_threshold_huf = 25000
         db.commit()
     snapshot_active_prices(db)
 
@@ -483,6 +495,15 @@ def _seed_marketing(db: Session) -> None:
                     link_url="/c/2",
                     placement="tile",
                     sort_order=4,
+                    active=True,
+                ),
+                Campaign(
+                    title="Ingyenes szállítás 25 000 Ft felett",
+                    subtitle="Kosár progress a checkout előtt",
+                    badge="Szállítás",
+                    link_url="/cart",
+                    placement="topbar",
+                    sort_order=5,
                     active=True,
                 ),
             ]

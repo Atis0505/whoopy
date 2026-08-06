@@ -1,7 +1,7 @@
 # Whoopy rendszerleírás — AI / fejlesztői handover
 
 > Célközönség: **másik AI agent** vagy új fejlesztő, aki nulláról folytatja a Whoopy ökoszisztémát.  
-> Frissítve: 2026-08 · Schema Whoopy **v13**
+> Frissítve: 2026-08 · Schema Whoopy **v14**
 
 ---
 
@@ -58,6 +58,7 @@
 | Vásárlói UX | `app/routers/customer_ux.py`, `services/customer_ux.py` · `docs/UX.md` |
 | Marketing | `services/{marketing_feeds,attribution}.py` · `/admin/marketing` · `docs/MARKETING.md` |
 | Logisztika / Compliance | `services/{carriers,rma,compliance,vat}.py` · `routers/compliance.py` · `docs/LOGISTICS_COMPLIANCE.md` |
+| Storefront ops | `middleware_maintenance.py`, `services/storefront_ops.py` · `docs/STOREFRONT_OPS.md` |
 
 ### ERP oldal
 
@@ -141,6 +142,7 @@ ERP: külön venv, `:8010`. Whoopy `.env` ↔ ERP `.env` **ugyanaz** az `API_KEY
 16. **Vásárlói élmény csomag** ✅ (`docs/UX.md`)  
 17. **Marketing csomag** ✅ (`docs/MARKETING.md`)  
 18. **Logisztika + Compliance** ✅ (`docs/LOGISTICS_COMPLIANCE.md`)  
+19. **Storefront ops** ✅ (`docs/STOREFRONT_OPS.md`)  
 
 ### Érdemes következő iterációk (éles / külső)
 

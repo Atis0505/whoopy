@@ -7,11 +7,12 @@ from app.database import Base, engine
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = "13"
+SCHEMA_VERSION = "14"
 VERSION_FILE = BASE_DIR / ".schema_version"
 DB_PATH = BASE_DIR / "marketplace.db"
 
 # Dev wipe biztonsági háló: ha a kód új oszlopokat vár, de a SQLite még régi
+# (store_settings v14 mezők additív ALTER-rel jönnek — ne wipe-oljanak lock miatt)
 _REQUIRED_COLUMNS = {
     "store_settings": {"company_name", "invoice_footer", "chat_widget_html"},
     "orders": {"invoice_status", "tax_total", "net_total", "access_token", "billing_city", "utm_source", "is_b2b"},
@@ -19,6 +20,21 @@ _REQUIRED_COLUMNS = {
     "campaigns": {"ab_group", "impressions"},
     "return_requests": {"label_code", "refund_status"},
 }
+
+# SQLite ADD COLUMN — storefront ops v14
+_STORE_SETTINGS_ALTERS = [
+    ("maintenance_message", "TEXT DEFAULT 'A bolt átmenetileg zárva van. Hamarosan visszatérünk.'"),
+    ("announcement_enabled", "BOOLEAN DEFAULT 0"),
+    ("announcement_text", "VARCHAR(512) DEFAULT ''"),
+    ("announcement_link", "VARCHAR(512) DEFAULT ''"),
+    ("announcement_link_label", "VARCHAR(64) DEFAULT 'Részletek'"),
+    ("announcement_bg", "VARCHAR(32) DEFAULT '#0f766e'"),
+    ("announcement_starts_at", "DATETIME"),
+    ("announcement_ends_at", "DATETIME"),
+    ("ticker_enabled", "BOOLEAN DEFAULT 1"),
+    ("business_hours", "VARCHAR(255) DEFAULT 'H–P 9:00–17:00'"),
+    ("free_shipping_threshold_huf", "FLOAT DEFAULT 25000"),
+]
 
 
 def _sqlite_missing_required_columns() -> bool:
@@ -41,15 +57,38 @@ def _sqlite_missing_required_columns() -> bool:
     return False
 
 
+def _sqlite_apply_additive_alters() -> None:
+    if not DB_PATH.exists():
+        return
+    try:
+        con = sqlite3.connect(DB_PATH)
+        try:
+            cols = {r[1] for r in con.execute("pragma table_info(store_settings)").fetchall()}
+            if not cols:
+                return
+            for name, ddl in _STORE_SETTINGS_ALTERS:
+                if name not in cols:
+                    con.execute(f"ALTER TABLE store_settings ADD COLUMN {name} {ddl}")
+                    logger.info("SQLite ALTER store_settings ADD %s", name)
+            con.commit()
+        finally:
+            con.close()
+    except Exception:
+        logger.exception("SQLite additive ALTER failed")
+
+
 def ensure_fresh_schema() -> None:
     """
-    Dev SQLite: schema version bump → recreate DB.
+    Dev SQLite: schema version bump → recreate DB (ha lehetséges).
+    Ha a DB zárolt: additív ALTER a v14 store_settings mezőkre.
     Production / Postgres: never wipe — only create_all (additive).
     """
     is_sqlite = settings.database_url.startswith("sqlite")
     allow_wipe = is_sqlite and not settings.is_production
 
     current = VERSION_FILE.read_text(encoding="utf-8").strip() if VERSION_FILE.exists() else ""
+    # Windows echo sometimes writes "13\\r" or "13>"
+    current = current.replace(">", "").strip()
     stale_shape = allow_wipe and _sqlite_missing_required_columns()
 
     if allow_wipe and DB_PATH.exists() and (current != SCHEMA_VERSION or stale_shape):
@@ -59,10 +98,15 @@ def ensure_fresh_schema() -> None:
             SCHEMA_VERSION,
             stale_shape,
         )
-        engine.dispose()
-        DB_PATH.unlink(missing_ok=True)
+        try:
+            engine.dispose()
+            DB_PATH.unlink(missing_ok=True)
+        except PermissionError:
+            logger.warning("SQLite wipe blocked (file locked) — falling back to additive ALTER")
 
     Base.metadata.create_all(bind=engine)
+    if is_sqlite:
+        _sqlite_apply_additive_alters()
 
     if allow_wipe or not VERSION_FILE.exists():
         VERSION_FILE.write_text(SCHEMA_VERSION, encoding="utf-8")

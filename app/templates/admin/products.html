@@ -37,7 +37,11 @@
           <td class="muted">{{ p.category.full_path if p.category else '—' }}</td>
           <td>
             {% for o in p.offers %}
-              <div>{{ o.supplier.name if o.supplier else o.supplier_id }}: {{ o.price|huf }} ({{ o.stock }} db)</div>
+              {% set stock_cls = 'stock-out' if o.stock < 1 else ('stock-low' if o.stock <= low_stock else 'stock-ok') %}
+              <div>
+                {{ o.supplier.name if o.supplier else o.supplier_id }}: {{ o.price|huf }}
+                <span class="stock-pill {{ stock_cls }}">{{ o.stock }} db</span>
+              </div>
             {% endfor %}
           </td>
         </tr>

@@ -157,6 +157,20 @@
 
     <hr style="border:0;border-top:1px solid var(--line);margin:1rem 0" />
     <div>{{ t('subtotal') }}: {{ money(quote.items_subtotal) }}</div>
+    {% if free_ship and free_ship.enabled %}
+    <div class="free-ship" style="margin:0.75rem 0">
+      {% if free_ship.unlocked %}
+      <div class="flash-ok" style="margin:0;padding:0.55rem 0.7rem;font-size:0.9rem">Ingyenes szállítás elérve!</div>
+      {% else %}
+      <div class="muted" style="font-size:0.85rem;margin-bottom:0.35rem">
+        Még {{ money(free_ship.remaining) }} az ingyenes szállításhoz ({{ money(free_ship.threshold) }})
+      </div>
+      <div class="free-ship-bar" role="progressbar" aria-valuenow="{{ free_ship.percent|int }}" aria-valuemin="0" aria-valuemax="100">
+        <span style="width:{{ free_ship.percent }}%"></span>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
     {% if quote.discount_total %}<div>{{ t('discount') }}: −{{ money(quote.discount_total) }}</div>{% endif %}
     {% if quote.gift_discount %}<div>Ajándékutalvány: −{{ money(quote.gift_discount) }}</div>{% endif %}
     {% if quote.loyalty_discount %}<div>Hűségpont: −{{ money(quote.loyalty_discount) }} ({{ quote.loyalty_points_used }} pont)</div>{% endif %}

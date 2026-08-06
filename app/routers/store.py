@@ -32,6 +32,13 @@ templates = Jinja2Templates(directory="app/templates")
 def google_merchant_feed(db: Session = Depends(get_db)):
     from fastapi.responses import Response
 
+    from app.services.storefront_ops import feeds_should_serve
+
+    if not feeds_should_serve(db):
+        return Response(
+            content='<?xml version="1.0"?><rss version="2.0"><channel><title>disabled</title></channel></rss>',
+            media_type="application/xml; charset=utf-8",
+        )
     xml = build_google_merchant_xml(db)
     return Response(content=xml, media_type="application/xml; charset=utf-8")
 
@@ -41,7 +48,13 @@ def meta_catalog_feed(db: Session = Depends(get_db)):
     from fastapi.responses import Response
 
     from app.services.marketing_feeds import build_meta_catalog_xml
+    from app.services.storefront_ops import feeds_should_serve
 
+    if not feeds_should_serve(db):
+        return Response(
+            content='<?xml version="1.0"?><rss version="2.0"><channel><title>disabled</title></channel></rss>',
+            media_type="application/xml; charset=utf-8",
+        )
     return Response(content=build_meta_catalog_xml(db), media_type="application/xml; charset=utf-8")
 
 
@@ -50,7 +63,13 @@ def arukereso_feed(db: Session = Depends(get_db)):
     from fastapi.responses import Response
 
     from app.services.marketing_feeds import build_arukereso_xml
+    from app.services.storefront_ops import feeds_should_serve
 
+    if not feeds_should_serve(db):
+        return Response(
+            content='<?xml version="1.0"?><products></products>',
+            media_type="application/xml; charset=utf-8",
+        )
     return Response(content=build_arukereso_xml(db), media_type="application/xml; charset=utf-8")
 
 

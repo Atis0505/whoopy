@@ -1,7 +1,7 @@
 {% extends "admin/base_admin.html" %}
 {% block content %}
 <h1 style="font-family:var(--display)">Kampányok</h1>
-<p class="muted">Hero / sáv / csempe megjelenés a Whoopy főoldalon.</p>
+<p class="muted">Hero / sáv / csempe a főoldalon · <code>topbar</code> a futó hirdetőszalagban.</p>
 <div class="layout-2">
   <div class="panel">
     <table class="table">
@@ -13,7 +13,13 @@
           <td>{{ c.placement }}</td>
           <td>{{ c.ab_group or '—' }}</td>
           <td>{{ c.impressions }} / {{ c.clicks }}</td>
-          <td>{{ 'igen' if c.active else 'nem' }}</td>
+          <td>
+            <form method="post" action="/admin/campaigns/{{ c.id }}/toggle" style="display:inline">
+              <button class="btn ghost" type="submit" style="padding:0.25rem 0.6rem;font-size:0.8rem">
+                {% if c.active %}Bekapcsolva ✓{% else %}Kikapcsolva{% endif %}
+              </button>
+            </form>
+          </td>
         </tr>
       {% endfor %}
       </tbody>
@@ -32,6 +38,7 @@
           <option value="hero">hero (fő banner)</option>
           <option value="strip">strip (oldalsáv kártya)</option>
           <option value="tile">tile (alsó csempesáv)</option>
+          <option value="topbar">topbar (futó hirdetőszalag)</option>
         </select>
       </div>
       <div class="field"><label>A/B csoport (hero)</label>

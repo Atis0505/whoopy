@@ -17,9 +17,42 @@
 </head>
 <body>
   <a class="skip-link" href="#main">Ugrás a tartalomra</a>
+  {% if demo_badge %}
+  <div class="demo-badge" title="Fejlesztői / demó környezet">DEMO</div>
+  {% endif %}
+  {% if announcement %}
+  <div class="announce-bar" style="background:{{ announcement.bg }}" role="region" aria-label="Hirdetés">
+    <div class="wrap announce-inner">
+      <span>{{ announcement.text }}</span>
+      {% if announcement.link %}
+      <a href="{{ announcement.link }}">{{ announcement.label }}</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% if ticker_items %}
+  <div class="social-ticker" aria-label="Élő ajánlatok és vásárlások">
+    <div class="ticker-track">
+      {% for it in ticker_items %}
+        {% if it.href %}
+        <a class="ticker-item ticker-{{ it.kind }}" href="{{ it.href }}">{{ it.text }}</a>
+        {% else %}
+        <span class="ticker-item ticker-{{ it.kind }}">{{ it.text }}</span>
+        {% endif %}
+      {% endfor %}
+      {% for it in ticker_items %}
+        {% if it.href %}
+        <a class="ticker-item ticker-{{ it.kind }}" href="{{ it.href }}" aria-hidden="true">{{ it.text }}</a>
+        {% else %}
+        <span class="ticker-item ticker-{{ it.kind }}" aria-hidden="true">{{ it.text }}</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
   <div class="topbar">
     <div class="wrap topbar-inner">
-      <div>whoopy.hu · EU szállítás · Google Taxonomy katalógus</div>
+      <div class="topbar-left">whoopy.hu · EU szállítás{% if business_hours %} · {{ business_hours }}{% endif %}</div>
       <form method="post" action="/prefs" class="prefs-form">
         <input type="hidden" name="next" value="{{ request.url.path }}" />
         <label>{{ t('language') }}
@@ -103,6 +136,7 @@
         <strong>Whoopy.hu</strong>
         <p>Mindent egy helyen – beszállítói marketplace, Google Taxonomy, EU csomaglogisztika.</p>
         <p class="muted">
+          {% if business_hours %}Ügyfélszolgálat: {{ business_hours }}<br/>{% endif %}
           <a href="/feeds/google-merchant.xml">Google Merchant</a> ·
           <a href="/feeds/meta-catalog.xml">Meta Shop</a> ·
           <a href="/feeds/arukereso.xml">Árukereső</a> ·

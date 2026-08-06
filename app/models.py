@@ -231,7 +231,7 @@ class Campaign(Base):
     badge: Mapped[str] = mapped_column(String(64), default="")  # pl. Kampány, Heti ajánlat
     image_url: Mapped[str] = mapped_column(String(512), default="")
     link_url: Mapped[str] = mapped_column(String(512), default="/")
-    # hero | strip | tile
+    # hero | strip | tile | topbar (site-wide hirdetőszalag kampány)
     placement: Mapped[str] = mapped_column(String(16), default="strip")
     # "" | A | B — hero A/B teszt
     ab_group: Mapped[str] = mapped_column(String(8), default="")
@@ -263,6 +263,21 @@ class StoreSettings(Base):
     erp_api_base: Mapped[str] = mapped_column(String(255), default="http://127.0.0.1:8010/api/v1")
     google_feed_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     maintenance_mode: Mapped[bool] = mapped_column(Boolean, default=False)
+    maintenance_message: Mapped[str] = mapped_column(
+        Text, default="A bolt átmenetileg zárva van. Hamarosan visszatérünk."
+    )
+    # Site-wide announcement / hirdetőszalag
+    announcement_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    announcement_text: Mapped[str] = mapped_column(String(512), default="")
+    announcement_link: Mapped[str] = mapped_column(String(512), default="")
+    announcement_link_label: Mapped[str] = mapped_column(String(64), default="Részletek")
+    announcement_bg: Mapped[str] = mapped_column(String(32), default="#0f766e")
+    announcement_starts_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    announcement_ends_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Social proof ticker + ops
+    ticker_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    business_hours: Mapped[str] = mapped_column(String(255), default="H–P 9:00–17:00")
+    free_shipping_threshold_huf: Mapped[float] = mapped_column(Float, default=25000.0)
     company_name: Mapped[str] = mapped_column(String(255), default="Whoopy Kft.")
     company_address: Mapped[str] = mapped_column(String(255), default="")
     company_tax_id: Mapped[str] = mapped_column(String(64), default="")  # adószám

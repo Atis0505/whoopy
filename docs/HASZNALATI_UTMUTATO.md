@@ -17,7 +17,7 @@ cd "C:\Users\korom\Személyes\taxonomy-marketplace"
 python run.py
 ```
 
-Kapcsolódó leírások: [`EU_SHOP.md`](EU_SHOP.md) · [`UX.md`](UX.md) · [`MARKETING.md`](MARKETING.md) · [`LOGISTICS_COMPLIANCE.md`](LOGISTICS_COMPLIANCE.md) · [`SZAMLAZZ.md`](SZAMLAZZ.md) · [`ADMIN.md`](ADMIN.md)
+További vásárlói / ops funkciók: felső hirdetőszalag, social ticker, bolt zárás — lásd [`STOREFRONT_OPS.md`](STOREFRONT_OPS.md).
 
 ---
 

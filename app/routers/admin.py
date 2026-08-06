@@ -93,11 +93,16 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     user = _require_admin_html(request, db)
     if isinstance(user, RedirectResponse):
         return user
+    from app.services.store_settings import get_store_settings
+    from app.services.storefront_ops import pending_order_count
+
+    store = get_store_settings(db)
     stats = {
         "products": db.query(Product).count(),
         "suppliers": db.query(Supplier).count(),
         "offers": db.query(Offer).count(),
         "orders": db.query(Order).count(),
+        "pending": pending_order_count(db),
         "categories": db.query(Category).count(),
         "coupons": db.query(Coupon).count(),
         "subscribers": db.query(NewsletterSubscriber).filter(NewsletterSubscriber.active.is_(True)).count(),
@@ -105,8 +110,29 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     recent = db.query(Order).order_by(Order.created_at.desc()).limit(8).all()
     return templates.TemplateResponse(
         "admin/dashboard.html",
-        {"request": request, "user": user, "stats": stats, "recent": recent, "app_name": settings.app_name},
+        {
+            "request": request,
+            "user": user,
+            "stats": stats,
+            "recent": recent,
+            "store": store,
+            "app_name": settings.app_name,
+        },
     )
+
+
+@router.post("/maintenance/toggle")
+def maintenance_toggle(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.store_settings import get_store_settings, touch_settings
+
+    store = get_store_settings(db)
+    store.maintenance_mode = not bool(store.maintenance_mode)
+    touch_settings(store)
+    db.commit()
+    return RedirectResponse("/admin", status_code=303)
 
 
 @router.get("/suppliers", response_class=HTMLResponse)
@@ -156,6 +182,9 @@ def products_list(request: Request, db: Session = Depends(get_db)):
     )
     categories = db.query(Category).order_by(Category.full_path).all()
     suppliers = db.query(Supplier).filter(Supplier.active.is_(True)).order_by(Supplier.name).all()
+    from app.services.store_settings import get_store_settings
+
+    store = get_store_settings(db)
     return templates.TemplateResponse(
         "admin/products.html",
         {
@@ -164,6 +193,7 @@ def products_list(request: Request, db: Session = Depends(get_db)):
             "products": products,
             "categories": categories,
             "suppliers": suppliers,
+            "low_stock": store.low_stock_threshold,
             "app_name": settings.app_name,
         },
     )
@@ -702,7 +732,7 @@ def campaigns_create(
             subtitle=subtitle.strip(),
             badge=badge.strip(),
             link_url=link_url.strip() or "/",
-            placement=placement if placement in ("hero", "strip", "tile") else "strip",
+            placement=placement if placement in ("hero", "strip", "tile", "topbar") else "strip",
             ab_group=ab,
             sort_order=sort_order,
             image_url=image_url.strip(),
@@ -710,6 +740,18 @@ def campaigns_create(
         )
     )
     db.commit()
+    return RedirectResponse("/admin/campaigns", status_code=303)
+
+
+@router.post("/campaigns/{campaign_id}/toggle")
+def campaigns_toggle(campaign_id: int, request: Request, db: Session = Depends(get_db)):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    c = db.get(Campaign, campaign_id)
+    if c:
+        c.active = not bool(c.active)
+        db.commit()
     return RedirectResponse("/admin/campaigns", status_code=303)
 
 
