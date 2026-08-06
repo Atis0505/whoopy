@@ -1,7 +1,7 @@
 # Whoopy.hu – Használati útmutató (magyar)
 
 Ez a dokumentum a **bolt (vásárlói UI)**, az **admin / dolgozó felület** és a **Management API** használatát írja le.  
-Schema: **v13** · GitHub: https://github.com/Atis0505/whoopy
+Schema: **v16** · GitHub: https://github.com/Atis0505/whoopy
 
 | Rendszer | URL |
 |----------|-----|
@@ -17,7 +17,9 @@ cd "C:\Users\korom\Személyes\taxonomy-marketplace"
 python run.py
 ```
 
-További vásárlói / ops funkciók: felső hirdetőszalag, social ticker, bolt zárás — lásd [`STOREFRONT_OPS.md`](STOREFRONT_OPS.md).
+További vásárlói / ops funkciók: felső hirdetőszalag, social ticker, bolt zárás — lásd [`STOREFRONT_OPS.md`](STOREFRONT_OPS.md).  
+Ártörténet / ismétlődő rendelés: [`OMNIBUS_SUBSCRIPTIONS.md`](OMNIBUS_SUBSCRIPTIONS.md).  
+Nagy katalógus (lapozás): [`CATALOG_SCALE.md`](CATALOG_SCALE.md).
 
 ---
 
@@ -35,19 +37,18 @@ További vásárlói / ops funkciók: felső hirdetőszalag, social ticker, bolt
 
 | Oldal | Mit csinál |
 |-------|------------|
-| `/` + keresőmező | Élő javaslatok (`/api/suggest`) |
-| `/search?q=` | Találati lista |
+| `/` + keresőmező | Élő javaslatok (`/api/suggest`); terméklista **lapozva** (48/oldal), márka/ár/készlet szűrő |
+| `/search?q=` | Találati lista (lapozva) |
 | `/taxonomy` | Teljes kategóriafa |
-| `/c/{id}` | Kategória terméklista (+ szűrők ahol van) |
-| `/account` | Fiók: rendelések, ismétlődő újrarendelés, GDPR export/törlés, hírlevél |
-| `/p/{slug}` | Termék: ajánlatok, variáns, Omnibus 30 nap legalacsonyabb ár, vélemények |
-| `/admin/price-history` | Ártörténet riporter (Omnibus) |
-| `/admin/subscriptions` | Ismétlődő rendelések + due runner |
+| `/c/{id}` | Kategória terméklista (lapozva) |
+| `/account` | Fiók: rendelések, **ismétlődő újrarendelés**, GDPR export/törlés, hírlevél |
+| `/p/{slug}` | Termék: ajánlatok, variáns, **Omnibus 30 nap** legalacsonyabb ár, vélemények |
 | `/compare` | Összehasonlítás |
 | `/recent` | Nemrég nézett |
 | `/wishlist` | Kívánságlista |
 
-A termékoldalon válaszd az **ajánlatot** (beszállító / variáns), majd kosár.
+A termékoldalon válaszd az **ajánlatot** (beszállító / variáns), majd kosár.  
+Ismétlés: kosárból vagy a fiókban egy korábbi rendelésnél „Ismétlés” (7–90 nap).
 
 További oldalak: `/contact`, `/faq`, `/track`, `/returns`, jogi CMS (`/pages/…`).
 
@@ -100,8 +101,11 @@ Belépés: **`/login`**.
 | Menü | Cél |
 |------|-----|
 | **Rendelések** | Státusz, futár **címke**, tracking sync, partial fulfill, Számlázz dry-run |
+| **Ismétlődő rendelések** | Due runner / manuális futtatás (`/admin/subscriptions`) |
 | **Visszaküldések** | RMA címke + refund |
 | **Raktárak** | Multi-warehouse (`BUD-01` default) |
+| **Ártörténet** | Omnibus PriceHistory riporter (`/admin/price-history`) |
+| **Készlet** | Stock + ár (árváltozás naplózva) |
 | **Marketing** | Feed URL-ek, UTM, affiliate, A/B |
 | **Partnerek / Staging / Feed / Beszerzés…** | Belső ops — [`PARTNEREK.md`](PARTNEREK.md) |
 | **Integrációk / Webhook-ek** | ERP, fizetés állapot |

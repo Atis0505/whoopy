@@ -26,7 +26,14 @@ A bővítések **ebben a sorrendben** készülnek. Az 1. lépés (ERP kliens) el
 | 20 | **Omnibus + ismétlődő rendelés** | kész | PriceHistory auto-log/riporter/guard, Subscription runner + fiók/admin UI (`docs/OMNIBUS_SUBSCRIPTIONS.md`) |
 | 21 | **Katalógus skálázás** | kész | Pagination, indexek, sitemap chunk (`docs/CATALOG_SCALE.md`) |
 
-**A tervezett bővítési sor (1–21) kész.**  
-Következő lépések inkább **élesítés**: SimplePay merchant, domain/TLS, Számlázz kulcs, éles futár/csomagpont API — lásd `AI_HANDOVER.md` „Mi van még vissza”.
+**A tervezett bővítési sor (1–21) kész.**
+
+### Mivel érdemes folytatni (prioritás)
+
+**Élesítés (külső):** domain/TLS → SimplePay merchant → Számlázz kulcs → futár API → VIES.  
+**Opcionális kód (kulcs nélkül):** abandoned-cart e-mail erősítés · ismétlés+kártya · feed chunk 40k+ SKU-ra · Postgres go-live checklist.  
+
+Részletes tábla: [`AI_HANDOVER.md`](../AI_HANDOVER.md) „Mi van még vissza”.  
+**Ne:** supplier portal, Whoopy→ERP katalógus pull, prod wipe.
 
 Rendszerleírás AI-nak: [`AI_SYSTEM.md`](AI_SYSTEM.md) · Katalógus scale: [`CATALOG_SCALE.md`](CATALOG_SCALE.md) · Omnibus/ismétlés: [`OMNIBUS_SUBSCRIPTIONS.md`](OMNIBUS_SUBSCRIPTIONS.md) · Logisztika/Compliance: [`LOGISTICS_COMPLIANCE.md`](LOGISTICS_COMPLIANCE.md) · Marketing: [`MARKETING.md`](MARKETING.md) · UX: [`UX.md`](UX.md) · EU shop: [`EU_SHOP.md`](EU_SHOP.md) · Számlázz: [`SZAMLAZZ.md`](SZAMLAZZ.md) · Használat: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · API: [`API.md`](API.md) · Fizetés: [`FIZETES.md`](FIZETES.md) · Képek: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md) · Admin: [`ADMIN.md`](ADMIN.md) · Merchant: [`MERCHANT.md`](MERCHANT.md) · Prod: [`PROD.md`](PROD.md) · Deploy: [`DEPLOY.md`](DEPLOY.md) · Partnerek: [`PARTNEREK.md`](PARTNEREK.md) · Storefront: [`STOREFRONT_OPS.md`](STOREFRONT_OPS.md)

@@ -38,7 +38,7 @@
 
 **Stack (Whoopy):** FastAPI + Jinja2 + SQLAlchemy + SQLite (dev) / Postgres (prod).  
 **Auth bolt:** session cookie. **API:** `X-API-Key`.  
-**Schema bump:** `.schema_version` + `app/bootstrap.py` — **dev SQLite wipe** version change-nél; **prod/Postgres soha nem wipe**.
+**Schema bump:** `.schema_version` + `app/bootstrap.py` — hiányzó kötelező oszlop → wipe (dev SQLite); version bump → `create_all` + additive ALTER/INDEX; **prod/Postgres soha nem wipe**.
 
 ### Fő modulok (Whoopy)
 
@@ -126,7 +126,7 @@ ERP: külön venv, `:8010`. Whoopy `.env` ↔ ERP `.env` **ugyanaz** az `API_KEY
 
 ---
 
-## 6. Kész roadmap (1–8) + további lépések állapota
+## 6. Kész roadmap (1–21) + folytatás
 
 1. ERP → Whoopy kliens ✅  
 2. Fizetés ✅ (+ SimplePay IPN signature, sandbox flag)  
@@ -150,15 +150,21 @@ ERP: külön venv, `:8010`. Whoopy `.env` ↔ ERP `.env` **ugyanaz** az `API_KEY
 20. **Omnibus + ismétlődő rendelés** ✅ (`docs/OMNIBUS_SUBSCRIPTIONS.md`)  
 21. **Katalógus skálázás** ✅ (`docs/CATALOG_SCALE.md`)  
 
-### Érdemes következő iterációk (éles / külső)
+### Érdemes következő iterációk
 
-1. SimplePay éles merchant + nyilvános IPN URL (üzleti / DNS)  
-2. Domain DNS + TLS (Caddy/Cloudflare) — `docs/DEPLOY.md`  
+**A — Élesítés (külső függőség):**  
+1. Domain DNS + TLS — `docs/DEPLOY.md`  
+2. SimplePay éles merchant + nyilvános IPN  
 3. Számlázz Agent kulcs + éles futár / csomagpont API  
-4. VIES élő ÁFA-szám validáció (most formátum-stub)  
-5. Ismétlődő rendelés: tárolt kártya / éles payment (most COD stub)
+4. VIES élő ÁFA-szám (most formátum-stub)  
 
-**Feature backlog a tervezett 1–21 soron túl:** nincs kötelező következő csomag; a fentiek integráció/élesítés.
+**B — Opcionális kód (kulcs nélkül is mehet):**  
+1. Abandoned-cart: guest e-mail a kosárban / admin digest  
+2. Ismétlődő rendelés tárolt kártyával (most COD stub)  
+3. Merchant/Meta feed chunkelés 40–80k SKU-ra (`docs/CATALOG_SCALE.md` HTML már paginált)  
+4. Postgres go-live checklist (`docs/PROD.md`)  
+
+**Feature backlog:** a tervezett **1–21** sor kész; fenti A/B a folytatás. Részlet: gyökér `AI_HANDOVER.md`.
 
 ### Kerüld el
 

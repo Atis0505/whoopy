@@ -2,7 +2,7 @@
 
 > **Olvasd el session elején.** Részletes rendszerkép: [`docs/AI_SYSTEM.md`](docs/AI_SYSTEM.md)  
 > Használat (embernek): [`docs/HASZNALATI_UTMUTATO.md`](docs/HASZNALATI_UTMUTATO.md)  
-> Frissítve: 2026-08 · Schema **v16** · utolsó csomag: Katalógus skálázás (pagination / index / sitemap)
+> Frissítve: 2026-08 · Schema **v16** · roadmap **1–21 kész** · folytatás: élesítés + opcionális kód (`AI_HANDOVER` „Mi van még vissza”)
 
 ---
 
@@ -76,33 +76,51 @@ Dev SQLite: hiányzó kötelező oszlop → wipe; version bump → `create_all` 
 | Terület | Hol |
 |---------|-----|
 | Bolt | `app/routers/store.py`, `templates/store/` |
-| EU extras | `routers/eu_shop.py` |
+| Katalógus lista / lapozó | `services/catalog.py` · `templates/partials/pager.html` |
+| EU extras | `routers/eu_shop.py` (sitemap chunk is) |
 | UX | `routers/customer_ux.py`, `services/customer_ux.py` |
-| Compliance | `routers/compliance.py`, `services/compliance.py`, `services/vat.py` |
+| Compliance / Omnibus | `routers/compliance.py`, `services/compliance.py`, `services/vat.py` |
 | Ismétlődő rendelés | `routers/subscriptions.py`, `services/subscriptions.py` |
 | Futár / RMA | `services/carriers.py`, `services/rma.py` |
 | Marketing | `services/marketing_feeds.py`, `services/attribution.py` |
 | Számlázz | `services/szamlazz.py` → `data/szamlazz_outbox/` |
-| Admin | `routers/admin*.py` · ártörténet `/admin/price-history` · ismétlések `/admin/subscriptions` |
-| Smoke | `tests/test_smoke.py` |
+| Admin | `routers/admin*.py` · `/admin/price-history` · `/admin/subscriptions` |
+| Smoke | `tests/test_smoke.py` (~21 teszt) |
 
 Outbox stubok (gitignore): `data/email_outbox/`, `szamlazz_outbox/`, `carrier_outbox/`, `rma_outbox/`.
 
 ---
 
-## Mi van még vissza (opcionális / élesítés)
+## Mi van még vissza — mivel érdemes folytatni
 
-A **tervezett feature sor kész**. Ami üzleti / külső függőség:
+A **1–21 feature sor kész.** Nincs kötelező következő kód-csomag. Prioritás:
 
-1. **SimplePay éles** merchant + publikus IPN URL (DNS/TLS)
-2. **Domain** whoopy.hu + TLS (`docs/DEPLOY.md`)
-3. **Számlázz Agent kulcs** — stub → éles XML API
-4. **Éles futár / csomagpont API** (GLS, Foxpost, Packeta) — most outbox stub
-5. **VIES** élő adószám-ellenőrzés (most csak formátum)
-6. Theme editor / teljes Shopify A/B — **szándékosan nincs**
-7. Abandoned-cart mail: kosárnak gyakran nincs vevő e-mail → admin értesítés stub
+### A) Élesítés (külső függőség — üzleti kulcs / DNS kell)
 
-Ne csináld: supplier portal · Whoopy→ERP katalógus pull · prod schema wipe · Jira/Confluence írás jóváhagyás nélkül.
+| # | Téma | Állapot most | Doc |
+|---|------|--------------|-----|
+| 1 | **Domain + TLS** (whoopy.hu) | config kész, DNS kell | `DEPLOY.md`, `PROD.md` |
+| 2 | **SimplePay éles** merchant + publikus IPN | sandbox OK | `FIZETES.md` |
+| 3 | **Számlázz Agent kulcs** | dry-run / outbox stub | `SZAMLAZZ.md` |
+| 4 | **Éles futár / csomagpont** (GLS, Foxpost, Packeta) | outbox stub | `LOGISTICS_COMPLIANCE.md` |
+| 5 | **VIES** élő adószám | csak formátum | `services/vat.py` |
+
+### B) Opcionális kód (ha még feature kell kulcs nélkül)
+
+| # | Téma | Miért |
+|---|------|--------|
+| 1 | **Abandoned-cart** értesítés erősítés | kosárnak gyakran nincs e-mail → guest e-mail a kosárban / admin digest |
+| 2 | **Ismétlődő rendelés + kártya** | most COD/`pending` stub; éles payment token kell |
+| 3 | **Feed chunk / stream** (Google/Meta) | 40–80k SKU-nál XML egyben nehéz; pagination már a HTML listákon megvan |
+| 4 | **Postgres éles** + connection pool | SQLite csak demó/dev |
+| 5 | **VIES HTTP kliens** (flag mögött) | formátum után élő EU check, timeout/fallback-kal |
+
+### C) Szándékosan NEM
+
+- Theme editor / teljes Shopify A/B UI  
+- Supplier portal / partner self-listing  
+- Whoopy → ERP katalógus **pull**  
+- Prod schema wipe  
 
 ---
 
