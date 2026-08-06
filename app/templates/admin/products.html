@@ -1,6 +1,11 @@
 {% extends "admin/base_admin.html" %}
 {% block content %}
 <h1 style="font-family:var(--font-display)">Termékek & ajánlatok</h1>
+<form method="get" action="/admin/products" style="display:flex;gap:0.5rem;margin-bottom:1rem;max-width:28rem">
+  <input name="q" value="{{ q or '' }}" placeholder="Keresés cím / slug / márka" />
+  <button class="btn secondary" type="submit">Keres</button>
+</form>
+{% if pager %}<p class="muted">{{ pager.total }} termék · oldal {{ pager.page }}/{{ pager.pages }}</p>{% endif %}
 <div class="layout-2">
   <div class="panel">
     <table class="table">
@@ -48,6 +53,9 @@
       {% endfor %}
       </tbody>
     </table>
+    {% if pager and pager.pages > 1 %}
+    {% include "partials/pager.html" %}
+    {% endif %}
   </div>
   <div class="panel">
     <h3>Új termék + első ajánlat</h3>

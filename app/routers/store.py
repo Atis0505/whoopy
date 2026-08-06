@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import func, or_
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
@@ -148,43 +148,37 @@ def home(
     sort: str = "newest",
     min_price: float | None = None,
     max_price: float | None = None,
+    page: int = 1,
 ):
+    from app.services.catalog import list_brands, list_catalog, pager_query
     from app.services.merchandising import active_campaigns, bestsellers, hero_for_session
 
-    query = (
-        db.query(Product)
-        .options(joinedload(Product.offers).joinedload(Offer.supplier), joinedload(Product.category))
-        .filter(Product.active.is_(True))
+    result = list_catalog(
+        db,
+        page=page,
+        q=q,
+        category_id=category,
+        brand=brand,
+        in_stock=in_stock == "1",
+        sort=sort or "newest",
+        min_price=min_price,
+        max_price=max_price,
     )
-    if q:
-        like = f"%{q}%"
-        query = query.filter(or_(Product.title.ilike(like), Product.brand.ilike(like), Product.description.ilike(like)))
-    if category:
-        query = query.filter(Product.category_id == category)
-    if brand:
-        query = query.filter(Product.brand.ilike(brand.strip()))
-    if sort == "bestseller":
-        query = query.order_by(Product.sold_count.desc())
-    elif sort == "title":
-        query = query.order_by(Product.title.asc())
-    else:
-        query = query.order_by(Product.created_at.desc())
-    products = query.all()
+    products = result.items
     _enrich_products(db, products)
-    if in_stock == "1":
-        products = [p for p in products if (p.best_price is not None)]
-    if min_price is not None:
-        products = [p for p in products if p.best_price is not None and p.best_price >= min_price]
-    if max_price is not None:
-        products = [p for p in products if p.best_price is not None and p.best_price <= max_price]
-    if sort == "price_asc":
-        products = sorted(products, key=lambda p: p.best_price if p.best_price is not None else 1e18)
-    elif sort == "price_desc":
-        products = sorted(products, key=lambda p: p.best_price if p.best_price is not None else -1, reverse=True)
-    brands = sorted({p.brand for p in db.query(Product).filter(Product.active.is_(True), Product.brand != "").all() if p.brand})
+    brands = list_brands(db)
     roots = db.query(Category).filter(Category.parent_id.is_(None)).order_by(Category.name).all()
     best = bestsellers(db, limit=8)
     _enrich_products(db, best)
+    filter_params = {
+        "q": q,
+        "category": category or "",
+        "brand": brand,
+        "in_stock": in_stock,
+        "sort": sort,
+        "min_price": min_price if min_price is not None else "",
+        "max_price": max_price if max_price is not None else "",
+    }
     return templates.TemplateResponse(
         "store/home.html",
         store_context(
@@ -203,27 +197,36 @@ def home(
             hero_campaigns=hero_for_session(db, request.session),
             strip_campaigns=active_campaigns(db, "strip"),
             tile_campaigns=active_campaigns(db, "tile"),
+            pager=result,
+            pager_base="/",
+            pager_qs=lambda p: pager_query(filter_params, p),
         ),
     )
 
 
 @router.get("/c/{google_id}", response_class=HTMLResponse)
-def category_page(google_id: int, request: Request, db: Session = Depends(get_db)):
+def category_page(google_id: int, request: Request, page: int = 1, db: Session = Depends(get_db)):
+    from app.services.catalog import list_catalog, pager_query
+
     cat = db.query(Category).filter(Category.google_id == google_id).first()
     if not cat:
         return RedirectResponse("/", status_code=302)
-    products = (
-        db.query(Product)
-        .join(Category, Product.category_id == Category.id)
-        .options(joinedload(Product.offers), joinedload(Product.category))
-        .filter(Product.active.is_(True), Category.full_path.startswith(cat.full_path))
-        .all()
-    )
+    result = list_catalog(db, page=page, category_path_prefix=cat.full_path, sort="newest")
+    products = result.items
     _enrich_products(db, products)
     children = db.query(Category).filter(Category.parent_id == cat.id).order_by(Category.name).all()
     return templates.TemplateResponse(
         "store/category.html",
-        store_context(request, db, category=cat, children=children, products=products),
+        store_context(
+            request,
+            db,
+            category=cat,
+            children=children,
+            products=products,
+            pager=result,
+            pager_base=f"/c/{google_id}",
+            pager_qs=lambda p: pager_query({}, p),
+        ),
     )
 
 

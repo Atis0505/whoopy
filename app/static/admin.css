@@ -150,3 +150,11 @@ tr.row-link:hover { background: #f8fafc; }
   .admin-sidebar { max-height: none; }
   .table { display: block; overflow-x: auto; }
 }
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem 0;
+}

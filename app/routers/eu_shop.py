@@ -42,13 +42,49 @@ def robots_txt():
 
 @router.get("/sitemap.xml")
 def sitemap_xml(db: Session = Depends(get_db)):
+    """Sitemap index ha sok termék; különben egy urlset."""
+    from app.services.catalog import SITEMAP_CHUNK
+
     base = settings.public_base_url.rstrip("/")
-    urls = [f"{base}/", f"{base}/taxonomy", f"{base}/contact", f"{base}/faq", f"{base}/track"]
-    for slug in ("aszf", "adatvedelem", "impressum", "szallitas", "visszakuldes", "rolunk"):
-        urls.append(f"{base}/pages/{slug}")
-    products = db.query(Product).filter(Product.active.is_(True)).order_by(Product.id.desc()).limit(5000).all()
-    for p in products:
-        urls.append(f"{base}/p/{p.slug}")
+    total = db.query(Product).filter(Product.active.is_(True)).count()
+    if total <= SITEMAP_CHUNK:
+        return _sitemap_urlset(db, base, offset=0, limit=SITEMAP_CHUNK)
+    chunks = (total + SITEMAP_CHUNK - 1) // SITEMAP_CHUNK
+    items = "".join(f"<sitemap><loc>{base}/sitemap/{i}.xml</loc></sitemap>" for i in range(chunks))
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        f"{items}</sitemapindex>"
+    )
+    return Response(content=xml, media_type="application/xml")
+
+
+@router.get("/sitemap/{chunk}.xml")
+def sitemap_chunk(chunk: int, db: Session = Depends(get_db)):
+    from app.services.catalog import SITEMAP_CHUNK
+
+    base = settings.public_base_url.rstrip("/")
+    if chunk < 0:
+        return Response(status_code=404)
+    return _sitemap_urlset(db, base, offset=chunk * SITEMAP_CHUNK, limit=SITEMAP_CHUNK, static=(chunk == 0))
+
+
+def _sitemap_urlset(db: Session, base: str, *, offset: int, limit: int, static: bool = True):
+    urls: list[str] = []
+    if static and offset == 0:
+        urls = [f"{base}/", f"{base}/taxonomy", f"{base}/contact", f"{base}/faq", f"{base}/track"]
+        for slug in ("aszf", "adatvedelem", "impressum", "szallitas", "visszakuldes", "rolunk"):
+            urls.append(f"{base}/pages/{slug}")
+    products = (
+        db.query(Product.slug)
+        .filter(Product.active.is_(True))
+        .order_by(Product.id.asc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    for (slug,) in products:
+        urls.append(f"{base}/p/{slug}")
     items = "".join(f"<url><loc>{u}</loc></url>" for u in urls)
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>'

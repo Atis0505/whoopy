@@ -19,5 +19,8 @@
     {% endfor %}
     </tbody>
   </table>
+  {% if pager and pager.pages > 1 %}
+  {% include "partials/pager.html" %}
+  {% endif %}
 </div>
 {% endblock %}

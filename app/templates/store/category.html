@@ -24,5 +24,8 @@
     <p>—</p>
     {% endfor %}
   </div>
+  {% if pager and pager.pages > 1 %}
+  {% include "partials/pager.html" %}
+  {% endif %}
 </section>
 {% endblock %}

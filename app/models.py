@@ -89,15 +89,15 @@ class Product(Base):
     slug: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     title: Mapped[str] = mapped_column(String(255), index=True)
     description: Mapped[str] = mapped_column(Text, default="")
-    brand: Mapped[str] = mapped_column(String(128), default="")
-    gtin: Mapped[str] = mapped_column(String(32), default="")
+    brand: Mapped[str] = mapped_column(String(128), default="", index=True)
+    gtin: Mapped[str] = mapped_column(String(32), default="", index=True)
     image_url: Mapped[str] = mapped_column(String(512), default="")
     weight_kg: Mapped[float] = mapped_column(Float, default=0.5)
     # combinable = small items share one parcel; separate = each unit ships alone (e.g. wardrobe)
     ship_mode: Mapped[str] = mapped_column(String(16), default="combinable")
-    sold_count: Mapped[int] = mapped_column(Integer, default=0)
-    category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"), nullable=True)
-    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    sold_count: Mapped[int] = mapped_column(Integer, default=0, index=True)
+    category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"), nullable=True, index=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     # pl. "Szín,Méret" — UI tengelyek; értékek az Offer.variant_label-ben
     variant_axes: Mapped[str] = mapped_column(String(128), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -135,9 +135,9 @@ class Offer(Base):
     price: Mapped[float] = mapped_column(Float)  # listaár HUF (bolt)
     cost_price: Mapped[float] = mapped_column(Float, default=0.0)  # beszerzési nettó HUF
     currency: Mapped[str] = mapped_column(String(3), default="HUF")
-    stock: Mapped[int] = mapped_column(Integer, default=0)
+    stock: Mapped[int] = mapped_column(Integer, default=0, index=True)
     lead_days: Mapped[int] = mapped_column(Integer, default=2)
-    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     # buy-box: kézzel kiemelt forrás ehhez a termékhez
     preferred_source: Mapped[bool] = mapped_column(Boolean, default=False)
     # pl. "Piros / M" — üres = alapváltozat

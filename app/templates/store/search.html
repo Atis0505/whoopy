@@ -7,7 +7,7 @@
     <input type="search" name="q" value="{{ q or '' }}" placeholder="Termék, márka, GTIN…" autofocus />
     <button type="submit">Keresés</button>
   </form>
-  <p class="muted">{{ products|length }} találat{% if q %} „{{ q }}”{% endif %}</p>
+  <p class="muted">{% if pager %}{{ pager.total }}{% else %}{{ products|length }}{% endif %} találat{% if q %} „{{ q }}”{% endif %}</p>
   <div class="product-grid">
   {% for p in products %}
     <a class="product-card" href="/p/{{ p.slug }}">
@@ -19,5 +19,8 @@
     <p>Nincs találat.</p>
   {% endfor %}
   </div>
+  {% if pager and pager.pages > 1 %}
+  {% include "partials/pager.html" %}
+  {% endif %}
 </section>
 {% endblock %}

@@ -248,11 +248,13 @@ def suppliers_create(
 
 
 @router.get("/products", response_class=HTMLResponse)
-def products_list(request: Request, db: Session = Depends(get_db)):
+def products_list(request: Request, q: str = "", page: int = 1, db: Session = Depends(get_db)):
     user = _require_admin_html(request, db)
     if isinstance(user, RedirectResponse):
         return user
-    products = (
+    from app.services.catalog import ADMIN_PER_PAGE, paginate, pager_query
+
+    query = (
         db.query(Product)
         .options(
             joinedload(Product.category),
@@ -260,9 +262,14 @@ def products_list(request: Request, db: Session = Depends(get_db)):
             joinedload(Product.images),
         )
         .order_by(Product.title)
-        .all()
     )
-    categories = db.query(Category).order_by(Category.full_path).all()
+    if q.strip():
+        like = f"%{q.strip()}%"
+        from sqlalchemy import or_
+
+        query = query.filter(or_(Product.title.ilike(like), Product.slug.ilike(like), Product.brand.ilike(like)))
+    result = paginate(query, page=page, per_page=ADMIN_PER_PAGE)
+    categories = db.query(Category).order_by(Category.full_path).limit(500).all()
     suppliers = db.query(Supplier).filter(Supplier.active.is_(True)).order_by(Supplier.name).all()
     from app.services.store_settings import get_store_settings
 
@@ -272,11 +279,15 @@ def products_list(request: Request, db: Session = Depends(get_db)):
         {
             "request": request,
             "user": user,
-            "products": products,
+            "products": result.items,
             "categories": categories,
             "suppliers": suppliers,
             "low_stock": store.low_stock_threshold,
             "app_name": settings.app_name,
+            "q": q,
+            "pager": result,
+            "pager_base": "/admin/products",
+            "pager_qs": lambda p: pager_query({"q": q}, p),
         },
     )
 
@@ -564,19 +575,29 @@ def newsletter_send(
 
 
 @router.get("/orders", response_class=HTMLResponse)
-def orders_list(request: Request, db: Session = Depends(get_db)):
+def orders_list(request: Request, page: int = 1, db: Session = Depends(get_db)):
     user = _require_staff_html(request, db)
     if isinstance(user, RedirectResponse):
         return user
-    orders = (
+    from app.services.catalog import ADMIN_PER_PAGE, paginate, pager_query
+
+    query = (
         db.query(Order)
         .options(joinedload(Order.shipments), joinedload(Order.lines))
         .order_by(Order.created_at.desc())
-        .all()
     )
+    result = paginate(query, page=page, per_page=ADMIN_PER_PAGE)
     return templates.TemplateResponse(
         "admin/orders.html",
-        {"request": request, "user": user, "orders": orders, "app_name": settings.app_name},
+        {
+            "request": request,
+            "user": user,
+            "orders": result.items,
+            "app_name": settings.app_name,
+            "pager": result,
+            "pager_base": "/admin/orders",
+            "pager_qs": lambda p: pager_query({}, p),
+        },
     )
 
 

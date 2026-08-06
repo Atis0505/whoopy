@@ -27,14 +27,24 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @router.get("/search", response_class=HTMLResponse)
-def search_page(request: Request, q: str = "", db: Session = Depends(get_db)):
+def search_page(request: Request, q: str = "", page: int = 1, db: Session = Depends(get_db)):
     from app.routers.store import _enrich_products
+    from app.services.catalog import list_catalog, pager_query
 
-    products = search_products(db, q, limit=60)
+    result = list_catalog(db, page=page, q=q, sort="bestseller")
+    products = result.items
     _enrich_products(db, products)
     return templates.TemplateResponse(
         "store/search.html",
-        store_context(request, db, products=products, q=q),
+        store_context(
+            request,
+            db,
+            products=products,
+            q=q,
+            pager=result,
+            pager_base="/search",
+            pager_qs=lambda p: pager_query({"q": q}, p),
+        ),
     )
 
 

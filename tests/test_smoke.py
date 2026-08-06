@@ -329,3 +329,26 @@ def test_subscription_create_and_fulfill():
         db.close()
 
     assert client.get("/account").status_code in (200, 302, 303)
+
+
+def test_catalog_pagination_and_sitemap():
+    from app.services.catalog import list_catalog
+
+    from app.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        page1 = list_catalog(db, page=1, per_page=2)
+        assert page1.page == 1
+        assert len(page1.items) <= 2
+        assert page1.total >= len(page1.items)
+    finally:
+        db.close()
+
+    r = client.get("/", params={"page": 1})
+    assert r.status_code == 200
+    r2 = client.get("/search", params={"q": "a", "page": 1})
+    assert r2.status_code == 200
+    sm = client.get("/sitemap.xml")
+    assert sm.status_code == 200
+    assert "urlset" in sm.text or "sitemapindex" in sm.text

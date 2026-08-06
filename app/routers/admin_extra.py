@@ -316,29 +316,40 @@ def analytics_page(request: Request, db: Session = Depends(get_db)):
 # ── Inventory ────────────────────────────────────────────────────────────────
 
 @router.get("/inventory", response_class=HTMLResponse)
-def inventory_page(request: Request, db: Session = Depends(get_db)):
+def inventory_page(request: Request, page: int = 1, db: Session = Depends(get_db)):
     user = _require_staff(request, db)
     if isinstance(user, RedirectResponse):
         return user
+    from app.services.catalog import ADMIN_PER_PAGE, paginate, pager_query
+
     store = get_store_settings(db)
     threshold = store.low_stock_threshold
-    offers = (
+    query = (
         db.query(Offer)
         .options(joinedload(Offer.product), joinedload(Offer.supplier))
         .order_by(Offer.stock.asc(), Offer.id.desc())
-        .limit(200)
+    )
+    result = paginate(query, page=page, per_page=ADMIN_PER_PAGE)
+    low = (
+        db.query(Offer)
+        .options(joinedload(Offer.product), joinedload(Offer.supplier))
+        .filter(Offer.stock <= threshold)
+        .order_by(Offer.stock.asc())
+        .limit(50)
         .all()
     )
-    low = [o for o in offers if o.stock <= threshold]
     return templates.TemplateResponse(
         "admin/inventory.html",
         {
             "request": request,
             "user": user,
-            "offers": offers,
+            "offers": result.items,
             "low": low,
             "threshold": threshold,
             "app_name": settings.app_name,
+            "pager": result,
+            "pager_base": "/admin/inventory",
+            "pager_qs": lambda p: pager_query({}, p),
         },
     )
 

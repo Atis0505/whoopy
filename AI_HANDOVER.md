@@ -2,7 +2,7 @@
 
 > **Olvasd el session elején.** Részletes rendszerkép: [`docs/AI_SYSTEM.md`](docs/AI_SYSTEM.md)  
 > Használat (embernek): [`docs/HASZNALATI_UTMUTATO.md`](docs/HASZNALATI_UTMUTATO.md)  
-> Frissítve: 2026-08 · Schema **v15** · utolsó csomag: Omnibus ártörténet + ismétlődő rendelés
+> Frissítve: 2026-08 · Schema **v16** · utolsó csomag: Katalógus skálázás (pagination / index / sitemap)
 
 ---
 
@@ -49,7 +49,7 @@ Docker: `docker compose up --build` — `docs/DEPLOY.md`.
 
 ---
 
-## Hogyan haladtunk (roadmap 1–20 = kész)
+## Hogyan haladtunk (roadmap 1–21 = kész)
 
 | # | Csomag | Doc |
 |---|--------|-----|
@@ -62,11 +62,12 @@ Docker: `docker compose up --build` — `docs/DEPLOY.md`.
 | 18 | **Logisztika + Compliance** (futár/RMA stub, warehouse, CMP, GDPR export/törlés, B2B ÁFA, Omnibus) | `LOGISTICS_COMPLIANCE.md` |
 | 19 | **Storefront ops** (announcement, social ticker, maintenance 1-gomb, kampány toggle, free-ship, responsive) | `STOREFRONT_OPS.md` |
 | 20 | **Omnibus + ismétlődő rendelés** (PriceHistory auto-log/riporter/guard, Subscription) | `OMNIBUS_SUBSCRIPTIONS.md` |
+| 21 | **Katalógus skálázás** (pagination, indexek, sitemap chunk) | `CATALOG_SCALE.md` |
 
-Tipikus commit minta a `main`-en: … → logistics/compliance → storefront ops → omnibus/subscriptions.
+Tipikus commit minta a `main`-en: … → omnibus/subscriptions → catalog scale.
 
-**Schema:** `app/bootstrap.py` `SCHEMA_VERSION = "15"` + `.schema_version`.  
-Dev SQLite: hiányzó kötelező oszlop → wipe; version bump → `create_all` + additive ALTER (zárolt DB-nél wipe nélkül). Prod/Postgres: **soha nem wipe**.
+**Schema:** `app/bootstrap.py` `SCHEMA_VERSION = "16"` + `.schema_version`.  
+Dev SQLite: hiányzó kötelező oszlop → wipe; version bump → `create_all` + additive ALTER/INDEX (zárolt DB-nél wipe nélkül). Prod/Postgres: **soha nem wipe**.
 
 ---
 
@@ -131,8 +132,10 @@ Ne csináld: supplier portal · Whoopy→ERP katalógus pull · prod schema wipe
 | `AI_HANDOVER.md` | **Ez** — session start |
 | `docs/AI_SYSTEM.md` | Teljes rendszer + roadmap |
 | `docs/HASZNALATI_UTMUTATO.md` | Magyar használat |
-| `docs/FEJLESZTESI_TERV.md` | 1–19 tábla |
+| `docs/FEJLESZTESI_TERV.md` | 1–21 tábla |
 | `docs/LOGISTICS_COMPLIANCE.md` | v13 logisztika/compliance |
 | `docs/STOREFRONT_OPS.md` | v14 banner / ticker / maintenance |
+| `docs/OMNIBUS_SUBSCRIPTIONS.md` | v15 ártörténet + ismétlés |
+| `docs/CATALOG_SCALE.md` | v16 pagination / index / sitemap |
 | `docs/UX.md` / `MARKETING.md` / `EU_SHOP.md` / `SZAMLAZZ.md` | Feature csomagok |
 | `docs/PARTNEREK.md` / `API.md` / `ADMIN.md` / `PROD.md` / `DEPLOY.md` | Ops |

@@ -7,7 +7,7 @@ from app.database import Base, engine
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = "15"
+SCHEMA_VERSION = "16"
 VERSION_FILE = BASE_DIR / ".schema_version"
 DB_PATH = BASE_DIR / "marketplace.db"
 
@@ -78,6 +78,20 @@ def _sqlite_apply_additive_alters() -> None:
                 if ph_cols and name not in ph_cols:
                     con.execute(f"ALTER TABLE price_history ADD COLUMN {name} {ddl}")
                     logger.info("SQLite ALTER price_history ADD %s", name)
+
+            # Scale indexes (v16) — IF NOT EXISTS, wipe nélkül
+            for stmt in (
+                "CREATE INDEX IF NOT EXISTS ix_products_brand ON products(brand)",
+                "CREATE INDEX IF NOT EXISTS ix_products_gtin ON products(gtin)",
+                "CREATE INDEX IF NOT EXISTS ix_products_sold_count ON products(sold_count)",
+                "CREATE INDEX IF NOT EXISTS ix_products_category_id ON products(category_id)",
+                "CREATE INDEX IF NOT EXISTS ix_products_active ON products(active)",
+                "CREATE INDEX IF NOT EXISTS ix_products_active_created ON products(active, created_at)",
+                "CREATE INDEX IF NOT EXISTS ix_offers_active ON offers(active)",
+                "CREATE INDEX IF NOT EXISTS ix_offers_stock ON offers(stock)",
+                "CREATE INDEX IF NOT EXISTS ix_offers_active_stock ON offers(active, stock)",
+            ):
+                con.execute(stmt)
             con.commit()
         finally:
             con.close()

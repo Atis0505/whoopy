@@ -1,0 +1,13 @@
+<nav class="pager" aria-label="Lapozás">
+  {% if pager.has_prev %}
+  <a class="btn ghost" href="{{ pager_base }}?{{ pager_qs(pager.page - 1) }}">← Előző</a>
+  {% else %}
+  <span class="btn ghost" style="opacity:0.4;pointer-events:none">← Előző</span>
+  {% endif %}
+  <span class="muted">{{ pager.page }} / {{ pager.pages }} · {{ pager.total }} találat</span>
+  {% if pager.has_next %}
+  <a class="btn ghost" href="{{ pager_base }}?{{ pager_qs(pager.page + 1) }}">Következő →</a>
+  {% else %}
+  <span class="btn ghost" style="opacity:0.4;pointer-events:none">Következő →</span>
+  {% endif %}
+</nav>
