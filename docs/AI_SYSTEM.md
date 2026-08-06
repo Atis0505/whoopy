@@ -87,17 +87,21 @@ API key (dev): `whoopy-dev-api-key-change-me`
 
 | Doc | Tartalom |
 |-----|----------|
-| `AI_HANDOVER.md` | Rövid session start |
+| `AI_HANDOVER.md` | Rövid session start + „mi van vissza” |
 | `docs/AI_SYSTEM.md` | **Ez a fájl** — teljes rendszerkép |
-| `docs/HASZNALATI_UTMUTATO.md` | Magyar használat |
-| `docs/FEJLESZTESI_TERV.md` | Roadmap állapot |
+| `docs/HASZNALATI_UTMUTATO.md` | Magyar használat (bolt + admin) |
+| `docs/FEJLESZTESI_TERV.md` | Roadmap 1–18 |
 | `docs/API.md` | Management API |
 | `docs/PARTNEREK.md` | Belső partner ops |
-| `docs/EU_SHOP.md` | GDPR, SEO, ÁFA, invoice, track, contact… |
+| `docs/EU_SHOP.md` | GDPR/SEO/ÁFA/invoice/track… |
+| `docs/UX.md` | Keresés, pickup, gift, loyalty… |
+| `docs/MARKETING.md` | Meta/Árukereső, UTM, affiliate, A/B |
+| `docs/LOGISTICS_COMPLIANCE.md` | Futár/RMA stub, warehouse, CMP, B2B, Omnibus |
 | `docs/SZAMLAZZ.md` | Számlázz.hu Agent stub / élesítés |
 | `docs/FIZETES.md` | Demo / Stripe / SimplePay |
 | `docs/KEPEK.md` | Feltöltés + CDN base |
 | `docs/WEBHOOKOK.md` | Outbound |
+| `docs/ADMIN.md` | Admin menü |
 | `docs/PROD.md` / `docs/DEPLOY.md` | Élesítés |
 | `docs/WHOOPY_ERP_INTEGRATION.md` | ERP kötés |
 | ERP `Documentation/ai/WHOOPY_SYNC.md` | ERP sync részletek |
@@ -138,11 +142,14 @@ ERP: külön venv, `:8010`. Whoopy `.env` ↔ ERP `.env` **ugyanaz** az `API_KEY
 17. **Marketing csomag** ✅ (`docs/MARKETING.md`)  
 18. **Logisztika + Compliance** ✅ (`docs/LOGISTICS_COMPLIANCE.md`)  
 
-### Érdemes következő iterációk
+### Érdemes következő iterációk (éles / külső)
 
 1. SimplePay éles merchant + nyilvános IPN URL (üzleti / DNS)  
-2. Domain DNS + TLS (Caddy/Cloudflare) a `docs/DEPLOY.md` szerint  
-3. Számlázz Agent kulcs + éles futár / csomagpont API
+2. Domain DNS + TLS (Caddy/Cloudflare) — `docs/DEPLOY.md`  
+3. Számlázz Agent kulcs + éles futár / csomagpont API  
+4. VIES élő ÁFA-szám validáció (most formátum-stub)  
+
+**Feature backlog a tervezett 1–18 soron túl:** nincs kötelező következő csomag; a fentiek integráció/élesítés.
 
 ### Kerüld el
 

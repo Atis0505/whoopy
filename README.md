@@ -3,12 +3,14 @@
 **Domain:** whoopy.hu  
 **GitHub:** https://github.com/Atis0505/whoopy  
 **Lokális:** http://127.0.0.1:8090  
-**Projekt:** `C:\Users\korom\Személyes\taxonomy-marketplace`
+**Projekt:** `C:\Users\korom\Személyes\taxonomy-marketplace`  
+**Schema:** v13
 
-Alza / eMAG / Pepita jellegű, **Google Taxonomy** alapú, többbeszállítós marketplace webshop.
-Később az `e_commerce_erp` rendszerhez kapcsolódik (lásd `docs/WHOOPY_ERP_INTEGRATION.md`).
+Alza / eMAG / Pepita jellegű, **Google Taxonomy** alapú, többbeszállítós marketplace webshop.  
+ERP: `e_commerce_erp` — `docs/WHOOPY_ERP_INTEGRATION.md`.
 
-> AI: [`AI_HANDOVER.md`](AI_HANDOVER.md) · Használat: [`docs/HASZNALATI_UTMUTATO.md`](docs/HASZNALATI_UTMUTATO.md) · Admin: [`docs/ADMIN.md`](docs/ADMIN.md) · Prod: [`docs/PROD.md`](docs/PROD.md) · Terv: [`docs/FEJLESZTESI_TERV.md`](docs/FEJLESZTESI_TERV.md)
+> **AI:** [`AI_HANDOVER.md`](AI_HANDOVER.md) · [`docs/AI_SYSTEM.md`](docs/AI_SYSTEM.md)  
+> **Használat:** [`docs/HASZNALATI_UTMUTATO.md`](docs/HASZNALATI_UTMUTATO.md) · Admin: [`docs/ADMIN.md`](docs/ADMIN.md) · Terv: [`docs/FEJLESZTESI_TERV.md`](docs/FEJLESZTESI_TERV.md)
 
 ## Indítás
 
@@ -20,22 +22,21 @@ python run.py
 
 - Bolt: http://127.0.0.1:8090  
 - Admin: http://127.0.0.1:8090/admin (`admin@whoopy.local` / `admin1234`)  
-- API docs: http://127.0.0.1:8090/docs (`X-API-Key`)  
-- Google feed: http://127.0.0.1:8090/feeds/google-merchant.xml
+- API: http://127.0.0.1:8090/docs (`X-API-Key`)  
+- Smoke: `python -m pytest tests/test_smoke.py -q`
 
 ## Képességek (rövid)
 
 - Több beszállító / ajánlat, kupon, akció, hírlevél, regisztráció
-- EU ország + valuta + 6 nyelv
-- Csomaglogisztika: összecsomagolható vs külön (bútor), COD díj
-- Merchant Center XML feed taxonomy path-okkal
-- **Management API** `/api/v1` — termék, ár, készlet, rendelés (lásd `docs/API.md`)
-- **Fizetés** — demo / Stripe / SimplePay (`docs/FIZETES.md`)
-- **Képfeltöltés** — admin + `/api/v1/products/{id}/images` (`docs/KEPEK.md`)
-- **Webhook-ek** — rendelés/fizetés/státusz → ERP (`docs/WEBHOOKOK.md`)
-- ERP reverse-bridge stub; ERP → Whoopy push az API-n / `whoopy-sync`
+- EU ország + valuta + több nyelv · B2B reverse charge · Omnibus ár
+- Csomaglogisztika (combinable/separate), csomagpont stub, futár/RMA stub, multi-warehouse
+- Feedek: Google Merchant, Meta, Árukereső · UTM / affiliate · hero A/B
+- Management API `/api/v1` · fizetés (demo/Stripe/SimplePay) · Számlázz stub
+- Webhook → ERP · partner staging/feed/árazás/beszerzés (nincs supplier portal)
+- GDPR: cookie CMP, adat-export, fiók-anonimizálás
+
+Részletek: `docs/UX.md`, `docs/MARKETING.md`, `docs/LOGISTICS_COMPLIANCE.md`, `docs/EU_SHOP.md`.
 
 ## ERP
 
-Saját ERP: `C:\Users\korom\Személyes\e_commerce_erp` (8010/5181).  
-Whoopy channel + API: `docs/WHOOPY_ERP_INTEGRATION.md`, `docs/API.md`.
+`C:\Users\korom\Személyes\e_commerce_erp` (8010/5181) · `docs/WHOOPY_ERP_INTEGRATION.md`, `docs/API.md`.

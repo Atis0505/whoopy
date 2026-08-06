@@ -23,6 +23,7 @@ A bővítések **ebben a sorrendben** készülnek. Az 1. lépés (ERP kliens) el
 | 17 | **Marketing csomag** | kész | Meta + Árukereső feed, UTM/affiliate, hero A/B (`docs/MARKETING.md`) |
 | 18 | **Logisztika + Compliance** | kész | Futár/RMA stub, warehouse/partial fulfill, CMP, GDPR, B2B ÁFA, Omnibus (`docs/LOGISTICS_COMPLIANCE.md`) |
 
-**A tervezett bővítési sor kész.** További ötletek: éles SimplePay, domain DNS, Számlázz kulcs, éles futár/csomagpont API.
+**A tervezett bővítési sor (1–18) kész.**  
+Következő lépések inkább **élesítés**: SimplePay merchant, domain/TLS, Számlázz kulcs, éles futár/csomagpont API — lásd `AI_HANDOVER.md` „Mi van még vissza”.
 
 Rendszerleírás AI-nak: [`AI_SYSTEM.md`](AI_SYSTEM.md) · Logisztika/Compliance: [`LOGISTICS_COMPLIANCE.md`](LOGISTICS_COMPLIANCE.md) · Marketing: [`MARKETING.md`](MARKETING.md) · UX: [`UX.md`](UX.md) · EU shop: [`EU_SHOP.md`](EU_SHOP.md) · Számlázz: [`SZAMLAZZ.md`](SZAMLAZZ.md) · Használat: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · API: [`API.md`](API.md) · Fizetés: [`FIZETES.md`](FIZETES.md) · Képek: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md) · Admin: [`ADMIN.md`](ADMIN.md) · Merchant: [`MERCHANT.md`](MERCHANT.md) · Prod: [`PROD.md`](PROD.md) · Deploy: [`DEPLOY.md`](DEPLOY.md) · Partnerek: [`PARTNEREK.md`](PARTNEREK.md)

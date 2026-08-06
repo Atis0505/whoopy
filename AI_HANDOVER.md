@@ -1,16 +1,37 @@
 # AI Handover – Whoopy.hu
 
-> Olvasd el session elején. **Teljes rendszerkép:** [`docs/AI_SYSTEM.md`](docs/AI_SYSTEM.md)
+> **Olvasd el session elején.** Részletes rendszerkép: [`docs/AI_SYSTEM.md`](docs/AI_SYSTEM.md)  
+> Használat (embernek): [`docs/HASZNALATI_UTMUTATO.md`](docs/HASZNALATI_UTMUTATO.md)  
+> Frissítve: 2026-08 · Schema **v13** · utolsó csomag: Logisztika + Compliance
+
+---
 
 ## Mi ez?
 
-**Whoopy.hu** storefront – Google Taxonomy marketplace (Alza/eMAG/Pepita jellegű UI).  
-- **GitHub:** https://github.com/Atis0505/whoopy  
-- **Helyi útvonal:** `C:\Users\korom\Személyes\taxonomy-marketplace`  
-- **Port:** **8090** (nem 8000)
+**Whoopy.hu** — magyar, Google Taxonomy alapú, **többbeszállítós marketplace storefront** (Alza / eMAG / Pepita jellegű UI).
 
-Kapcsolódó ERP: `C:\Users\korom\Személyes\e_commerce_erp` (:8010 / :5181)  
-Integráció: `docs/WHOOPY_ERP_INTEGRATION.md` · API: `docs/API.md` · **AI rendszerleírás:** `docs/AI_SYSTEM.md`
+| | |
+|--|--|
+| **GitHub** | https://github.com/Atis0505/whoopy |
+| **Helyi path** | `C:\Users\korom\Személyes\taxonomy-marketplace` |
+| **Port** | **8090** (nem 8000) |
+| **Stack** | FastAPI + Jinja2 + SQLAlchemy · SQLite (dev) / Postgres (prod) |
+
+Kapcsolódó **ERP** (külön repo): `C:\Users\korom\Személyes\e_commerce_erp` (:8010 API / :5181 UI)  
+→ https://github.com/Atis0505/e_commerce_erp · `docs/WHOOPY_ERP_INTEGRATION.md`
+
+A Nokia/`ngNCOM` Cursor workspace **nem** a Whoopy kódja — csak chat/history.
+
+---
+
+## Üzleti modell (ne rontsd el)
+
+- **Partnerek** = források, ahonnan Whoopy **vásárol** — **nem** self-listing eladók.
+- **Nincs supplier portal.** Ne építs partner-feltöltő bolt UI-t.
+- Egy termékre több Offer (ár / lead / preferált) → buy-box.
+- ERP **pushol** katalógust Whoopy felé; Whoopy **nem** pullolja az ERP katalógust.
+
+---
 
 ## Gyors indítás
 
@@ -18,33 +39,96 @@ Integráció: `docs/WHOOPY_ERP_INTEGRATION.md` · API: `docs/API.md` · **AI ren
 cd "C:\Users\korom\Személyes\taxonomy-marketplace"
 .\.venv\Scripts\activate
 python run.py
+# tesztek: python -m pytest tests/test_smoke.py -q
 ```
 
-Docker: `docker compose up --build` — lásd `docs/DEPLOY.md`.
+Demo: `admin@whoopy.local` / `admin1234` · `dolgozo@…` / `worker123` · `vasarlo@…` / `vasarlo123`  
+API key (dev): `whoopy-dev-api-key-change-me`
 
-## Szerepkörök
+Docker: `docker compose up --build` — `docs/DEPLOY.md`.
 
-| Szerep | Belépés | Hová kerül |
-|--------|---------|------------|
-| **customer** | `/login` vagy regisztráció | `/account` vásárlói nézet |
-| **worker** | `/login` | `/admin/orders` (+ partners / procurement) |
-| **admin** | `/login` | `/admin` teljes admin |
+---
 
-Demo: `vasarlo@whoopy.local` / vasarlo123 · `dolgozo@whoopy.local` / worker123 · `admin@whoopy.local` / admin1234
+## Hogyan haladtunk (roadmap 1–18 = kész)
 
-## Partner modell (fontos)
+| # | Csomag | Doc |
+|---|--------|-----|
+| 1–8 | ERP kliens, fizetés, képek, webhook, admin, merchant, prod, partner ops | `PARTNEREK`, `FIZETES`, `KEPEK`, … |
+| 9–13 | Autosync, CDN, SimplePay sandbox, Docker, smoke/S3/orders | `DEPLOY`, `PROD` |
+| 14 | EU webshop (GDPR banner v1, SEO, ÁFA, invoice HTML, track, FAQ…) | `EU_SHOP.md` |
+| 15 | Checkout E2E smoke + **Számlázz.hu Agent stub** | `SZAMLAZZ.md` |
+| 16 | Vásárlói UX (search, pickup, billing, gift, loyalty, compare…) | `UX.md` |
+| 17 | Marketing (Meta + Árukereső, UTM, affiliate, hero A/B) | `MARKETING.md` |
+| 18 | **Logisztika + Compliance** (futár/RMA stub, warehouse, CMP, GDPR export/törlés, B2B ÁFA, Omnibus) | `LOGISTICS_COMPLIANCE.md` |
 
-- Partnerek = források, ahonnan Whoopy vásárol — nem self-listing eladók  
-- Admin: `/admin/partners`, `/admin/staging`, `/admin/feeds`, `/admin/procurement`, …  
-- Schema **v13** · Doc: `docs/PARTNEREK.md` · EU: `docs/EU_SHOP.md` · UX: `docs/UX.md` · Marketing: `docs/MARKETING.md` · Logisztika/Compliance: `docs/LOGISTICS_COMPLIANCE.md` · Számlázz: `docs/SZAMLAZZ.md`
+Tipikus commit minta a `main`-en: EU → checkout/Számlázz → UX → marketing → logistics/compliance (`4078ce9` környék).
 
-## ERP
+**Schema:** `app/bootstrap.py` `SCHEMA_VERSION = "13"` + `.schema_version`.  
+Dev SQLite: version bump → **wipe + reseed**. Prod/Postgres: **soha nem wipe**.
 
-- Push: ERP `/api/v1/whoopy-sync/*` + **autosync** (`WHOOPY_AUTOSYNC_ENABLED`)  
-- Whoopy admin: Integrációk → ERP autosync gomb (`ERP_ENABLED=true`)  
-- Webhook: Whoopy → ERP `POST /webhooks/whoopy` → JSONL inbox  
+---
 
-## Roadmap
+## Hol van mi (gyors térkép)
 
-Lásd `docs/FEJLESZTESI_TERV.md` — 1–18 kész (logisztika + compliance).  
-Következő opcionális: éles SimplePay, domain DNS, Számlázz kulcs, éles futár/csomagpont API.
+| Terület | Hol |
+|---------|-----|
+| Bolt | `app/routers/store.py`, `templates/store/` |
+| EU extras | `routers/eu_shop.py` |
+| UX | `routers/customer_ux.py`, `services/customer_ux.py` |
+| Compliance | `routers/compliance.py`, `services/compliance.py`, `services/vat.py` |
+| Futár / RMA | `services/carriers.py`, `services/rma.py` |
+| Marketing | `services/marketing_feeds.py`, `services/attribution.py` |
+| Számlázz | `services/szamlazz.py` → `data/szamlazz_outbox/` |
+| Admin | `routers/admin*.py` |
+| Smoke | `tests/test_smoke.py` (~16 teszt) |
+
+Outbox stubok (gitignore): `data/email_outbox/`, `szamlazz_outbox/`, `carrier_outbox/`, `rma_outbox/`.
+
+---
+
+## Mi van még vissza (opcionális / élesítés)
+
+A **tervezett feature sor kész**. Ami üzleti / külső függőség:
+
+1. **SimplePay éles** merchant + publikus IPN URL (DNS/TLS)
+2. **Domain** whoopy.hu + TLS (`docs/DEPLOY.md`)
+3. **Számlázz Agent kulcs** — stub → éles XML API
+4. **Éles futár / csomagpont API** (GLS, Foxpost, Packeta) — most outbox stub
+5. **VIES** élő adószám-ellenőrzés (most csak formátum)
+6. Theme editor / teljes Shopify A/B — **szándékosan nincs**
+7. Abandoned-cart mail: kosárnak gyakran nincs vevő e-mail → admin értesítés stub
+
+Ne csináld: supplier portal · Whoopy→ERP katalógus pull · prod schema wipe · Jira/Confluence írás jóváhagyás nélkül.
+
+---
+
+## ERP kötés (rövid)
+
+- Whoopy Management API: `/api/v1/*` + `X-API-Key`
+- ERP: `/api/v1/whoopy-sync/*` + autosync (`WHOOPY_AUTOSYNC_ENABLED`)
+- Whoopy → ERP webhook → JSONL inbox
+- Admin: `/admin/integrations` (őszinte státusz)
+
+---
+
+## Új session checklist
+
+1. `AI_HANDOVER.md` → `docs/AI_SYSTEM.md` → érintett feature doc  
+2. `python run.py` · `/admin/integrations`  
+3. Modellváltozás → `SCHEMA_VERSION` növelés  
+4. Commit Whoopy **és** ERP külön repo; ne `.env` / `*.db` / uploads  
+5. Smoke: `pytest tests/test_smoke.py -q`
+
+---
+
+## Doc index
+
+| Fájl | Szerep |
+|------|--------|
+| `AI_HANDOVER.md` | **Ez** — session start |
+| `docs/AI_SYSTEM.md` | Teljes rendszer + roadmap |
+| `docs/HASZNALATI_UTMUTATO.md` | Magyar használat |
+| `docs/FEJLESZTESI_TERV.md` | 1–18 tábla |
+| `docs/LOGISTICS_COMPLIANCE.md` | v13 logisztika/compliance |
+| `docs/UX.md` / `MARKETING.md` / `EU_SHOP.md` / `SZAMLAZZ.md` | Feature csomagok |
+| `docs/PARTNEREK.md` / `API.md` / `ADMIN.md` / `PROD.md` / `DEPLOY.md` | Ops |

@@ -1,13 +1,13 @@
 # Whoopy.hu – Használati útmutató (magyar)
 
-Ez a dokumentum a **bolt (vásárlói UI)**, az **admin / dolgozó felület** és a **Management API** használatát írja le.
+Ez a dokumentum a **bolt (vásárlói UI)**, az **admin / dolgozó felület** és a **Management API** használatát írja le.  
+Schema: **v13** · GitHub: https://github.com/Atis0505/whoopy
 
 | Rendszer | URL |
 |----------|-----|
 | Bolt | http://127.0.0.1:8090 |
 | Admin | http://127.0.0.1:8090/admin |
 | API Swagger | http://127.0.0.1:8090/docs |
-| GitHub | https://github.com/Atis0505/whoopy |
 
 Indítás:
 
@@ -17,149 +17,133 @@ cd "C:\Users\korom\Személyes\taxonomy-marketplace"
 python run.py
 ```
 
+Kapcsolódó leírások: [`EU_SHOP.md`](EU_SHOP.md) · [`UX.md`](UX.md) · [`MARKETING.md`](MARKETING.md) · [`LOGISTICS_COMPLIANCE.md`](LOGISTICS_COMPLIANCE.md) · [`SZAMLAZZ.md`](SZAMLAZZ.md) · [`ADMIN.md`](ADMIN.md)
+
 ---
 
 ## 1. Vásárlói felület (bolt)
 
 ### 1.1 Főoldal (`/`)
 
-- Kampánycsíkok / hero (adminban szerkeszthető)
+- Kampány hero / strip / tile (A/B csoporttal)
 - Kiemelt / legtöbbet rendelt termékek
-- Kategória belépők (Google Taxonomy fa)
-- Nyelv és valuta váltó a fejlécben
+- Kategória belépők (Google Taxonomy)
+- Nyelv és valuta a fejlécben
+- Cookie CMP banner (szükséges / analitika / marketing)
 
-### 1.2 Böngészés
+### 1.2 Böngészés és keresés
 
 | Oldal | Mit csinál |
 |-------|------------|
+| `/` + keresőmező | Élő javaslatok (`/api/suggest`) |
+| `/search?q=` | Találati lista |
 | `/taxonomy` | Teljes kategóriafa |
-| `/c/{id}` | Kategória terméklista |
-| `/p/{slug}` | Termékoldal – több beszállítói ajánlat (ár, készlet, szállítási nap) |
+| `/c/{id}` | Kategória terméklista (+ szűrők ahol van) |
+| `/p/{slug}` | Termék: ajánlatok, variáns, Omnibus 30 nap legalacsonyabb ár, vélemények |
+| `/compare` | Összehasonlítás |
+| `/recent` | Nemrég nézett |
+| `/wishlist` | Kívánságlista |
 
-A termékoldalon válaszd ki a kívánt **ajánlatot** (beszállító), majd add a kosárhoz.
-Vélemények, kívánságlista, készlet-értesítő: lásd [`EU_SHOP.md`](EU_SHOP.md).
+A termékoldalon válaszd az **ajánlatot** (beszállító / variáns), majd kosár.
 
-További vásárlói oldalak: `/contact`, `/faq`, `/track`, `/wishlist`, `/returns`, jogi CMS (`/pages/…`).
+További oldalak: `/contact`, `/faq`, `/track`, `/returns`, jogi CMS (`/pages/…`).
 
-### 1.3 Kosár és fizetés
+### 1.3 Kosár és checkout
 
-1. **Kosár** (`/cart`): mennyiség, kupon, ország, fizetési preferencia (előre / utánvét / számla).
-2. Több beszállító esetén **több szállítmány** jelenik meg – szállítási mód szállítmányonként választható.
-3. **Checkout** (`/checkout`): szállítási adatok → rendelés leadása.
-4. Ha **Online / bankkártya** volt kiválasztva → `/pay/...` fizetési kapu ([`FIZETES.md`](FIZETES.md)).
-5. **Rendelés visszaigazolás** (`/order/{szám}`): tételek + szállítmányok + fizetés státusz.
+1. **Kosár** (`/cart`): mennyiség, kupon, ajándékutalvány, hűségpont, fizetési mód, **futár vs csomagpont**, **B2B adószám**.
+2. Több beszállító → több szállítmány; szállítási mód szállítmányonként.
+3. **Checkout** (`/checkout`): szállítási + opcionális eltérő számlázási cím → rendelés.
+4. Előre fizetésnél → `/pay/...` ([`FIZETES.md`](FIZETES.md)).
+5. **Rendelés** (`/order/{szám}`): tételek, szállítmányok, HTML számla link.
 
 **Tippek**
 
-- `combinable` termékek egy csomagba mehetnek; `separate` (pl. bútor) darabonként számol szállítást.
-- Kuponpéldák (seed): `WELCOME10`, `SAVE2000`, `FREESHIP`.
+- Kuponok (seed): `WELCOME10`, `SAVE2000`, `FREESHIP`.
+- Ajándékutalvány (seed): `WHOOPY5K`.
+- B2B: pipáld a kosárban, add meg az EU adószámot (pl. `DE123456789`) → más EU ország esetén reverse charge (ÁFA 0%).
+- Csomagpont: Foxpost / Packeta / GLS stub lista.
 
-### 1.4 Fiók
+### 1.4 Fiók és GDPR
 
 | Művelet | Útvonal |
 |---------|---------|
-| Regisztráció | `/register` |
-| Belépés | `/login` |
-| Saját fiók / rendelések | `/account` |
-| Hírlevél | lábléc űrlap |
+| Regisztráció / belépés | `/register`, `/login` |
+| Fiók / rendelések | `/account` |
+| Adatok exportja (JSON) | `/account/export` |
+| Fiók törlése | `/account/delete` — confirm mező: `TORLES` |
+| Hírlevél | lábléc vagy fiók |
 
 **Demo vásárló:** `vasarlo@whoopy.local` / `vasarlo123`
 
-### 1.5 Nyelv és valuta
+### 1.5 Nyelv, valuta, feedek
 
-A fejlécben váltható (többek között): `hu`, `en`, `de`, `pl`, `ro` · `HUF`, `EUR`, …  
-Az árak a boltban HUF-ból váltódnak; a katalógus tárolása HUF.
-
-### 1.6 Google Merchant feed
-
-`GET /feeds/google-merchant.xml` — Google Merchant Center / Shopping feed (taxonomy path-okkal).
+Nyelvek: `hu`, `en`, `de`, … · Valuták: `HUF`, `EUR`, …  
+Feedek: Google Merchant, Meta katalog, Árukereső — lásd [`MARKETING.md`](MARKETING.md).
 
 ---
 
-## 2. Admin és dolgozó felület
+## 2. Admin és dolgozó
 
-Belépés: **`/login`** (ugyanaz a belépő, szerepkör dönti el a jogosultságot).
+Belépés: **`/login`**.
 
-| Szerep | Demo fiók | Jelszó | Hová kerül |
-|--------|-----------|--------|------------|
-| Admin | `admin@whoopy.local` | `admin1234` | `/admin` – teljes menü |
-| Dolgozó | `dolgozo@whoopy.local` | `worker123` | `/admin/orders` – rendelés / készlet |
+| Szerep | Demo | Jelszó | Hová |
+|--------|------|--------|------|
+| Admin | `admin@whoopy.local` | `admin1234` | `/admin` |
+| Dolgozó | `dolgozo@whoopy.local` | `worker123` | `/admin/orders` |
 | Vásárló | `vasarlo@whoopy.local` | `vasarlo123` | `/account` |
 
-### 2.1 Admin menü (összefoglaló)
+### 2.1 Fontos menüpontok
 
 | Menü | Cél |
 |------|-----|
-| **Dashboard** | Áttekintés |
-| **Rendelések** | Lista, státusz, szállítmány / tracking |
-| **Termékek** | Katalógus áttekintés |
-| **Beszállítók** | Supplier kódok (API-hoz is kell) |
-| **Szállítás** | Ország / mód / COD díjak |
-| **Kedvezmények** | Kuponok |
-| **Termékakciók** | Százalékos / fix akciók |
-| **Kampányok** | Főoldali hero / strip / tile |
-| **Hírlevél** | Feliratkozók |
-| **Integrációk** | ERP / API állapot (őszinte státusz) |
-| **Webhook-ek** | Outbound események ERP felé |
-| **Partnerek / Staging / Feedek / Árazás / Beszerzés / Dedup / KPI** | Belső beszerzési ops — [`PARTNEREK.md`](PARTNEREK.md) |
+| **Rendelések** | Státusz, futár **címke**, tracking sync, partial fulfill, Számlázz dry-run |
+| **Visszaküldések** | RMA címke + refund |
+| **Raktárak** | Multi-warehouse (`BUD-01` default) |
+| **Marketing** | Feed URL-ek, UTM, affiliate, A/B |
+| **Partnerek / Staging / Feed / Beszerzés…** | Belső ops — [`PARTNEREK.md`](PARTNEREK.md) |
+| **Integrációk / Webhook-ek** | ERP, fizetés állapot |
 
-> Megjegyzés: a sidebar menüpontok **működő oldalakra** vezetnek (settings, analitika, CMS, inventory…). Részletek: [`ADMIN.md`](ADMIN.md).
+Részletes menü: [`ADMIN.md`](ADMIN.md).
 
-### 2.2 Tipikus admin feladatok
+### 2.2 Tipikus folyamatok
 
-1. **Új kampány:** Kampányok → cím, badge, kép URL, link, placement (`hero` / `strip` / `tile`).
-2. **Kupon:** Kedvezmények → kód, típus (`percent` / `fixed` / `free_shipping`), minimum kosár.
-3. **Termékkép:** Termékek → fájl feltöltés a sorban ([`KEPEK.md`](KEPEK.md)).
-4. **Rendelés feldolgozás:** Rendelések → státusz (`pending` → `paid` → `fulfilled`), tracking a szállítmányon.
-5. **Beszállító:** kód (pl. `HU-BUD-01`) legyen stabil — az API `supplier_code` ezzel egyezik.
-6. **Partner feed:** Feedek → CSV feltöltés → Staging review → Publish ([`PARTNEREK.md`](PARTNEREK.md)).
-7. **Beszerzés:** Beszerzési nézet → nyitott rendelések partnerenként.
+1. **Rendelés kiszállítás:** Rendelések → szállítmány → Címke (GLS/Foxpost/…) → Tracking sync → státusz `shipped` / `delivered`. Több csomag külön kezelhető (`partial` → `fulfilled`).
+2. **Visszaküldés:** Vásárló `/returns` → admin RMA címke → Refund.
+3. **Partner áru:** Feed CSV → Staging → Publish.
+4. **Kampány:** Kampányok + Marketing A/B.
 
 ### 2.3 Dolgozó
 
-Rendelés, készlet, partnerek böngésző, beszerzési nézet; marketing / staging / feed menük nem.
+Rendelés, visszaküldés, készlet, partnerek, beszerzés — marketing / settings / staff nem.
 
 ---
 
 ## 3. Management API (rövid)
 
-Részletes referencia: [`API.md`](API.md) · Swagger: `/docs`
-
-**Auth:** minden hívásnál
+[`API.md`](API.md) · Swagger: `/docs`
 
 ```http
 X-API-Key: whoopy-dev-api-key-change-me
 ```
 
-(Élesben állítsd át: env `API_KEY`.)
-
-### Leggyakoribb műveletek
-
-| Cél | Metódus + útvonal |
-|-----|-------------------|
-| Termék létrehozás | `POST /api/v1/products` |
-| Create vagy frissítés (ERP) | `PUT /api/v1/products/upsert` |
-| Ármódosítás | `PATCH /api/v1/offers/{id}/price` |
-| Készlet | `PATCH /api/v1/offers/{id}/stock` |
-| Tömeges ár/készlet | `POST /api/v1/offers/bulk-price` |
+| Cél | Metódus |
+|-----|---------|
+| Termék upsert | `PUT /api/v1/products/upsert` |
+| Ár / készlet | `PATCH /api/v1/offers/{id}/price` · `…/stock` |
 | Rendelések | `GET /api/v1/orders` |
-| Státusz | `PATCH /api/v1/orders/{id}/status` |
 
-**ERP oldal:** az `e_commerce_erp` Whoopy adaptere ezeket hívja (`WHOOPY_API_URL`, `WHOOPY_API_KEY`).  
-Lásd: ERP `Documentation/ai/WHOOPY_SYNC.md` (ha telepítve) és [`WHOOPY_ERP_INTEGRATION.md`](WHOOPY_ERP_INTEGRATION.md).
+ERP: `e_commerce_erp` Whoopy adapter (`WHOOPY_API_URL`, `WHOOPY_API_KEY`) — [`WHOOPY_ERP_INTEGRATION.md`](WHOOPY_ERP_INTEGRATION.md).
 
 ---
 
 ## 4. Gyakori kérdések
 
-**Miért több szállítási sor a kosárban?**  
-Különböző beszállítók külön csomagot indítanak.
+**Miért több szállítási sor?** Különböző beszállítók külön csomagot indítanak.
 
-**Hol állítsam az API kulcsot?**  
-Whoopy: `app/config.py` / `API_KEY`. ERP: `.env` → `WHOOPY_API_KEY` (ugyanaz az érték).
+**Hol az API kulcs?** Whoopy `API_KEY` · ERP `WHOOPY_API_KEY` (ugyanaz).
 
-**A DB újraseedelődik?**  
-Ha a `.schema_version` változik, fejlesztői módban a SQLite újraépülhet — ne tárolj éles adatot a helyi `marketplace.db`-ben.
+**A DB újraseedelődik?** Schema bump (`.schema_version`) → **dev SQLite wipe**. Éles Postgres soha.
 
-**Hol a GitHub?**  
-https://github.com/Atis0505/whoopy
+**Számla / futár éles?** Stub outbox (`data/szamlazz_outbox`, `data/carrier_outbox`) amíg nincs Agent / futár kulcs.
+
+**Hol a GitHub?** https://github.com/Atis0505/whoopy
