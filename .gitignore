@@ -20,3 +20,8 @@ data/taxonomy/*.txt
 *.log
 .idea/
 .vscode/
+
+data/email_outbox/
+data/szamlazz_outbox/
+data/szamlazz_pdf/
+
