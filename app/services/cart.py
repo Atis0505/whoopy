@@ -42,6 +42,9 @@ class CartQuote:
     shipping_total: float = 0.0
     cod_fee_total: float = 0.0
     grand_total: float = 0.0
+    tax_rate_percent: float = 27.0
+    tax_total: float = 0.0
+    net_total: float = 0.0
     shipments: list[ShipmentQuote] = field(default_factory=list)
     item_count: int = 0
     currency: str = "HUF"
@@ -315,4 +318,10 @@ def quote_cart(db: Session, cart: Cart, country: str | None = None) -> CartQuote
         quote.items_subtotal - quote.discount_total + quote.shipping_total + quote.cod_fee_total,
         2,
     )
+    from app.services.store_settings import get_store_settings
+    from app.services.vat import split_gross, vat_rate_for_country
+
+    store = get_store_settings(db)
+    quote.tax_rate_percent = vat_rate_for_country(country or cart.country, store.tax_rate_percent)
+    quote.net_total, quote.tax_total, _ = split_gross(quote.grand_total, quote.tax_rate_percent)
     return quote

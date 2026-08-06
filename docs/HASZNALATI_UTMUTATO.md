@@ -37,6 +37,9 @@ python run.py
 | `/p/{slug}` | Termékoldal – több beszállítói ajánlat (ár, készlet, szállítási nap) |
 
 A termékoldalon válaszd ki a kívánt **ajánlatot** (beszállító), majd add a kosárhoz.
+Vélemények, kívánságlista, készlet-értesítő: lásd [`EU_SHOP.md`](EU_SHOP.md).
+
+További vásárlói oldalak: `/contact`, `/faq`, `/track`, `/wishlist`, `/returns`, jogi CMS (`/pages/…`).
 
 ### 1.3 Kosár és fizetés
 

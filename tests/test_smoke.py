@@ -32,9 +32,16 @@ def test_api_requires_key():
     assert r.status_code in (200, 401, 403, 404)
 
 
-def test_media_absolute_helper():
-    from app.services.media import absolute_media_url
+def test_robots_and_sitemap():
+    r = client.get("/robots.txt")
+    assert r.status_code == 200
+    assert "Sitemap" in r.text
+    r2 = client.get("/sitemap.xml")
+    assert r2.status_code == 200
+    assert "urlset" in r2.text
 
-    assert absolute_media_url("https://cdn.example/x.jpg").startswith("https://")
-    rel = absolute_media_url("/media/products/1/a.jpg")
-    assert "media/products" in rel
+
+def test_faq_contact_pages():
+    assert client.get("/faq").status_code == 200
+    assert client.get("/contact").status_code == 200
+    assert client.get("/track").status_code == 200

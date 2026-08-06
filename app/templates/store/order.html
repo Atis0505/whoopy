@@ -35,6 +35,7 @@
     <strong>{{ s.supplier_name }}</strong> — {{ s.rate_name }} · {{ s.method }} · {{ s.payment_method }}
     · {{ s.package_count }} pkg · {{ money(s.shipping_price) }}
     {% if s.cod_fee %} + COD {{ money(s.cod_fee) }}{% endif %}
+    {% if s.tracking_code %}<div>Tracking: <code>{{ s.tracking_code }}</code> · státusz: {{ s.status }}</div>{% endif %}
   </div>
   {% endfor %}
   <p>{{ t('subtotal') }} {{ money(order.subtotal) }}
@@ -43,6 +44,13 @@
     {% if order.cod_fee_total %} + {{ t('cod_fee') }} {{ money(order.cod_fee_total) }}{% endif %}
     = <span class="price">{{ money(order.grand_total) }}</span>
   </p>
-  <p><a class="btn secondary" href="/">{{ t('continue_shopping') }}</a></p>
+  {% if order.tax_total %}
+  <p class="muted">Nettó {{ money(order.net_total) }} · ÁFA ({{ order.tax_rate_percent }}%) {{ money(order.tax_total) }}</p>
+  {% endif %}
+  <p>
+    <a class="btn secondary" href="/order/{{ order.order_number }}/invoice?email={{ order.email }}">Számla (nyomtatható)</a>
+    <a class="btn secondary" href="/returns">Visszaküldés</a>
+    <a class="btn secondary" href="/">{{ t('continue_shopping') }}</a>
+  </p>
 </section>
 {% endblock %}

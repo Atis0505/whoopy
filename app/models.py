@@ -233,6 +233,11 @@ class StoreSettings(Base):
     erp_api_base: Mapped[str] = mapped_column(String(255), default="http://127.0.0.1:8010/api/v1")
     google_feed_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     maintenance_mode: Mapped[bool] = mapped_column(Boolean, default=False)
+    company_name: Mapped[str] = mapped_column(String(255), default="Whoopy Kft.")
+    company_address: Mapped[str] = mapped_column(String(255), default="")
+    company_tax_id: Mapped[str] = mapped_column(String(64), default="")  # adószám
+    company_eu_vat: Mapped[str] = mapped_column(String(64), default="")  # HU12345678
+    invoice_footer: Mapped[str] = mapped_column(Text, default="")
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
@@ -329,6 +334,10 @@ class Order(Base):
     discount_total: Mapped[float] = mapped_column(Float, default=0)
     shipping_total: Mapped[float] = mapped_column(Float, default=0)
     cod_fee_total: Mapped[float] = mapped_column(Float, default=0)
+    # ÁFA: árak bruttók; tax_total = bruttó * rate/(100+rate)
+    tax_rate_percent: Mapped[float] = mapped_column(Float, default=27.0)
+    tax_total: Mapped[float] = mapped_column(Float, default=0)
+    net_total: Mapped[float] = mapped_column(Float, default=0)
     grand_total: Mapped[float] = mapped_column(Float, default=0)
     currency: Mapped[str] = mapped_column(String(3), default="HUF")
     coupon_code: Mapped[str] = mapped_column(String(64), default="")
@@ -476,6 +485,67 @@ class StagingListing(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
+class ContactMessage(Base):
+    __tablename__ = "contact_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(255))
+    email: Mapped[str] = mapped_column(String(255), index=True)
+    subject: Mapped[str] = mapped_column(String(255), default="")
+    body: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(32), default="new", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class WishlistItem(Base):
+    __tablename__ = "wishlist_items"
+    __table_args__ = (UniqueConstraint("user_id", "product_id", name="uq_wishlist_user_product"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
+    session_key: Mapped[str] = mapped_column(String(64), default="", index=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ProductReview(Base):
+    __tablename__ = "product_reviews"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
+    author_name: Mapped[str] = mapped_column(String(128), default="")
+    rating: Mapped[int] = mapped_column(Integer, default=5)
+    title: Mapped[str] = mapped_column(String(255), default="")
+    body: Mapped[str] = mapped_column(Text, default="")
+    approved: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class StockAlert(Base):
+    __tablename__ = "stock_alerts"
+    __table_args__ = (UniqueConstraint("email", "product_id", name="uq_stock_alert_email_product"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
+    email: Mapped[str] = mapped_column(String(255), index=True)
+    notified: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ReturnRequest(Base):
+    __tablename__ = "return_requests"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), index=True)
+    email: Mapped[str] = mapped_column(String(255), index=True)
+    reason: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(32), default="requested", index=True)
+    admin_note: Mapped[str] = mapped_column(String(512), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class PricingRule(Base):
     """Listaár számítás / buy-box preferencia (belső)."""
 
@@ -483,11 +553,9 @@ class PricingRule(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(128))
-    # margin_percent | fixed_markup | buybox
     rule_type: Mapped[str] = mapped_column(String(32), default="margin_percent")
-    value: Mapped[float] = mapped_column(Float, default=20.0)  # % vagy HUF
+    value: Mapped[float] = mapped_column(Float, default=20.0)
     min_margin_percent: Mapped[float] = mapped_column(Float, default=0.0)
-    # buybox: cheapest | fastest | preferred_supplier
     buybox_mode: Mapped[str] = mapped_column(String(32), default="cheapest")
     supplier_id: Mapped[Optional[int]] = mapped_column(ForeignKey("suppliers.id"), nullable=True)
     category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"), nullable=True)

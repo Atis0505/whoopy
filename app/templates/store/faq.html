@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}GYIK – {{ app_name }}{% endblock %}
+{% block content %}
+<section class="panel" style="margin:1.5rem 0">
+  <h1 style="font-family:var(--font-display)">Gyakori kérdések</h1>
+  <details class="faq-item" open><summary>Mennyi a szállítási idő?</summary>
+    <p>Magyarországon tipikusan 1–3 munkanap; EU-n belül 3–7 munkanap a beszállítótól függően. A termékoldalon látsz lead time-ot ajánlatonként.</p></details>
+  <details class="faq-item"><summary>Hogyan fizethetek?</summary>
+    <p>Online (kártya / SimplePay / Stripe), utánvét, vagy számla. Online fizetés után a státusz „paid” lesz.</p></details>
+  <details class="faq-item"><summary>Elállás / visszaküldés</summary>
+    <p>EU fogyasztóként 14 napod van indokolás nélküli elállásra. Indíts kérelmet a <a href="/returns">Visszaküldés</a> oldalon, vagy olvasd a <a href="/pages/visszakuldes">visszaküldési tájékoztatót</a>.</p></details>
+  <details class="faq-item"><summary>ÁFA / számla</summary>
+    <p>Az árak bruttók (ÁFA-val). A rendelésnél és a nyomtatható számlán látszik a nettó / ÁFA bontás.</p></details>
+  <details class="faq-item"><summary>Hol követhetem a csomagot?</summary>
+    <p><a href="/track">Rendeléskövetés</a> — rendelésszám + e-mail.</p></details>
+</section>
+{% endblock %}

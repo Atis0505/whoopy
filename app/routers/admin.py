@@ -483,6 +483,32 @@ def order_status(
     return RedirectResponse(f"/admin/orders/{order_id}", status_code=303)
 
 
+@router.post("/orders/{order_id}/shipment/{shipment_id}")
+def order_shipment_update(
+    order_id: int,
+    shipment_id: int,
+    request: Request,
+    tracking_code: str = Form(""),
+    shipment_status: str = Form("pending"),
+    db: Session = Depends(get_db),
+):
+    user = _require_staff_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.models import OrderShipment
+    from app.services.webhooks import emit_order_event, load_order
+
+    sh = db.query(OrderShipment).filter(OrderShipment.id == shipment_id, OrderShipment.order_id == order_id).first()
+    if sh:
+        sh.tracking_code = tracking_code.strip()
+        sh.status = shipment_status.strip() or sh.status
+        db.commit()
+        full = load_order(db, order_id)
+        if full:
+            emit_order_event(db, "shipment.updated", full)
+    return RedirectResponse(f"/admin/orders/{order_id}", status_code=303)
+
+
 @router.get("/campaigns", response_class=HTMLResponse)
 def campaigns_list(request: Request, db: Session = Depends(get_db)):
     user = _require_admin_html(request, db)

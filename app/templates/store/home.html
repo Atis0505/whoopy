@@ -80,6 +80,30 @@
     <h2>{{ t('products') }}</h2>
     {% if q %}<span class="muted">„{{ q }}”</span>{% endif %}
   </div>
+  <form method="get" action="/" class="filter-bar panel" style="margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
+    <input type="hidden" name="q" value="{{ q or '' }}" />
+    <label>Márka
+      <select name="brand">
+        <option value="">— mind —</option>
+        {% for b in brands or [] %}
+        <option value="{{ b }}" {% if brand==b %}selected{% endif %}>{{ b }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Min ár <input type="number" name="min_price" value="{{ min_price or '' }}" style="width:6rem" /></label>
+    <label>Max ár <input type="number" name="max_price" value="{{ max_price or '' }}" style="width:6rem" /></label>
+    <label style="display:flex;align-items:center;gap:0.35rem"><input type="checkbox" name="in_stock" value="1" {% if in_stock=='1' %}checked{% endif %} /> Készleten</label>
+    <label>Rendezés
+      <select name="sort">
+        <option value="newest" {% if sort=='newest' %}selected{% endif %}>Újabbak</option>
+        <option value="price_asc" {% if sort=='price_asc' %}selected{% endif %}>Ár ↑</option>
+        <option value="price_desc" {% if sort=='price_desc' %}selected{% endif %}>Ár ↓</option>
+        <option value="bestseller" {% if sort=='bestseller' %}selected{% endif %}>Népszerű</option>
+        <option value="title" {% if sort=='title' %}selected{% endif %}>Név</option>
+      </select>
+    </label>
+    <button class="btn secondary" type="submit">Szűrés</button>
+  </form>
   <div class="grid">
     {% for p in products %}
     <a class="product-card" href="/p/{{ p.slug }}">

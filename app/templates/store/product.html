@@ -1,5 +1,27 @@
 {% extends "base.html" %}
 {% block title %}{{ product.title }} – {{ app_name }}{% endblock %}
+{% block meta_description %}{{ product.description[:160] if product.description else product.title }}{% endblock %}
+{% block og_title %}{{ product.title }}{% endblock %}
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": {{ product.title|tojson }},
+  "description": {{ (product.description or '')|tojson }},
+  "sku": {{ (product.slug)|tojson }},
+  "gtin": {{ (product.gtin or '')|tojson }},
+  "brand": {"@type": "Brand", "name": {{ (product.brand or 'Whoopy')|tojson }}},
+  "image": {{ (product.image_url or '')|tojson }},
+  "offers": {
+    "@type": "AggregateOffer",
+    "priceCurrency": "HUF",
+    "lowPrice": {{ (offers[0].display_price if offers else 0)|tojson }},
+    "offerCount": {{ offers|length }}
+  }
+}
+</script>
+{% endblock %}
 {% block content %}
 <section class="layout-2">
   <div class="panel">
@@ -11,6 +33,10 @@
       {{ product.weight_kg }} kg ·
       {% if product.ship_mode == 'separate' %}{{ t('separate') }}{% else %}{{ t('combinable') }}{% endif %}
     </p>
+    <form method="post" action="/wishlist/add" style="margin-top:0.8rem">
+      <input type="hidden" name="product_id" value="{{ product.id }}" />
+      <button class="btn secondary" type="submit">♥ Kívánságlistára</button>
+    </form>
   </div>
   <div class="panel">
     <h2>{{ t('supplier_offers') }}</h2>
@@ -27,13 +53,54 @@
       </div>
       <form method="post" action="/cart/add">
         <input type="hidden" name="offer_id" value="{{ o.id }}" />
-        <input type="number" name="quantity" value="1" min="1" max="{{ o.stock }}" style="width:4rem;margin-right:0.4rem" {% if o.stock < 1 %}disabled{% endif %} />
+        <input type="number" name="quantity" value="1" min="1" max="{{ o.stock }}" style="width:4rem;margin-right:0.4rem" {% if o.stock < 1 %}disabled{% endif %} aria-label="Mennyiség" />
         <button class="btn" type="submit" {% if o.stock < 1 %}disabled{% endif %}>{{ t('add_to_cart') }}</button>
       </form>
     </div>
     {% else %}
-    <p>—</p>
+    <p>Jelenleg nincs készleten.</p>
+    <form method="post" action="/p/{{ product.slug }}/stock-alert">
+      <div class="field"><label>Értesítés ha van készlet</label><input type="email" name="email" required placeholder="email@" /></div>
+      <button class="btn secondary" type="submit">Feliratkozás</button>
+    </form>
     {% endfor %}
+    {% if request.query_params.get('alert') %}<div class="flash-ok">Értesítünk, ha újra van készlet.</div>{% endif %}
   </div>
+</section>
+
+{% if related %}
+<section style="margin:1.5rem 0">
+  <h2>Hasonló termékek</h2>
+  <div class="product-grid">
+  {% for p in related %}
+    <a class="product-card" href="/p/{{ p.slug }}">
+      <img src="{{ p.image_url or 'https://placehold.co/400x300' }}" alt="" />
+      <strong>{{ p.title }}</strong>
+    </a>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="panel" id="reviews" style="margin:1.5rem 0">
+  <h2>Vélemények</h2>
+  {% for r in reviews %}
+  <div class="faq-item">
+    <strong>{{ "★" * r.rating }}{{ "☆" * (5 - r.rating) }}</strong>
+    {% if r.title %} — {{ r.title }}{% endif %}
+    <div class="muted">{{ r.author_name }} · {{ r.created_at }}</div>
+    <p>{{ r.body }}</p>
+  </div>
+  {% else %}
+  <p class="muted">Még nincs vélemény.</p>
+  {% endfor %}
+  <h3>Írj véleményt</h3>
+  <form method="post" action="/p/{{ product.slug }}/review">
+    <div class="field"><label>Név</label><input name="author_name" value="{{ user.full_name if user else '' }}" /></div>
+    <div class="field"><label>Értékelés (1–5)</label><input type="number" name="rating" min="1" max="5" value="5" /></div>
+    <div class="field"><label>Cím</label><input name="title" /></div>
+    <div class="field"><label>Szöveg</label><textarea name="body" rows="3"></textarea></div>
+    <button class="btn" type="submit">Küldés</button>
+  </form>
 </section>
 {% endblock %}

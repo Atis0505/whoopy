@@ -280,9 +280,26 @@ code {
   margin-top: 1rem; background: #0b1220; color: #94a3b8; padding: 2.2rem 0 2.5rem;
 }
 .site-footer strong, .site-footer h4 { color: white; }
-.footer-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 1.5rem; }
+.site-footer a { color: #cbd5e1; }
+.footer-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 1.5rem; }
 .newsletter-form { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
 .newsletter-form input { flex: 1; }
+
+.skip-link {
+  position: absolute; left: -999px; top: 0; background: #0f172a; color: white;
+  padding: 0.5rem 1rem; z-index: 1000;
+}
+.skip-link:focus { left: 0.5rem; top: 0.5rem; }
+.cookie-banner {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  background: #0f172a; color: #e2e8f0; padding: 1rem 1.25rem;
+  display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;
+  border-top: 1px solid #334155;
+}
+.cookie-banner a { color: #7dd3fc; }
+.faq-item { border-bottom: 1px solid var(--line); padding: 0.75rem 0; }
+.faq-item summary { cursor: pointer; font-weight: 700; }
+.filter-bar label { font-size: 0.85rem; font-weight: 650; }
 
 .admin-nav { display: flex; gap: 0.55rem; flex-wrap: wrap; margin: 1rem 0; }
 .admin-nav a {

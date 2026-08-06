@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Kívánságlista – {{ app_name }}{% endblock %}
+{% block content %}
+<section style="margin:1.5rem 0">
+  <h1 style="font-family:var(--font-display)">Kívánságlista</h1>
+  <div class="product-grid">
+  {% for p in products %}
+    <a class="product-card" href="/p/{{ p.slug }}">
+      <img src="{{ p.image_url or 'https://placehold.co/400x300' }}" alt="" />
+      <strong>{{ p.title }}</strong>
+    </a>
+    <form method="post" action="/wishlist/remove" style="margin-bottom:1rem">
+      <input type="hidden" name="product_id" value="{{ p.id }}" />
+      <button class="btn secondary" type="submit">Eltávolít</button>
+    </form>
+  {% else %}
+    <p class="muted">Üres. Termékoldalon add a kívánságlistához.</p>
+  {% endfor %}
+  </div>
+</section>
+{% endblock %}

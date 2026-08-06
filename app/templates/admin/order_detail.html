@@ -29,9 +29,22 @@
       <strong>{{ s.supplier_name }}</strong>
       <div>{{ s.method }} · {{ s.weight_kg }} kg · {{ s.shipping_price|huf }}</div>
       <div class="muted">Státusz: {{ s.status }}{% if s.tracking_code %} · {{ s.tracking_code }}{% endif %}</div>
+      <form method="post" action="/admin/orders/{{ order.id }}/shipment/{{ s.id }}" style="margin-top:0.5rem">
+        <div class="field"><label>Tracking</label><input name="tracking_code" value="{{ s.tracking_code }}" /></div>
+        <div class="field"><label>Szállítmány státusz</label>
+          <select name="shipment_status">
+            {% for st in ['pending','shipped','delivered','returned'] %}
+            <option value="{{ st }}" {% if s.status==st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn secondary" type="submit">Tracking mentés</button>
+      </form>
     </div>
     {% endfor %}
-    <p><strong>Végösszeg:</strong> {{ order.grand_total|huf }}</p>
+    <p><strong>Végösszeg:</strong> {{ order.grand_total|huf }}
+      {% if order.tax_total %}<br/><span class="muted">Nettó {{ order.net_total|huf }} · ÁFA {{ order.tax_total|huf }}</span>{% endif %}
+    </p>
     <form method="post" action="/admin/orders/{{ order.id }}/status">
       <div class="field"><label>Státusz módosítás</label>
         <select name="status">

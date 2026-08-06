@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Rendeléskövetés – {{ app_name }}{% endblock %}
+{% block content %}
+<section class="panel" style="margin:1.5rem 0;max-width:480px">
+  <h1 style="font-family:var(--font-display)">Rendeléskövetés</h1>
+  {% if error %}<div class="flash-error">Nem találtuk a rendelést — ellenőrizd a számot és az e-mailt.</div>{% endif %}
+  <form method="post" action="/track">
+    <div class="field"><label>Rendelésszám</label><input name="order_number" required placeholder="TM-…" /></div>
+    <div class="field"><label>E-mail</label><input name="email" type="email" required /></div>
+    <button class="btn" type="submit">Keresés</button>
+  </form>
+</section>
+{% endblock %}

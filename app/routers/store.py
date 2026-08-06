@@ -77,7 +77,17 @@ def set_prefs(
 
 
 @router.get("/", response_class=HTMLResponse)
-def home(request: Request, db: Session = Depends(get_db), q: str = "", category: int | None = None):
+def home(
+    request: Request,
+    db: Session = Depends(get_db),
+    q: str = "",
+    category: int | None = None,
+    brand: str = "",
+    in_stock: str = "",
+    sort: str = "newest",
+    min_price: float | None = None,
+    max_price: float | None = None,
+):
     from app.services.merchandising import active_campaigns, bestsellers
 
     query = (
@@ -90,8 +100,27 @@ def home(request: Request, db: Session = Depends(get_db), q: str = "", category:
         query = query.filter(or_(Product.title.ilike(like), Product.brand.ilike(like), Product.description.ilike(like)))
     if category:
         query = query.filter(Product.category_id == category)
-    products = query.order_by(Product.created_at.desc()).all()
+    if brand:
+        query = query.filter(Product.brand.ilike(brand.strip()))
+    if sort == "bestseller":
+        query = query.order_by(Product.sold_count.desc())
+    elif sort == "title":
+        query = query.order_by(Product.title.asc())
+    else:
+        query = query.order_by(Product.created_at.desc())
+    products = query.all()
     _enrich_products(db, products)
+    if in_stock == "1":
+        products = [p for p in products if (p.best_price is not None)]
+    if min_price is not None:
+        products = [p for p in products if p.best_price is not None and p.best_price >= min_price]
+    if max_price is not None:
+        products = [p for p in products if p.best_price is not None and p.best_price <= max_price]
+    if sort == "price_asc":
+        products = sorted(products, key=lambda p: p.best_price if p.best_price is not None else 1e18)
+    elif sort == "price_desc":
+        products = sorted(products, key=lambda p: p.best_price if p.best_price is not None else -1, reverse=True)
+    brands = sorted({p.brand for p in db.query(Product).filter(Product.active.is_(True), Product.brand != "").all() if p.brand})
     roots = db.query(Category).filter(Category.parent_id.is_(None)).order_by(Category.name).all()
     best = bestsellers(db, limit=8)
     _enrich_products(db, best)
@@ -103,6 +132,12 @@ def home(request: Request, db: Session = Depends(get_db), q: str = "", category:
             products=products,
             categories=roots,
             q=q,
+            brands=brands,
+            brand=brand,
+            in_stock=in_stock,
+            sort=sort,
+            min_price=min_price,
+            max_price=max_price,
             bestsellers=best,
             hero_campaigns=active_campaigns(db, "hero"),
             strip_campaigns=active_campaigns(db, "strip"),
@@ -155,9 +190,41 @@ def product_detail(slug: str, request: Request, db: Session = Depends(get_db)):
         offers.sort(key=lambda o: (0 if o.id == buy.id else 1, o.display_price, o.lead_days))
     else:
         offers.sort(key=lambda o: (o.display_price, o.lead_days))
+
+    from app.models import ProductReview
+
+    reviews = (
+        db.query(ProductReview)
+        .filter(ProductReview.product_id == product.id, ProductReview.approved.is_(True))
+        .order_by(ProductReview.id.desc())
+        .limit(50)
+        .all()
+    )
+    related = []
+    if product.category_id:
+        related = (
+            db.query(Product)
+            .filter(
+                Product.active.is_(True),
+                Product.category_id == product.category_id,
+                Product.id != product.id,
+            )
+            .order_by(Product.sold_count.desc())
+            .limit(4)
+            .all()
+        )
+        _enrich_products(db, related)
     return templates.TemplateResponse(
         "store/product.html",
-        store_context(request, db, product=product, offers=offers, buybox_offer=buy),
+        store_context(
+            request,
+            db,
+            product=product,
+            offers=offers,
+            buybox_offer=buy,
+            reviews=reviews,
+            related=related,
+        ),
     )
 
 
@@ -313,6 +380,8 @@ def checkout_submit(
         if user:
             user.newsletter_opt_in = True
         db.commit()
+
+    request.session["last_order"] = order.order_number
 
     # Online fizetés (prepaid) → fizetési kapu
     if order.payment_method == "prepaid":

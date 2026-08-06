@@ -18,9 +18,11 @@ from app.models import (
     CartItem,
     Category,
     CmsPage,
+    ContactMessage,
     Offer,
     Order,
     Product,
+    ReturnRequest,
     User,
 )
 from app.seed_auth import hash_password
@@ -84,6 +86,11 @@ def settings_save(
     tax_rate_percent: float = Form(27.0),
     low_stock_threshold: int = Form(5),
     order_prefix: str = Form("TM"),
+    company_name: str = Form(""),
+    company_address: str = Form(""),
+    company_tax_id: str = Form(""),
+    company_eu_vat: str = Form(""),
+    invoice_footer: str = Form(""),
     erp_enabled: str = Form(""),
     erp_api_base: str = Form(""),
     google_feed_enabled: str = Form(""),
@@ -104,6 +111,11 @@ def settings_save(
     store.tax_rate_percent = tax_rate_percent
     store.low_stock_threshold = max(0, low_stock_threshold)
     store.order_prefix = order_prefix.strip() or "TM"
+    store.company_name = company_name.strip() or store.company_name
+    store.company_address = company_address.strip()
+    store.company_tax_id = company_tax_id.strip()
+    store.company_eu_vat = company_eu_vat.strip()
+    store.invoice_footer = invoice_footer.strip()
     store.erp_enabled = erp_enabled == "1"
     store.erp_api_base = erp_api_base.strip() or store.erp_api_base
     store.google_feed_enabled = google_feed_enabled == "1"
@@ -509,3 +521,72 @@ def merchant_import_taxonomy(
         result = {"ok": False, "error": str(exc)}
     request.session["taxonomy_import_result"] = json.dumps(result, ensure_ascii=False, indent=2)
     return RedirectResponse("/admin/merchant", status_code=303)
+
+
+@router.get("/contact-messages", response_class=HTMLResponse)
+def contact_messages_page(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    messages = db.query(ContactMessage).order_by(ContactMessage.id.desc()).limit(200).all()
+    return templates.TemplateResponse(
+        "admin/contact_messages.html",
+        {"request": request, "user": user, "messages": messages, "app_name": settings.app_name},
+    )
+
+
+@router.post("/contact-messages/{msg_id}/status")
+def contact_message_status(
+    msg_id: int,
+    request: Request,
+    status: str = Form("read"),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    msg = db.get(ContactMessage, msg_id)
+    if msg:
+        msg.status = status.strip()[:32] or "read"
+        db.commit()
+    return RedirectResponse("/admin/contact-messages", status_code=303)
+
+
+@router.get("/returns", response_class=HTMLResponse)
+def returns_page(request: Request, db: Session = Depends(get_db)):
+    user = _require_staff(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    returns = db.query(ReturnRequest).order_by(ReturnRequest.id.desc()).limit(200).all()
+    order_ids = {r.order_id for r in returns}
+    orders = {o.id: o for o in db.query(Order).filter(Order.id.in_(order_ids)).all()} if order_ids else {}
+    return templates.TemplateResponse(
+        "admin/returns.html",
+        {
+            "request": request,
+            "user": user,
+            "returns": returns,
+            "orders": orders,
+            "app_name": settings.app_name,
+        },
+    )
+
+
+@router.post("/returns/{ret_id}/status")
+def return_status(
+    ret_id: int,
+    request: Request,
+    status: str = Form("approved"),
+    admin_note: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    user = _require_staff(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    ret = db.get(ReturnRequest, ret_id)
+    if ret:
+        ret.status = status.strip()[:32] or ret.status
+        ret.admin_note = admin_note.strip()[:512]
+        ret.updated_at = datetime.utcnow()
+        db.commit()
+    return RedirectResponse("/admin/returns", status_code=303)

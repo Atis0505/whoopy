@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Kapcsolat – {{ app_name }}{% endblock %}
+{% block content %}
+<section class="panel" style="margin:1.5rem 0;max-width:640px">
+  <h1 style="font-family:var(--font-display)">Kapcsolat</h1>
+  {% if ok %}<div class="flash-ok">Üzeneted megérkezett — hamarosan válaszolunk.</div>{% endif %}
+  <p class="muted">EU ügyfélszolgálat · normally 1–2 munkanap</p>
+  <form method="post" action="/contact">
+    <div class="field"><label>Név</label><input name="name" required /></div>
+    <div class="field"><label>E-mail</label><input name="email" type="email" required /></div>
+    <div class="field"><label>Tárgy</label><input name="subject" /></div>
+    <div class="field"><label>Üzenet</label><textarea name="body" rows="5" required></textarea></div>
+    <button class="btn" type="submit">Küldés</button>
+  </form>
+</section>
+{% endblock %}

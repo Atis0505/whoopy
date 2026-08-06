@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <title>Számla {{ order.order_number }}</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 800px; margin: 2rem auto; color: #111; }
+    h1 { font-size: 1.4rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th, td { border-bottom: 1px solid #ddd; padding: 0.4rem; text-align: left; }
+    .muted { color: #555; }
+    @media print { .no-print { display: none; } }
+  </style>
+</head>
+<body>
+  <p class="no-print"><button onclick="window.print()">Nyomtatás / PDF</button> · <a href="/order/{{ order.order_number }}">← rendelés</a></p>
+  <h1>Számla / Invoice — {{ order.order_number }}</h1>
+  <p><strong>{{ store.company_name or store.store_name }}</strong><br/>
+    {{ store.company_address }}<br/>
+    {% if store.company_tax_id %}Adószám: {{ store.company_tax_id }}<br/>{% endif %}
+    {% if store.company_eu_vat %}EU ÁFA: {{ store.company_eu_vat }}{% endif %}
+  </p>
+  <p class="muted">Vevő: {{ order.full_name }} · {{ order.email }}<br/>
+    {{ order.zip_code }} {{ order.city }}, {{ order.address }}, {{ order.country }}</p>
+  <table>
+    <thead><tr><th>Tétel</th><th>Qty</th><th>Összeg</th></tr></thead>
+    <tbody>
+    {% for ln in order.lines %}
+      <tr><td>{{ ln.product_title }}</td><td>{{ ln.quantity }}</td><td>{{ "%.0f"|format(ln.line_total) }} {{ order.currency }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p>
+    Nettó: {{ "%.0f"|format(order.net_total or 0) }} {{ order.currency }}<br/>
+    ÁFA ({{ order.tax_rate_percent }}%): {{ "%.0f"|format(order.tax_total or 0) }} {{ order.currency }}<br/>
+    <strong>Bruttó: {{ "%.0f"|format(order.grand_total) }} {{ order.currency }}</strong>
+  </p>
+  <p class="muted">{{ store.invoice_footer or "Ez egyszerűsített demó számla — éles NAV e-számla külön kötés." }}</p>
+</body>
+</html>

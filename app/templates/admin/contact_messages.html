@@ -1,0 +1,36 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Kapcsolat üzenetek{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Kapcsolat üzenetek</h1>
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Dátum</th><th>Név</th><th>E-mail</th><th>Tárgy</th><th>Státusz</th><th></th></tr></thead>
+    <tbody>
+    {% for m in messages %}
+      <tr>
+        <td class="muted">{{ m.created_at }}</td>
+        <td>{{ m.name }}</td>
+        <td><a href="mailto:{{ m.email }}">{{ m.email }}</a></td>
+        <td>
+          <strong>{{ m.subject or '—' }}</strong>
+          <div class="muted" style="font-size:0.85rem;max-width:28rem;white-space:pre-wrap">{{ m.body[:280] }}{% if m.body|length > 280 %}…{% endif %}</div>
+        </td>
+        <td>{{ m.status }}</td>
+        <td>
+          <form method="post" action="/admin/contact-messages/{{ m.id }}/status" style="display:flex;gap:0.35rem;align-items:center">
+            <select name="status">
+              <option value="new" {% if m.status=='new' %}selected{% endif %}>new</option>
+              <option value="read" {% if m.status=='read' %}selected{% endif %}>read</option>
+              <option value="done" {% if m.status=='done' %}selected{% endif %}>done</option>
+            </select>
+            <button class="btn ghost" type="submit">OK</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6">Nincs üzenet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

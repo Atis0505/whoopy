@@ -6,7 +6,7 @@ from app.database import Base, engine
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = "8"
+SCHEMA_VERSION = "9"
 VERSION_FILE = BASE_DIR / ".schema_version"
 DB_PATH = BASE_DIR / "marketplace.db"
 

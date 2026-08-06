@@ -1,0 +1,43 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Visszaküldések{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Visszaküldési kérelmek</h1>
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>Dátum</th><th>Rendelés</th><th>E-mail</th><th>Indok</th><th>Státusz</th><th>Művelet</th></tr></thead>
+    <tbody>
+    {% for r in returns %}
+      {% set o = orders.get(r.order_id) %}
+      <tr>
+        <td class="muted">{{ r.created_at }}</td>
+        <td>
+          {% if o %}
+            <a href="/admin/orders/{{ o.id }}">{{ o.order_number }}</a>
+          {% else %}
+            #{{ r.order_id }}
+          {% endif %}
+        </td>
+        <td><a href="mailto:{{ r.email }}">{{ r.email }}</a></td>
+        <td style="max-width:22rem;white-space:pre-wrap">{{ r.reason }}</td>
+        <td>{{ r.status }}{% if r.admin_note %}<div class="muted" style="font-size:0.8rem">{{ r.admin_note }}</div>{% endif %}</td>
+        <td>
+          <form method="post" action="/admin/returns/{{ r.id }}/status" style="display:flex;flex-direction:column;gap:0.35rem;min-width:10rem">
+            <select name="status">
+              <option value="requested" {% if r.status=='requested' %}selected{% endif %}>requested</option>
+              <option value="approved" {% if r.status=='approved' %}selected{% endif %}>approved</option>
+              <option value="rejected" {% if r.status=='rejected' %}selected{% endif %}>rejected</option>
+              <option value="received" {% if r.status=='received' %}selected{% endif %}>received</option>
+              <option value="refunded" {% if r.status=='refunded' %}selected{% endif %}>refunded</option>
+            </select>
+            <input name="admin_note" placeholder="Megjegyzés" value="{{ r.admin_note }}" />
+            <button class="btn ghost" type="submit">Mentés</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6">Nincs visszaküldési kérelem.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

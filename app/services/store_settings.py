@@ -39,12 +39,28 @@ def ensure_default_cms_pages(db: Session) -> None:
         (
             "adatvedelem",
             "Adatvédelmi tájékoztató",
-            "<p>Minta adatvédelmi oldal. A vásárlói adatok kezeléséről itt tájékoztathatod az ügyfeleket.</p>",
+            "<p>Minta adatvédelmi oldal (GDPR). Cookie-k: session (kosár, belépés), preferenciák.</p>",
         ),
         (
             "rolunk",
             "Rólunk",
             "<p><strong>Whoopy.hu</strong> – többbeszállítós marketplace demó Google Taxonomy alapokon.</p>",
+        ),
+        (
+            "impressum",
+            "Impresszum",
+            "<p><strong>Whoopy Kft.</strong> (minta)<br/>Székhely: Budapest<br/>Adószám: —<br/>E-mail: info@whoopy.hu<br/>"
+            "DE/AT Impressum: cseréld a saját cégadatokra.</p>",
+        ),
+        (
+            "szallitas",
+            "Szállítási tájékoztató",
+            "<p>EU országokba szállítunk. A kosárban országonkénti díjak és átfutási idők jelennek meg beszállítónként.</p>",
+        ),
+        (
+            "visszakuldes",
+            "Elállás és visszaküldés",
+            "<p>Fogyasztóként 14 napos elállási jogod van. Kérelmet a <a href='/returns'>/returns</a> oldalon indíthatsz.</p>",
         ),
     ]
     for slug, title, body in defaults:

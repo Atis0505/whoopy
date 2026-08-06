@@ -77,6 +77,9 @@ def create_order_from_cart(
         discount_total=quote.discount_total,
         shipping_total=quote.shipping_total,
         cod_fee_total=quote.cod_fee_total,
+        tax_rate_percent=getattr(quote, "tax_rate_percent", 27.0),
+        tax_total=getattr(quote, "tax_total", 0.0),
+        net_total=getattr(quote, "net_total", 0.0),
         grand_total=quote.grand_total,
         currency=cart.currency or "HUF",
         coupon_code=cart.coupon_code or "",
@@ -138,4 +141,10 @@ def create_order_from_cart(
 
     full = load_order(db, order.id) or order
     emit_order_event(db, "order.created", full)
+    try:
+        from app.services.email import order_confirmation_email
+
+        order_confirmation_email(full)
+    except Exception:
+        pass
     return order

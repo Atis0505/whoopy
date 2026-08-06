@@ -89,6 +89,9 @@
     <div>{{ t('shipping') }}: {{ money(quote.shipping_total) }}</div>
     {% if quote.cod_fee_total %}<div>{{ t('cod_fee') }}: {{ money(quote.cod_fee_total) }}</div>{% endif %}
     <div class="price" style="margin-top:0.5rem">{{ t('grand_total') }}: {{ money(quote.grand_total) }}</div>
+    <p class="muted" style="font-size:0.85rem;margin-top:0.35rem">
+      Nettó: {{ money(quote.net_total) }} · ÁFA ({{ quote.tax_rate_percent|round(1) }}%): {{ money(quote.tax_total) }}
+    </p>
     {% if quote.item_count > 0 %}
     <p style="margin-top:1rem"><a class="btn" href="/checkout">{{ t('checkout') }}</a></p>
     {% endif %}

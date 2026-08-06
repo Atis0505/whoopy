@@ -67,6 +67,13 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = True
     rate_limit_api_per_minute: int = 120
     docs_enabled: bool = True  # set false in production if desired
+    # SMTP (opcionális — üresen outbox fájl)
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_use_tls: bool = True
 
     @property
     def is_production(self) -> bool:

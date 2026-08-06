@@ -4,34 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}{{ app_name }} – {{ app_domain }}{% endblock %}</title>
-  <meta name="description" content="Whoopy.hu – minden egy helyen. Google Taxonomy alapú marketplace EU szállítással." />
+  <meta name="description" content="{% block meta_description %}Whoopy.hu – EU marketplace Google Taxonomy katalógussal, több beszállítói ajánlattal.{% endblock %}" />
+  <link rel="canonical" href="{% block canonical %}{{ request.url }}{% endblock %}" />
+  <meta property="og:title" content="{% block og_title %}{{ app_name }}{% endblock %}" />
+  <meta property="og:description" content="{% block og_description %}EU webshop · Whoopy.hu{% endblock %}" />
+  <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
+  {% block head_extra %}{% endblock %}
 </head>
 <body>
+  <a class="skip-link" href="#main">Ugrás a tartalomra</a>
   <div class="topbar">
     <div class="wrap topbar-inner">
       <div>whoopy.hu · EU szállítás · Google Taxonomy katalógus</div>
       <form method="post" action="/prefs" class="prefs-form">
         <input type="hidden" name="next" value="{{ request.url.path }}" />
         <label>{{ t('language') }}
-          <select name="lang" onchange="this.form.submit()">
+          <select name="lang" onchange="this.form.submit()" aria-label="Nyelv">
             {% for code, label in langs.items() %}
             <option value="{{ code }}" {% if lang==code %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </label>
         <label>{{ t('currency') }}
-          <select name="currency" onchange="this.form.submit()">
+          <select name="currency" onchange="this.form.submit()" aria-label="Pénznem">
             {% for c in currencies %}
             <option value="{{ c.code }}" {% if currency==c.code %}selected{% endif %}>{{ c.code }}</option>
             {% endfor %}
           </select>
         </label>
         <label>{{ t('country') }}
-          <select name="country" onchange="this.form.submit()">
+          <select name="country" onchange="this.form.submit()" aria-label="Ország">
             {% for code, label in countries.items() %}
             <option value="{{ code }}" {% if cart and cart.country==code %}selected{% endif %}>{{ code }}</option>
             {% endfor %}
@@ -44,17 +50,19 @@
   <header class="site-header">
     <div class="wrap header-inner">
       <a class="brand" href="/">
-        <div class="brand-mark">W</div>
+        <div class="brand-mark" aria-hidden="true">W</div>
         Whoopy<span>.hu</span>
       </a>
       {% block search %}
-      <form class="search-bar" action="/" method="get">
-        <input type="search" name="q" placeholder="{{ t('search') }} – termék, márka, kategória…" value="{{ q or '' }}" />
+      <form class="search-bar" action="/" method="get" role="search">
+        <input type="search" name="q" placeholder="{{ t('search') }} – termék, márka…" value="{{ q or '' }}" aria-label="{{ t('search') }}" />
         <button type="submit">{{ t('search') }}</button>
       </form>
       {% endblock %}
       <div class="header-actions">
         <a class="icon-btn" href="/taxonomy">{{ t('taxonomy') }}</a>
+        <a class="icon-btn" href="/wishlist">♥</a>
+        <a class="icon-btn" href="/track">Track</a>
         {% if user %}
           <a class="icon-btn" href="/account">{{ t('account') }}</a>
           {% if user.role == 'admin' or user.is_admin %}
@@ -72,17 +80,17 @@
     </div>
     {% if categories is defined and categories %}
     <div class="wrap">
-      <div class="cat-strip">
+      <nav class="cat-strip" aria-label="Kategóriák">
         {% for c in categories %}
         <a class="cat-chip" href="/c/{{ c.google_id }}">{{ c.name }}</a>
         {% endfor %}
         <a class="cat-chip" href="/taxonomy">{{ t('all_categories') }} →</a>
-      </div>
+      </nav>
     </div>
     {% endif %}
   </header>
 
-  <main class="wrap">
+  <main class="wrap" id="main">
     {% block content %}{% endblock %}
   </main>
 
@@ -91,24 +99,47 @@
       <div>
         <strong>Whoopy.hu</strong>
         <p>Mindent egy helyen – beszállítói marketplace, Google Taxonomy, EU csomaglogisztika.</p>
-        <p class="muted"><a href="/feeds/google-merchant.xml">Google Merchant feed</a></p>
+        <p class="muted"><a href="/feeds/google-merchant.xml">Google Merchant feed</a> · <a href="/sitemap.xml">Sitemap</a></p>
       </div>
       <div>
         <h4>Vásárlás</h4>
         <p><a href="/cart">{{ t('cart') }}</a></p>
-        <p><a href="/taxonomy">{{ t('taxonomy') }}</a></p>
-        <p><a href="/account">{{ t('account') }}</a></p>
+        <p><a href="/wishlist">Kívánságlista</a></p>
+        <p><a href="/track">Rendeléskövetés</a></p>
+        <p><a href="/returns">Visszaküldés</a></p>
+        <p><a href="/faq">GYIK</a></p>
+        <p><a href="/contact">Kapcsolat</a></p>
+      </div>
+      <div>
+        <h4>Jogi</h4>
+        <p><a href="/pages/aszf">ÁSZF</a></p>
+        <p><a href="/pages/adatvedelem">Adatvédelem</a></p>
+        <p><a href="/pages/impressum">Impresszum</a></p>
+        <p><a href="/pages/szallitas">Szállítás</a></p>
+        <p><a href="/pages/visszakuldes">Elállás / visszaküldés</a></p>
+        <p><a href="/pages/rolunk">Rólunk</a></p>
       </div>
       <div>
         <h4>{{ t('newsletter') }}</h4>
         <p>{{ t('newsletter_cta') }}</p>
         <form method="post" action="/newsletter" class="newsletter-form">
           <input type="hidden" name="lang" value="{{ lang }}" />
-          <input type="email" name="email" required placeholder="email@" />
+          <input type="email" name="email" required placeholder="email@" aria-label="E-mail" />
           <button class="btn" type="submit">{{ t('subscribe') }}</button>
         </form>
       </div>
     </div>
   </footer>
+
+  {% if not request.session.get('cookie_consent') %}
+  <div class="cookie-banner" role="dialog" aria-label="Cookie tájékoztató">
+    <p>A Whoopy cookie-kat használ a kosárhoz és a bejelentkezéshez (szükséges).
+      <a href="/pages/adatvedelem">Adatvédelem</a></p>
+    <form method="post" action="/cookies/consent" style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <button class="btn secondary" name="choice" value="necessary" type="submit">Csak szükséges</button>
+      <button class="btn" name="choice" value="all" type="submit">Elfogadom</button>
+    </form>
+  </div>
+  {% endif %}
 </body>
 </html>

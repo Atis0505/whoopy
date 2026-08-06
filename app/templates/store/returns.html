@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Visszaküldés – {{ app_name }}{% endblock %}
+{% block content %}
+<section class="panel" style="margin:1.5rem 0;max-width:560px">
+  <h1 style="font-family:var(--font-display)">Visszaküldés / elállás</h1>
+  <p class="muted">EU 14 napos elállási jog. Részletek: <a href="/pages/visszakuldes">tájékoztató</a>.</p>
+  {% if ok %}<div class="flash-ok">Kérelmed rögzítve — e-mailben jelezzük a következő lépést.</div>{% endif %}
+  {% if error %}<div class="flash-error">Rendelés nem található.</div>{% endif %}
+  <form method="post" action="/returns">
+    <div class="field"><label>Rendelésszám</label><input name="order_number" required /></div>
+    <div class="field"><label>E-mail</label><input name="email" type="email" required /></div>
+    <div class="field"><label>Indoklás</label><textarea name="reason" rows="4" required></textarea></div>
+    <button class="btn" type="submit">Kérelem indítása</button>
+  </form>
+</section>
+{% endblock %}
