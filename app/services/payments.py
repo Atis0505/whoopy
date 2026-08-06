@@ -105,7 +105,6 @@ def _start_stripe(db: Session, order: Order) -> PaymentStartResult:
     if amount < 1:
         return PaymentStartResult(provider="stripe", error="Érvénytelen összeg")
     currency = (settings.stripe_currency or "huf").lower()
-    # Stripe HUF: zero-decimal
     payload = {
         "mode": "payment",
         "success_url": f"{settings.public_base_url}/pay/return?provider=stripe&order={order.order_number}&session_id={{CHECKOUT_SESSION_ID}}",
@@ -137,6 +136,16 @@ def _start_stripe(db: Session, order: Order) -> PaymentStartResult:
         return PaymentStartResult(provider="stripe", error=str(exc))
 
 
+def _demo_fallback(order: Order, error: str | None = None) -> PaymentStartResult:
+    if not settings.simplepay_allow_demo_fallback:
+        return PaymentStartResult(provider="simplepay", error=error or "SimplePay hiba")
+    return PaymentStartResult(
+        provider="demo",
+        redirect_url=f"{settings.public_base_url}/pay/{order.order_number}/demo",
+        error=error,
+    )
+
+
 def _simplepay_signature(payload_json: str) -> str:
     digest = hmac.new(
         settings.simplepay_secret_key.encode("utf-8"),
@@ -144,6 +153,27 @@ def _simplepay_signature(payload_json: str) -> str:
         hashlib.sha384,
     ).digest()
     return base64.b64encode(digest).decode("utf-8")
+
+
+def verify_simplepay_ipn(raw_body: bytes, signature_header: str) -> Optional[dict]:
+    """IPN Signature (HMAC-SHA384 + Base64) ellenőrzés — OTP SimplePay v2."""
+    if not settings.simplepay_secret_key:
+        return None
+    if not signature_header:
+        # sandbox / hiányzó header: csak ha explicit fallback engedett
+        if settings.simplepay_allow_demo_fallback and settings.simplepay_sandbox:
+            try:
+                return json.loads(raw_body.decode("utf-8"))
+            except Exception:
+                return None
+        return None
+    try:
+        expected = _simplepay_signature(raw_body.decode("utf-8"))
+        if not hmac.compare_digest(expected, signature_header.strip()):
+            return None
+        return json.loads(raw_body.decode("utf-8"))
+    except Exception:
+        return None
 
 
 def _start_simplepay(db: Session, order: Order) -> PaymentStartResult:
@@ -189,28 +219,16 @@ def _start_simplepay(db: Session, order: Order) -> PaymentStartResult:
             data = resp.json()
             if resp.status_code >= 400 or data.get("errorCodes"):
                 logger.error("SimplePay start error: %s", data)
-                # fejlesztői fallback
-                return PaymentStartResult(
-                    provider="demo",
-                    redirect_url=f"{settings.public_base_url}/pay/{order.order_number}/demo",
-                    error=str(data),
-                )
+                return _demo_fallback(order, error=str(data))
             pay_url = data.get("paymentUrl") or data.get("redirectUrl")
             order.payment_ref = str(data.get("transactionId") or data.get("orderRef") or "")
             db.commit()
             if not pay_url:
-                return PaymentStartResult(
-                    provider="demo",
-                    redirect_url=f"{settings.public_base_url}/pay/{order.order_number}/demo",
-                )
+                return _demo_fallback(order, error="Nincs paymentUrl a SimplePay válaszban")
             return PaymentStartResult(provider="simplepay", redirect_url=pay_url)
     except Exception as exc:
         logger.exception("SimplePay start failed")
-        return PaymentStartResult(
-            provider="demo",
-            redirect_url=f"{settings.public_base_url}/pay/{order.order_number}/demo",
-            error=str(exc),
-        )
+        return _demo_fallback(order, error=str(exc))
 
 
 def complete_stripe_session(db: Session, order: Order, session_id: str) -> bool:

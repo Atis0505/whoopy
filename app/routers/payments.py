@@ -16,6 +16,7 @@ from app.services.payments import (
     mark_order_paid,
     resolve_provider,
     start_payment,
+    verify_simplepay_ipn,
     verify_stripe_webhook,
 )
 
@@ -158,11 +159,12 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
 @router.post("/pay/webhook/simplepay")
 async def simplepay_ipn(request: Request, db: Session = Depends(get_db)):
-    """OTP SimplePay IPN — JSON body, orderRef alapján."""
-    try:
-        body = await request.json()
-    except Exception:
-        return HTMLResponse("error", status_code=400)
+    """OTP SimplePay IPN — JSON body + Signature header."""
+    raw = await request.body()
+    sig = request.headers.get("Signature", "")
+    body = verify_simplepay_ipn(raw, sig)
+    if body is None:
+        return HTMLResponse("invalid signature", status_code=401)
     order_ref = body.get("orderRef") or body.get("o")
     status = str(body.get("status") or body.get("e") or "").upper()
     if not order_ref:

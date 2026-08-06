@@ -1,6 +1,6 @@
 # AI Handover – Whoopy.hu
 
-> Olvasd el session elején.
+> Olvasd el session elején. **Teljes rendszerkép:** [`docs/AI_SYSTEM.md`](docs/AI_SYSTEM.md)
 
 ## Mi ez?
 
@@ -10,7 +10,7 @@
 - **Port:** **8090** (nem 8000)
 
 Kapcsolódó ERP: `C:\Users\korom\Személyes\e_commerce_erp` (:8010 / :5181)  
-Integrációs terv: `docs/WHOOPY_ERP_INTEGRATION.md` · API: `docs/API.md`
+Integráció: `docs/WHOOPY_ERP_INTEGRATION.md` · API: `docs/API.md` · **AI rendszerleírás:** `docs/AI_SYSTEM.md`
 
 ## Gyors indítás
 
@@ -20,56 +20,31 @@ cd "C:\Users\korom\Személyes\taxonomy-marketplace"
 python run.py
 ```
 
+Docker: `docker compose up --build` — lásd `docs/DEPLOY.md`.
+
 ## Szerepkörök
 
 | Szerep | Belépés | Hová kerül |
 |--------|---------|------------|
 | **customer** | `/login` vagy regisztráció | `/account` vásárlói nézet |
-| **worker** | `/login` | `/admin/orders` (rendeléskezelés) |
+| **worker** | `/login` | `/admin/orders` (+ partners / procurement) |
 | **admin** | `/login` | `/admin` teljes admin |
 
 Demo: `vasarlo@whoopy.local` / vasarlo123 · `dolgozo@whoopy.local` / worker123 · `admin@whoopy.local` / admin1234
 
-## Merchandising
-
-- **Kampányok** (`Campaign`): hero / strip / tile – admin: `/admin/campaigns`
-- **Legtöbben rendelték**: `Product.sold_count` alapján a főoldalon
-
-## Fontos URL-ek
-
-| URL | Szerep |
-|-----|--------|
-| `/` | Főoldal |
-| `/docs` | OpenAPI (Management API) |
-| `/api/v1/*` | ERP / automation API (`X-API-Key`) |
-| `/feeds/google-merchant.xml` | Google Merchant feed |
-| `/admin` | Admin |
-| `/cart` | Kosár + multi shipping |
-
-API leírás: `docs/API.md` · **Magyar használati útmutató:** `docs/HASZNALATI_UTMUTATO.md` · Terv: `docs/FEJLESZTESI_TERV.md`
-
-## ERP kötés állapota
-
-- Whoopy Management API kész (`/api/v1`)
-- **ERP adapter kész:** `e_commerce_erp` → `WhoopyAdapter` + `/api/v1/whoopy-sync/*` (`WHOOPY_ENABLED`)
-- Stub reverse bridge: `app/services/erp_bridge.py`
-- Részletek: ERP `Documentation/ai/WHOOPY_SYNC.md`
-
-## Következő lépések (lásd FEJLESZTESI_TERV)
-
-1. ~~ERP Whoopy kliens~~
-2. ~~Fizetés (demo / Stripe / SimplePay)~~ — `docs/FIZETES.md`
-3. ~~Képfeltöltés~~ — `docs/KEPEK.md`
-4. ~~Webhook-ek~~ — `docs/WEBHOOKOK.md`
-5. ~~Admin Shopify-szint~~ — `docs/ADMIN.md`
-6. ~~Merchant Center~~ — `docs/MERCHANT.md`
-7. ~~Prod hardening~~ — `docs/PROD.md`
-8. ~~Belső partner ops~~ — `docs/PARTNEREK.md` (staging, feed, árazás, beszerzés, dedup, KPI; **nincs** supplier portal)
-
-Tervkész. Következő opcionális: ERP autosync, CDN, éles domain.
-
 ## Partner modell (fontos)
 
-- Partnerek = források, ahonnan Whoopy vásárol — nem self-listing eladók
-- Admin: `/admin/partners`, `/admin/staging`, `/admin/feeds`, `/admin/procurement`, …
-- Schema v8
+- Partnerek = források, ahonnan Whoopy vásárol — nem self-listing eladók  
+- Admin: `/admin/partners`, `/admin/staging`, `/admin/feeds`, `/admin/procurement`, …  
+- Schema **v8** · Doc: `docs/PARTNEREK.md`
+
+## ERP
+
+- Push: ERP `/api/v1/whoopy-sync/*` + **autosync** (`WHOOPY_AUTOSYNC_ENABLED`)  
+- Whoopy admin: Integrációk → ERP autosync gomb (`ERP_ENABLED=true`)  
+- Webhook: Whoopy → ERP `POST /webhooks/whoopy` → JSONL inbox  
+
+## Roadmap
+
+Lásd `docs/FEJLESZTESI_TERV.md` — 1–12 kész.  
+Következő opcionális: whoopy_orders pipeline, S3/R2, éles SimplePay merchant, E2E.

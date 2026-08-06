@@ -12,7 +12,11 @@ A bővítések **ebben a sorrendben** készülnek. Az 1. lépés (ERP kliens) el
 | 6 | **Merchant Center éles** | kész | Feed validáció + taxonomy import (`docs/MERCHANT.md`) |
 | 7 | **Prod hardening** | kész | Secrets, Postgres, rate limit, HTTPS (`docs/PROD.md`) |
 | 8 | **Belső partner ops** | kész | Staging, feed, árazás, beszerzés, dedup, KPI (`docs/PARTNEREK.md`) — **nincs** supplier portal |
+| 9 | **ERP master autosync** | kész | ERP `WHOOPY_AUTOSYNC_*` + `/whoopy-sync/autosync` |
+| 10 | **CDN media base** | kész | `MEDIA_PUBLIC_BASE` (`docs/KEPEK.md`) |
+| 11 | **SimplePay sandbox** | kész | IPN signature + fallback flag (`docs/FIZETES.md`) |
+| 12 | **Deploy / Docker** | kész | `Dockerfile`, `docker-compose.yml`, `docs/DEPLOY.md` |
 
-**A tervezett bővítési sor kész.** További ötletek: SimplePay sandbox teszt, ERP master autosync, CDN képek.
+**A tervezett bővítési sor kész.** További ötletek: webhook → whoopy_orders pipeline, S3/R2 feltöltés, E2E tesztek.
 
-Használati útmutató: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · API: [`API.md`](API.md) · Fizetés: [`FIZETES.md`](FIZETES.md) · Képek: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md) · Admin: [`ADMIN.md`](ADMIN.md) · Merchant: [`MERCHANT.md`](MERCHANT.md) · Prod: [`PROD.md`](PROD.md) · Partnerek: [`PARTNEREK.md`](PARTNEREK.md)
+Rendszerleírás AI-nak: [`AI_SYSTEM.md`](AI_SYSTEM.md) · Használat: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · API: [`API.md`](API.md) · Fizetés: [`FIZETES.md`](FIZETES.md) · Képek: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md) · Admin: [`ADMIN.md`](ADMIN.md) · Merchant: [`MERCHANT.md`](MERCHANT.md) · Prod: [`PROD.md`](PROD.md) · Deploy: [`DEPLOY.md`](DEPLOY.md) · Partnerek: [`PARTNEREK.md`](PARTNEREK.md)

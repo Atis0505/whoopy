@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: whoopy
+      POSTGRES_PASSWORD: whoopy
+      POSTGRES_DB: whoopy
+    volumes:
+      - whoopy_pg:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U whoopy"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    ports:
+      - "8090:8090"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://whoopy:whoopy@db:5432/whoopy
+      HOST: 0.0.0.0
+      PORT: "8090"
+      SEED_ON_STARTUP: "false"
+    volumes:
+      - whoopy_uploads:/app/data/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  whoopy_pg:
+  whoopy_uploads:

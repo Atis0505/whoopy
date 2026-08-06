@@ -27,7 +27,21 @@ def ensure_upload_dirs() -> None:
 
 
 def public_url(product_id: int, filename: str) -> str:
+    """Relatív path a storefront / media mount felé."""
     return f"/media/products/{product_id}/{filename}"
+
+
+def absolute_media_url(relative_or_absolute: str) -> str:
+    """CDN / PUBLIC_BASE — abszolút URL a Merchant feedhez és primary image_url-hez."""
+    url = (relative_or_absolute or "").strip()
+    if not url:
+        return ""
+    if url.startswith("http://") or url.startswith("https://"):
+        return url
+    base = settings.media_base
+    if not url.startswith("/"):
+        url = "/" + url
+    return f"{base}{url}" if base else url
 
 
 def disk_path(product_id: int, filename: str) -> Path:
@@ -81,7 +95,7 @@ async def save_product_image(
     if is_primary:
         for img in db.query(ProductImage).filter(ProductImage.product_id == product.id).all():
             img.is_primary = False
-        product.image_url = f"{settings.public_base_url.rstrip('/')}{url}"
+        product.image_url = absolute_media_url(url)
 
     image = ProductImage(
         product_id=product.id,
@@ -100,7 +114,7 @@ async def save_product_image(
 def set_primary_image(db: Session, product: Product, image: ProductImage) -> ProductImage:
     for img in db.query(ProductImage).filter(ProductImage.product_id == product.id).all():
         img.is_primary = img.id == image.id
-    product.image_url = f"{settings.public_base_url.rstrip('/')}{image.url}"
+    product.image_url = absolute_media_url(image.url)
     db.commit()
     db.refresh(image)
     return image
@@ -122,7 +136,7 @@ def delete_product_image(db: Session, product: Product, image: ProductImage) -> 
         )
         if nxt:
             nxt.is_primary = True
-            product.image_url = f"{settings.public_base_url.rstrip('/')}{nxt.url}"
+            product.image_url = absolute_media_url(nxt.url)
         else:
             # ha külső URL volt, ne töröljük vakon — csak feltöltött primary hiányában ürítjük, ha /media/
             if "/media/products/" in (product.image_url or ""):
@@ -131,9 +145,9 @@ def delete_product_image(db: Session, product: Product, image: ProductImage) -> 
 
 
 def absolute_or_path(url: str) -> str:
-    """Storefronthez: abszolút vagy gyökér-relatív URL."""
+    """Storefronthez: abszolút vagy gyökér-relatív URL (CDN-aware)."""
     if not url:
         return ""
     if url.startswith("http://") or url.startswith("https://"):
         return url
-    return url
+    return absolute_media_url(url)

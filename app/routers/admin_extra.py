@@ -421,11 +421,16 @@ def abandoned_carts(request: Request, db: Session = Depends(get_db)):
 # ── Integrations (honest) ────────────────────────────────────────────────────
 
 @router.get("/integrations", response_class=HTMLResponse)
-def integrations_page(request: Request, db: Session = Depends(get_db)):
+async def integrations_page(request: Request, db: Session = Depends(get_db)):
     user = _require_admin(request, db)
     if isinstance(user, RedirectResponse):
         return user
     store = get_store_settings(db)
+    from app.services.erp_bridge import erp_status, ping_erp
+    from app.services.payments import resolve_provider
+
+    erp = erp_status()
+    erp_ping = await ping_erp() if settings.erp_enabled else {"ok": False, "reason": "disabled"}
     return templates.TemplateResponse(
         "admin/integrations.html",
         {
@@ -433,9 +438,26 @@ def integrations_page(request: Request, db: Session = Depends(get_db)):
             "user": user,
             "store": store,
             "cfg": settings,
+            "erp": erp,
+            "erp_ping": erp_ping,
+            "resolved_payment": resolve_provider(),
+            "media_base": settings.media_base,
             "app_name": settings.app_name,
+            "flash": request.session.pop("integrations_flash", None),
         },
     )
+
+
+@router.post("/integrations/erp-autosync")
+async def integrations_erp_autosync(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.erp_bridge import trigger_erp_autosync
+
+    result = await trigger_erp_autosync()
+    request.session["integrations_flash"] = str(result)
+    return RedirectResponse("/admin/integrations", status_code=303)
 
 
 # ── Google Merchant Center ───────────────────────────────────────────────────

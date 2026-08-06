@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     erp_api_base: str = "http://127.0.0.1:8010/api/v1"
     erp_enabled: bool = False
     public_base_url: str = "http://127.0.0.1:8090"
+    # Media / CDN — ha üres, public_base_url; pl. https://cdn.whoopy.hu
+    media_public_base: str = ""
     # Whoopy Management API (ERP / automation) — header: X-API-Key
     api_key: str = "whoopy-dev-api-key-change-me"
     # Payments: demo | stripe | simplepay | auto
@@ -41,6 +43,8 @@ class Settings(BaseSettings):
     simplepay_secret_key: str = ""
     simplepay_sandbox: bool = True
     simplepay_currency: str = "HUF"
+    # Ha true: SimplePay hiba esetén demo oldalra esik vissza (csak dev!)
+    simplepay_allow_demo_fallback: bool = True
     # Outbound webhooks (Whoopy → ERP / external)
     webhook_enabled: bool = False
     webhook_url: str = "http://127.0.0.1:8010/api/v1/webhooks/whoopy"
@@ -62,6 +66,10 @@ class Settings(BaseSettings):
         return self.environment == "production"
 
     @property
+    def media_base(self) -> str:
+        return (self.media_public_base or self.public_base_url or "").rstrip("/")
+
+    @property
     def cors_origin_list(self) -> list[str]:
         return [x.strip() for x in self.cors_origins.split(",") if x.strip()]
 
@@ -79,6 +87,8 @@ class Settings(BaseSettings):
             bad.append("WEBHOOK_SECRET")
         if self.admin_password in ("admin1234", "admin", "password"):
             bad.append("ADMIN_PASSWORD")
+        if self.is_production and self.simplepay_allow_demo_fallback and self.payment_provider == "simplepay":
+            bad.append("SIMPLEPAY_ALLOW_DEMO_FALLBACK")
         return bad
 
 

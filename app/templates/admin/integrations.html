@@ -1,35 +1,49 @@
 {% extends "admin/base_admin.html" %}
 {% block page_title %}Integrációk{% endblock %}
 {% block content %}
+{% if flash %}<div class="flash-ok"><pre style="white-space:pre-wrap;margin:0;font-size:0.85rem">{{ flash }}</pre></div>{% endif %}
 <h1 style="font-family:var(--font-display)">Integrációk</h1>
 <p class="muted">Őszinte státusz — mi van bekötve, mi nincs.</p>
 <div class="admin-grid" style="margin:1rem 0">
   <div class="admin-card">
     <b>{% if cfg.erp_enabled %}ON{% else %}OFF{% endif %}</b>
-    <div class="muted">ERP reverse-bridge (config)</div>
+    <div class="muted">ERP bridge (ERP_ENABLED)</div>
   </div>
   <div class="admin-card">
-    <b>{% if store.erp_enabled %}ON{% else %}OFF{% endif %}</b>
-    <div class="muted">ERP flag (store settings)</div>
+    <b>{% if erp_ping.ok %}OK{% else %}—{% endif %}</b>
+    <div class="muted">ERP whoopy-sync ping</div>
   </div>
   <div class="admin-card">
     <b>{% if cfg.webhook_enabled %}ON{% else %}OFF{% endif %}</b>
     <div class="muted">Outbound webhook</div>
   </div>
   <div class="admin-card">
-    <b>{{ cfg.payment_provider }}</b>
-    <div class="muted">Fizetés provider</div>
+    <b>{{ resolved_payment }}</b>
+    <div class="muted">Fizetés (resolved)</div>
+  </div>
+  <div class="admin-card">
+    <b>{% if cfg.simplepay_sandbox %}sandbox{% else %}live{% endif %}</b>
+    <div class="muted">SimplePay mód</div>
+  </div>
+  <div class="admin-card">
+    <b style="font-size:0.75rem;word-break:break-all">{{ media_base or '—' }}</b>
+    <div class="muted">Media / CDN base</div>
   </div>
 </div>
 <div class="panel">
   <h3>Részletek</h3>
   <ul>
     <li><strong>Management API</strong> — kész (`/api/v1`, X-API-Key)</li>
-    <li><strong>ERP → Whoopy</strong> — ERP `whoopy-sync` kliens (külön projekt)</li>
+    <li><strong>ERP → Whoopy</strong> — ERP `POST /whoopy-sync/autosync` + push API (külön projekt)</li>
     <li><strong>Whoopy → ERP webhook</strong> — {{ cfg.webhook_url or 'nincs URL' }}</li>
     <li><strong>Google Merchant feed</strong> — {% if store.google_feed_enabled %}<a href="/feeds/google-merchant.xml">/feeds/google-merchant.xml</a> · <a href="/admin/merchant">Merchant admin</a>{% else %}kikapcsolva{% endif %}</li>
-    <li><strong>Stripe / SimplePay</strong> — kulcsok env-ben; különben demo fizetés</li>
+    <li><strong>Stripe / SimplePay</strong> — provider={{ cfg.payment_provider }}; demo fallback={% if cfg.simplepay_allow_demo_fallback %}igen{% else %}nem{% endif %}</li>
   </ul>
+  {% if cfg.erp_enabled %}
+  <form method="post" action="/admin/integrations/erp-autosync" style="margin:1rem 0">
+    <button class="btn" type="submit">ERP autosync futtatása most</button>
+  </form>
+  {% endif %}
   <p><a class="btn secondary" href="/admin/webhooks">Webhook kezelés</a>
      <a class="btn secondary" href="/admin/settings">Beállítások</a>
      <a class="btn secondary" href="/docs" target="_blank">API docs</a></p>

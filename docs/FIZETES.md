@@ -31,6 +31,8 @@ SIMPLEPAY_MERCHANT=...
 SIMPLEPAY_SECRET_KEY=...
 SIMPLEPAY_SANDBOX=true
 SIMPLEPAY_CURRENCY=HUF
+# Dev: hiba esetén demo oldal. Éles: false
+SIMPLEPAY_ALLOW_DEMO_FALLBACK=true
 ```
 
 `PAYMENT_PROVIDER`:
@@ -41,6 +43,14 @@ SIMPLEPAY_CURRENCY=HUF
 | `demo` | Mindig demo oldal |
 | `stripe` | Stripe (kulcs nélkül visszaesik demo-ra) |
 | `simplepay` | SimplePay (kulcs nélkül demo) |
+
+## Sandbox checklist
+
+1. OTP sandbox merchant + secret a `.env`-ben  
+2. `PAYMENT_PROVIDER=simplepay`, `SIMPLEPAY_SANDBOX=true`  
+3. Elérhető `PUBLIC_BASE_URL` (tunnel, ha lokál)  
+4. IPN: `POST {PUBLIC_BASE_URL}/pay/webhook/simplepay` — **Signature** HMAC-SHA384 Base64  
+5. Éles: `SIMPLEPAY_SANDBOX=false` + `SIMPLEPAY_ALLOW_DEMO_FALLBACK=false`
 
 ## Webhook / IPN
 
@@ -53,5 +63,6 @@ SIMPLEPAY_CURRENCY=HUF
 
 ## Fejlesztői megjegyzés
 
-- Schema mezők: `Order.payment_status`, `payment_provider`, `payment_ref`, `paid_at` (schema **v5**).
-- Kód: `app/services/payments.py`, `app/routers/payments.py`
+- Schema mezők: `Order.payment_status`, `payment_provider`, `payment_ref`, `paid_at`  
+- Kód: `app/services/payments.py`, `app/routers/payments.py`  
+- Deploy: [`DEPLOY.md`](DEPLOY.md)

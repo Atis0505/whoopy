@@ -9,7 +9,15 @@ data/uploads/products/{product_id}/{uuid}.jpg
 ```
 
 Nyilvános URL: `/media/products/{product_id}/{fájlnév}`  
-(pl. `http://127.0.0.1:8090/media/products/3/abc….webp`)
+Abszolút primary URL: `{MEDIA_PUBLIC_BASE vagy PUBLIC_BASE_URL}/media/products/...`
+
+```env
+PUBLIC_BASE_URL=https://whoopy.hu
+MEDIA_PUBLIC_BASE=https://cdn.whoopy.hu
+```
+
+Ha `MEDIA_PUBLIC_BASE` üres, a `PUBLIC_BASE_URL` érvényes.  
+CDN tipikusan reverse-proxy / Cloudflare cache a `/media/*` path-ra — a fájlok továbbra is a `data/uploads` volume-on vannak (vagy később object storage).
 
 A feltöltött fájlok **nincsenek** a Gitben (`.gitignore`: `data/uploads/`).
 

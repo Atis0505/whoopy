@@ -72,6 +72,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8090 --workers 2
 
 Ne használd `--reload`-ot productionben.
 
+Docker: lásd [`DEPLOY.md`](DEPLOY.md) (`Dockerfile` + `docker-compose.yml`).
+
 ## CORS (ha kell)
 
 ```env
