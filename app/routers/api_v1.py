@@ -539,10 +539,12 @@ def update_offer(offer_id: int, body: OfferUpdate, db: Session = Depends(get_db)
 @router.patch("/offers/{offer_id}/price", response_model=OfferOut, tags=["Offers"])
 def patch_offer_price(offer_id: int, body: PricePatch, db: Session = Depends(get_db)):
     """Gyors ármódosítás már meghirdetett terméknél."""
+    from app.services.compliance import set_offer_price
+
     o = db.get(Offer, offer_id)
     if not o:
         raise HTTPException(404, "Ajánlat nem található")
-    o.price = body.price
+    set_offer_price(db, o, body.price, source="api")
     o.currency = body.currency
     db.commit()
     db.refresh(o)
@@ -563,6 +565,8 @@ def patch_offer_stock(offer_id: int, body: StockPatch, db: Session = Depends(get
 @router.post("/offers/bulk-price", response_model=BulkPriceResult, tags=["Offers"])
 def bulk_update_prices(body: BulkPriceRequest, db: Session = Depends(get_db)):
     """Tömeges ármódosítás — ERP árszinkronhoz."""
+    from app.services.compliance import set_offer_price
+
     updated = 0
     errors: list[str] = []
     for i, item in enumerate(body.items):
@@ -584,7 +588,7 @@ def bulk_update_prices(body: BulkPriceRequest, db: Session = Depends(get_db)):
             if not offer:
                 errors.append(f"[{i}] ajánlat nem található")
                 continue
-            offer.price = item.price
+            set_offer_price(db, offer, item.price, source="api_bulk")
             if item.stock is not None:
                 offer.stock = item.stock
             updated += 1

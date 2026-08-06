@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
-from app.models import Campaign, Order, OrderLine, Product, StoreSettings
+from app.models import Campaign, Offer, Order, OrderLine, Product, StoreSettings
 from app.services.merchandising import active_campaigns
 from app.services.store_settings import get_store_settings
 
@@ -50,8 +50,54 @@ def pending_order_count(db: Session) -> int:
     )
 
 
+def _product_href(db: Session, *, offer_id: int | None = None, title: str = "", sku: str = "") -> str:
+    """Resolve /p/{slug} from offer or title/sku fallback."""
+    from urllib.parse import quote
+
+    if offer_id:
+        row = (
+            db.query(Product.slug)
+            .join(Offer, Offer.product_id == Product.id)
+            .filter(Offer.id == offer_id, Product.active.is_(True))
+            .first()
+        )
+        if row and row[0]:
+            return f"/p/{row[0]}"
+    if sku:
+        row = (
+            db.query(Product.slug)
+            .join(Offer, Offer.product_id == Product.id)
+            .filter(Offer.sku == sku, Product.active.is_(True))
+            .first()
+        )
+        if row and row[0]:
+            return f"/p/{row[0]}"
+    title = (title or "").strip()
+    if title:
+        p = db.query(Product).filter(Product.active.is_(True), Product.title == title).first()
+        if p:
+            return f"/p/{p.slug}"
+        p = (
+            db.query(Product)
+            .filter(Product.active.is_(True), Product.title.ilike(f"{title[:40]}%"))
+            .order_by(Product.sold_count.desc())
+            .first()
+        )
+        if p:
+            return f"/p/{p.slug}"
+        return f"/search?q={quote(title[:60])}"
+    return "/taxonomy"
+
+
+def _campaign_href(c: Campaign) -> str:
+    url = (c.link_url or "").strip()
+    if url:
+        return url
+    return f"/go/c/{c.id}"
+
+
 def social_ticker_items(db: Session, *, limit: int = 12) -> list[dict]:
-    """Futó szalag: friss vásárlások + havi bestseller + topbar kampányok."""
+    """Futó szalag: friss vásárlások + havi bestseller + topbar kampányok (linkelve)."""
     items: list[dict] = []
 
     recent = (
@@ -63,18 +109,28 @@ def social_ticker_items(db: Session, *, limit: int = 12) -> list[dict]:
         .all()
     )
     for o in recent:
-        title = o.lines[0].product_title if o.lines else "termék"
+        if not o.lines:
+            continue
+        line = o.lines[0]
+        title = line.product_title or "termék"
         city = (o.city or "Magyarország").split(",")[0][:32]
+        href = _product_href(db, offer_id=line.offer_id, title=title, sku=line.sku or "")
         items.append(
             {
                 "kind": "purchase",
                 "text": f"{city} · valaki megvette: {title[:48]}",
+                "href": href or "/taxonomy",
             }
         )
 
     since = datetime.utcnow() - timedelta(days=30)
     top = (
-        db.query(OrderLine.product_title, func.sum(OrderLine.quantity).label("qty"))
+        db.query(
+            OrderLine.product_title,
+            func.sum(OrderLine.quantity).label("qty"),
+            func.max(OrderLine.offer_id).label("offer_id"),
+            func.max(OrderLine.sku).label("sku"),
+        )
         .join(Order, Order.id == OrderLine.order_id)
         .filter(Order.created_at >= since, Order.status.notin_(("cancelled",)))
         .group_by(OrderLine.product_title)
@@ -82,11 +138,13 @@ def social_ticker_items(db: Session, *, limit: int = 12) -> list[dict]:
         .limit(5)
         .all()
     )
-    for title, qty in top:
+    for title, qty, offer_id, sku in top:
+        href = _product_href(db, offer_id=offer_id, title=title or "", sku=sku or "")
         items.append(
             {
                 "kind": "bestseller",
-                "text": f"Havi kedvenc · {title[:48]} ({int(qty)} db)",
+                "text": f"Havi kedvenc · {(title or '')[:48]} ({int(qty)} db)",
+                "href": href or "/taxonomy",
             }
         )
 
@@ -102,6 +160,7 @@ def social_ticker_items(db: Session, *, limit: int = 12) -> list[dict]:
                 {
                     "kind": "bestseller",
                     "text": f"Kedvelt · {p.title[:48]}",
+                    "href": f"/p/{p.slug}",
                 }
             )
 
@@ -111,9 +170,26 @@ def social_ticker_items(db: Session, *, limit: int = 12) -> list[dict]:
             {
                 "kind": "promo",
                 "text": f"{label}: {c.title}" + (f" — {c.subtitle}" if c.subtitle else ""),
-                "href": c.link_url or f"/go/c/{c.id}",
+                "href": _campaign_href(c),
             }
         )
+
+    # Always linkable fallback bestsellers if still thin
+    if len(items) < 4:
+        for p in (
+            db.query(Product)
+            .filter(Product.active.is_(True))
+            .order_by(Product.sold_count.desc(), Product.id.desc())
+            .limit(4)
+            .all()
+        ):
+            items.append(
+                {
+                    "kind": "bestseller",
+                    "text": f"Népszerű · {p.title[:48]}",
+                    "href": f"/p/{p.slug}",
+                }
+            )
 
     return items[:limit]
 

@@ -1,18 +1,25 @@
 {% extends "admin/base_admin.html" %}
+{% block page_title %}Beszállítók{% endblock %}
 {% block content %}
 <h1 style="font-family:var(--font-display)">Beszállítók</h1>
+<p class="muted">Kattints egy sorra a cégadatok megnyitásához.</p>
 <div class="layout-2">
   <div class="panel">
     <table class="table">
       <thead><tr><th>Kód</th><th>Név</th><th>Ország</th><th>E-mail</th></tr></thead>
       <tbody>
       {% for s in suppliers %}
-        <tr>
-          <td>{{ s.code }}</td>
-          <td><strong>{{ s.name }}</strong><div class="muted">{{ s.city }}</div></td>
+        <tr class="row-link" onclick="location.href='/admin/suppliers/{{ s.id }}'" style="cursor:pointer">
+          <td><code>{{ s.code }}</code></td>
+          <td>
+            <strong><a href="/admin/suppliers/{{ s.id }}" onclick="event.stopPropagation()">{{ s.name }}</a></strong>
+            <div class="muted">{{ s.city }}{% if s.preferred %} · preferált{% endif %}</div>
+          </td>
           <td>{{ s.country }}</td>
-          <td>{{ s.email }}</td>
+          <td>{{ s.email or '—' }}</td>
         </tr>
+      {% else %}
+        <tr><td colspan="4" class="muted">Nincs beszállító.</td></tr>
       {% endfor %}
       </tbody>
     </table>
@@ -23,8 +30,10 @@
       <div class="field"><label>Kód</label><input name="code" required placeholder="HU-XYZ-01" /></div>
       <div class="field"><label>Név</label><input name="name" required /></div>
       <div class="field"><label>E-mail</label><input name="email" type="email" /></div>
+      <div class="field"><label>Telefon</label><input name="phone" /></div>
       <div class="field"><label>Ország</label><input name="country" value="HU" maxlength="2" /></div>
       <div class="field"><label>Város</label><input name="city" /></div>
+      <div class="field"><label>Cím</label><input name="address" /></div>
       <button class="btn" type="submit">Mentés</button>
     </form>
   </div>

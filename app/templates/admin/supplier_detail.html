@@ -1,0 +1,60 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}{{ supplier.name }}{% endblock %}
+{% block content %}
+<p class="muted"><a href="/admin/suppliers">← Beszállítók</a></p>
+<h1 style="font-family:var(--font-display)">{{ supplier.name }}</h1>
+<p class="muted"><code>{{ supplier.code }}</code>
+  · {% if supplier.active %}aktív{% else %}inaktív{% endif %}
+  {% if supplier.preferred %} · <span class="badge">preferált</span>{% endif %}
+  {% if supplier.dropship_available %} · dropship{% endif %}
+</p>
+
+{% if request.query_params.get('saved') %}<div class="flash-ok">Mentve.</div>{% endif %}
+
+<div class="layout-2">
+  <div class="panel">
+    <h3>Cégadatok</h3>
+    <form method="post" action="/admin/suppliers/{{ supplier.id }}">
+      <div class="field"><label>Név</label><input name="name" value="{{ supplier.name }}" required /></div>
+      <div class="field"><label>Kód</label><input name="code" value="{{ supplier.code }}" required /></div>
+      <div class="field"><label>E-mail</label><input name="email" type="email" value="{{ supplier.email }}" /></div>
+      <div class="field"><label>Telefon</label><input name="phone" value="{{ supplier.phone }}" /></div>
+      <div class="field"><label>Ország</label><input name="country" value="{{ supplier.country }}" maxlength="2" /></div>
+      <div class="field"><label>Város</label><input name="city" value="{{ supplier.city }}" /></div>
+      <div class="field"><label>Cím</label><input name="address" value="{{ supplier.address }}" /></div>
+      <div class="field"><label>Megjegyzés</label><textarea name="notes" rows="3">{{ supplier.notes }}</textarea></div>
+      <label class="muted"><input type="checkbox" name="active" value="1" {% if supplier.active %}checked{% endif %} /> Aktív</label><br/>
+      <label class="muted"><input type="checkbox" name="preferred" value="1" {% if supplier.preferred %}checked{% endif %} /> Preferált forrás</label><br/>
+      <label class="muted"><input type="checkbox" name="dropship_available" value="1" {% if supplier.dropship_available %}checked{% endif %} /> Dropship elérhető</label>
+      <p style="margin-top:1rem"><button class="btn" type="submit">Mentés</button></p>
+    </form>
+  </div>
+  <div class="panel">
+    <h3>Összefoglaló</h3>
+    <div class="admin-grid" style="margin-bottom:1rem">
+      <div class="admin-card"><b>{{ offer_count }}</b><div class="muted">ajánlat</div></div>
+      <div class="admin-card"><b>{{ rate_count }}</b><div class="muted">szállítási díj</div></div>
+      <div class="admin-card"><b>{{ feed_count }}</b><div class="muted">feed</div></div>
+    </div>
+    <p><a class="btn secondary" href="/admin/inventory">Készlet / ajánlatok</a>
+       <a class="btn ghost" href="/admin/shipping">Szállítás</a>
+       <a class="btn ghost" href="/admin/partners">Partnerek</a></p>
+    {% if offers %}
+    <h3 style="margin-top:1.25rem">Legutóbbi ajánlatok</h3>
+    <table class="table">
+      <thead><tr><th>SKU</th><th>Termék</th><th>Ár</th><th>Készlet</th></tr></thead>
+      <tbody>
+      {% for o in offers %}
+        <tr>
+          <td><code>{{ o.sku }}</code></td>
+          <td>{{ o.product.title if o.product else '—' }}</td>
+          <td>{{ o.price|huf }}</td>
+          <td>{{ o.stock }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -717,7 +717,7 @@ class Warehouse(Base):
 
 
 class PriceHistory(Base):
-    """Omnibus / 30 napos legalacsonyabb ár."""
+    """Omnibus / 30 napos legalacsonyabb ár + NAV-szerű ártörténet."""
 
     __tablename__ = "price_history"
 
@@ -725,7 +725,51 @@ class PriceHistory(Base):
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
     offer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("offers.id"), nullable=True)
     price: Mapped[float] = mapped_column(Float)
+    previous_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    source: Mapped[str] = mapped_column(String(64), default="system")  # api|admin|staging|seed|snapshot
     recorded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class Subscription(Base):
+    """Vásárlói ismétlődő / automatikus újrarendelés."""
+
+    __tablename__ = "subscriptions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String(128), default="Ismétlődő rendelés")
+    interval_days: Mapped[int] = mapped_column(Integer, default=30)
+    next_run_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    paused: Mapped[bool] = mapped_column(Boolean, default=False)
+    email: Mapped[str] = mapped_column(String(255), default="")
+    full_name: Mapped[str] = mapped_column(String(255), default="")
+    phone: Mapped[str] = mapped_column(String(64), default="")
+    country: Mapped[str] = mapped_column(String(2), default="HU")
+    city: Mapped[str] = mapped_column(String(128), default="")
+    address: Mapped[str] = mapped_column(String(255), default="")
+    zip_code: Mapped[str] = mapped_column(String(16), default="")
+    payment_preference: Mapped[str] = mapped_column(String(16), default="cod")
+    last_order_id: Mapped[Optional[int]] = mapped_column(ForeignKey("orders.id"), nullable=True)
+    last_error: Mapped[str] = mapped_column(String(512), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    lines: Mapped[list["SubscriptionLine"]] = relationship(
+        back_populates="subscription", cascade="all, delete-orphan"
+    )
+
+
+class SubscriptionLine(Base):
+    __tablename__ = "subscription_lines"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    subscription_id: Mapped[int] = mapped_column(ForeignKey("subscriptions.id"), index=True)
+    offer_id: Mapped[int] = mapped_column(ForeignKey("offers.id"), index=True)
+    quantity: Mapped[int] = mapped_column(Integer, default=1)
+
+    subscription: Mapped[Subscription] = relationship(back_populates="lines")
+    offer: Mapped["Offer"] = relationship()
 
 
 class CookieConsentLog(Base):

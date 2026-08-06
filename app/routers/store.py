@@ -661,8 +661,27 @@ def account_page(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
     if not user:
         return RedirectResponse("/login", status_code=303)
+    from app.models import Subscription
+    from app.services.subscriptions import ALLOWED_INTERVALS
+
     orders = db.query(Order).filter(Order.customer_id == user.id).order_by(Order.created_at.desc()).limit(20).all()
-    return templates.TemplateResponse("store/account.html", store_context(request, db, orders=orders))
+    subscriptions = (
+        db.query(Subscription)
+        .options(joinedload(Subscription.lines))
+        .filter(Subscription.user_id == user.id)
+        .order_by(Subscription.id.desc())
+        .all()
+    )
+    return templates.TemplateResponse(
+        "store/account.html",
+        store_context(
+            request,
+            db,
+            orders=orders,
+            subscriptions=subscriptions,
+            interval_choices=ALLOWED_INTERVALS,
+        ),
+    )
 
 
 @router.post("/account/newsletter")

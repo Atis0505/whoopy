@@ -58,10 +58,13 @@
           {% if o.promo %}<span class="badge">{{ t('promo') }}</span>
           <span class="muted" style="text-decoration:line-through">{{ money(o.list_price) }}</span>{% endif %}
         </div>
-        {% if lowest_30d is not none and o.display_price < lowest_30d %}
-        <div class="muted" style="font-size:0.8rem">Legalacsonyabb ár az elmúlt 30 napban: {{ money(lowest_30d) }}</div>
-        {% elif lowest_30d is not none %}
-        <div class="muted" style="font-size:0.8rem">Legalacsonyabb ár az elmúlt 30 napban: {{ money(lowest_30d) }}</div>
+        {% if lowest_30d is not none %}
+        <div class="muted" style="font-size:0.8rem">
+          Omnibus — legalacsonyabb ár az elmúlt 30 napban: <strong>{{ money(lowest_30d) }}</strong>
+          {% if o.display_price < lowest_30d %}
+          <span>(aktuális ajánlat ennél alacsonyabb)</span>
+          {% endif %}
+        </div>
         {% endif %}
       </div>
       <form method="post" action="/cart/add">

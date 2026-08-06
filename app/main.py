@@ -11,7 +11,7 @@ from app.bootstrap import ensure_fresh_schema
 from app.config import BASE_DIR, settings
 from app.database import SessionLocal
 from app.middleware_security import ApiRateLimitMiddleware, SecurityHeadersMiddleware
-from app.routers import admin, admin_extra, admin_marketplace, api_v1, compliance, customer_ux, eu_shop, payments, store
+from app.routers import admin, admin_extra, admin_marketplace, api_v1, compliance, customer_ux, eu_shop, payments, store, subscriptions
 from app.seed import seed_all
 from app.services.media import ensure_upload_dirs
 
@@ -71,6 +71,7 @@ app.include_router(store.router)
 app.include_router(eu_shop.router)
 app.include_router(customer_ux.router)
 app.include_router(compliance.router)
+app.include_router(subscriptions.router)
 app.include_router(admin.router)
 app.include_router(admin_extra.router)
 app.include_router(admin_marketplace.router)
@@ -105,6 +106,11 @@ def on_startup():
         db = SessionLocal()
         try:
             seed_all(db)
+            from app.services.subscriptions import process_due_subscriptions
+
+            result = process_due_subscriptions(db)
+            if result["processed"] or result["failed"]:
+                logger.info("Subscriptions due: %s", result)
         finally:
             db.close()
     else:

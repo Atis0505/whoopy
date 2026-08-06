@@ -24,6 +24,42 @@
     </form>
 
     <hr style="border:0;border-top:1px solid var(--line);margin:1.25rem 0" />
+    <h3>Ismétlődő rendelések</h3>
+    {% if request.query_params.get('sub_ok') %}<div class="flash-ok">Ismétlés létrehozva.</div>{% endif %}
+    {% if request.query_params.get('sub_error') %}<div class="flash-error">Nem sikerült ismétlést létrehozni (hiányzó tétel / készlet).</div>{% endif %}
+    <p class="muted" style="font-size:0.9rem">Állíts be automatikus újrarendelést egy korábbi rendelésből vagy a kosárból.</p>
+    {% for s in subscriptions %}
+    <div class="shipment" style="margin-bottom:0.75rem">
+      <strong>{{ s.name }}</strong>
+      <div class="muted">{{ s.interval_days }} naponta · következő: {{ s.next_run_at }}
+        · {% if not s.active %}leállítva{% elif s.paused %}szünet{% else %}aktív{% endif %}
+      </div>
+      <div class="muted" style="font-size:0.85rem">{{ s.lines|length }} tétel · {{ s.city }} {{ s.address }}</div>
+      {% if s.last_error %}<div class="flash-error" style="margin-top:0.35rem;padding:0.4rem;font-size:0.8rem">{{ s.last_error }}</div>{% endif %}
+      <div style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-top:0.5rem">
+        <form method="post" action="/account/subscriptions/{{ s.id }}/interval" style="display:flex;gap:0.35rem">
+          <select name="interval_days">
+            {% for d in interval_choices %}
+            <option value="{{ d }}" {% if s.interval_days==d %}selected{% endif %}>{{ d }} nap</option>
+            {% endfor %}
+          </select>
+          <button class="btn ghost" type="submit">Intervallum</button>
+        </form>
+        {% if s.paused or not s.active %}
+        <form method="post" action="/account/subscriptions/{{ s.id }}/resume"><button class="btn secondary" type="submit">Folytatás</button></form>
+        {% else %}
+        <form method="post" action="/account/subscriptions/{{ s.id }}/pause"><button class="btn secondary" type="submit">Szünet</button></form>
+        {% endif %}
+        <form method="post" action="/account/subscriptions/{{ s.id }}/cancel" onsubmit="return confirm('Leállítod az ismétlést?');">
+          <button class="btn ghost" type="submit">Leállítás</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <p class="muted">Még nincs ismétlődő rendelésed.</p>
+    {% endfor %}
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:1.25rem 0" />
     <h3>Adatok (GDPR)</h3>
     {% if request.query_params.get('gdpr_error') %}
     <div class="flash-error">Törléshez írd be: TORLES{% if request.query_params.get('gdpr_error')=='staff' %} (staff fiók nem törölhető így){% endif %}</div>
@@ -56,9 +92,19 @@
           <td><a href="/order/{{ o.order_number }}">{{ o.order_number }}</a></td>
           <td>{{ o.status }}</td>
           <td>{{ money(o.grand_total) }}</td>
+          <td>
+            <form method="post" action="/account/subscriptions/from-order/{{ o.id }}" style="display:flex;gap:0.25rem;align-items:center">
+              <select name="interval_days" style="width:auto">
+                {% for d in interval_choices %}
+                <option value="{{ d }}" {% if d==30 %}selected{% endif %}>{{ d }} nap</option>
+                {% endfor %}
+              </select>
+              <button class="btn ghost" type="submit" style="padding:0.25rem 0.5rem;font-size:0.8rem">Ismétlés</button>
+            </form>
+          </td>
         </tr>
       {% else %}
-        <tr><td colspan="3" class="muted">Még nincs rendelésed.</td></tr>
+        <tr><td colspan="4" class="muted">Még nincs rendelésed.</td></tr>
       {% endfor %}
       </tbody>
     </table>

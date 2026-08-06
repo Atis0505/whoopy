@@ -1,0 +1,40 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Ismétlődő rendelések{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Ismétlődő / automatikus rendelések</h1>
+{% if request.query_params.get('ok') %}
+<div class="flash-ok">Lefuttatva: {{ request.query_params.get('ok') }} siker{% if request.query_params.get('fail') %}, {{ request.query_params.get('fail') }} hiba{% endif %}.</div>
+{% endif %}
+<form method="post" action="/admin/subscriptions/run-due" style="margin-bottom:1rem">
+  <button class="btn" type="submit">Esedékesek futtatása most</button>
+</form>
+<div class="panel">
+  <table class="table">
+    <thead><tr><th>ID</th><th>Név</th><th>User</th><th>Intervallum</th><th>Következő</th><th>Státusz</th><th>Művelet</th></tr></thead>
+    <tbody>
+    {% for s in subscriptions %}
+      <tr>
+        <td>#{{ s.id }}</td>
+        <td>{{ s.name }}<div class="muted">{{ s.lines|length }} tétel · {{ s.email }}</div></td>
+        <td>{{ s.user_id }}</td>
+        <td>{{ s.interval_days }} nap</td>
+        <td class="muted">{{ s.next_run_at }}</td>
+        <td>
+          {% if not s.active %}inaktív
+          {% elif s.paused %}szüneteltetve
+          {% else %}aktív{% endif %}
+          {% if s.last_error %}<div class="flash-error" style="margin:0.35rem 0 0;padding:0.35rem;font-size:0.8rem">{{ s.last_error }}</div>{% endif %}
+        </td>
+        <td>
+          <form method="post" action="/admin/subscriptions/{{ s.id }}/run-now">
+            <button class="btn ghost" type="submit">Futtatás most</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="7">Nincs ismétlődő rendelés.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

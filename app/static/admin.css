@@ -103,11 +103,26 @@
   border-radius: 12px;
   padding: 1rem;
 }
+a.admin-card-link {
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+a.admin-card-link:hover {
+  border-color: #99f6e4;
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.12);
+  transform: translateY(-1px);
+}
+a.admin-card-link:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
 .admin-card b {
   font-size: 1.45rem;
   font-family: Sora, Manrope, sans-serif;
   display: block;
 }
+tr.row-link:hover { background: #f8fafc; }
 .stat-bar {
   height: 8px;
   background: #e2e8f0;

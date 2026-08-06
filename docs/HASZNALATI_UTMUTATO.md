@@ -39,7 +39,10 @@ További vásárlói / ops funkciók: felső hirdetőszalag, social ticker, bolt
 | `/search?q=` | Találati lista |
 | `/taxonomy` | Teljes kategóriafa |
 | `/c/{id}` | Kategória terméklista (+ szűrők ahol van) |
+| `/account` | Fiók: rendelések, ismétlődő újrarendelés, GDPR export/törlés, hírlevél |
 | `/p/{slug}` | Termék: ajánlatok, variáns, Omnibus 30 nap legalacsonyabb ár, vélemények |
+| `/admin/price-history` | Ártörténet riporter (Omnibus) |
+| `/admin/subscriptions` | Ismétlődő rendelések + due runner |
 | `/compare` | Összehasonlítás |
 | `/recent` | Nemrég nézett |
 | `/wishlist` | Kívánságlista |

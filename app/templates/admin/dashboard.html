@@ -22,14 +22,14 @@
 </div>
 
 <div class="admin-grid" style="margin:1rem 0 1.5rem">
-  <div class="admin-card"><b>{{ stats.products }}</b><div class="muted">termék</div></div>
-  <div class="admin-card"><b>{{ stats.suppliers }}</b><div class="muted">beszállító</div></div>
-  <div class="admin-card"><b>{{ stats.offers }}</b><div class="muted">ajánlat</div></div>
-  <div class="admin-card"><b>{{ stats.orders }}</b><div class="muted">rendelés</div></div>
-  <div class="admin-card"><b>{{ stats.pending }}</b><div class="muted">nyitott rendelés</div></div>
-  <div class="admin-card"><b>{{ stats.categories }}</b><div class="muted">taxonomy node</div></div>
-  <div class="admin-card"><b>{{ stats.coupons }}</b><div class="muted">kupon</div></div>
-  <div class="admin-card"><b>{{ stats.subscribers }}</b><div class="muted">hírlevél</div></div>
+  <a class="admin-card admin-card-link" href="/admin/products"><b>{{ stats.products }}</b><div class="muted">termék</div></a>
+  <a class="admin-card admin-card-link" href="/admin/suppliers"><b>{{ stats.suppliers }}</b><div class="muted">beszállító</div></a>
+  <a class="admin-card admin-card-link" href="/admin/inventory"><b>{{ stats.offers }}</b><div class="muted">ajánlat</div></a>
+  <a class="admin-card admin-card-link" href="/admin/orders"><b>{{ stats.orders }}</b><div class="muted">rendelés</div></a>
+  <a class="admin-card admin-card-link" href="/admin/orders"><b>{{ stats.pending }}</b><div class="muted">nyitott rendelés</div></a>
+  <a class="admin-card admin-card-link" href="/admin/categories"><b>{{ stats.categories }}</b><div class="muted">taxonomy node</div></a>
+  <a class="admin-card admin-card-link" href="/admin/coupons"><b>{{ stats.coupons }}</b><div class="muted">kupon</div></a>
+  <a class="admin-card admin-card-link" href="/admin/newsletter"><b>{{ stats.subscribers }}</b><div class="muted">hírlevél</div></a>
 </div>
 <div class="panel">
   <h3>Legutóbbi rendelések</h3>

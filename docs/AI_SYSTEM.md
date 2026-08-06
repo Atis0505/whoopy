@@ -1,7 +1,7 @@
 # Whoopy rendszerleírás — AI / fejlesztői handover
 
 > Célközönség: **másik AI agent** vagy új fejlesztő, aki nulláról folytatja a Whoopy ökoszisztémát.  
-> Frissítve: 2026-08 · Schema Whoopy **v14**
+> Frissítve: 2026-08 · Schema Whoopy **v15**
 
 ---
 
@@ -59,6 +59,7 @@
 | Marketing | `services/{marketing_feeds,attribution}.py` · `/admin/marketing` · `docs/MARKETING.md` |
 | Logisztika / Compliance | `services/{carriers,rma,compliance,vat}.py` · `routers/compliance.py` · `docs/LOGISTICS_COMPLIANCE.md` |
 | Storefront ops | `middleware_maintenance.py`, `services/storefront_ops.py` · `docs/STOREFRONT_OPS.md` |
+| Omnibus + ismétlés | `services/compliance.py`, `services/subscriptions.py`, `routers/subscriptions.py` · `docs/OMNIBUS_SUBSCRIPTIONS.md` |
 
 ### ERP oldal
 
@@ -91,7 +92,8 @@ API key (dev): `whoopy-dev-api-key-change-me`
 | `AI_HANDOVER.md` | Rövid session start + „mi van vissza” |
 | `docs/AI_SYSTEM.md` | **Ez a fájl** — teljes rendszerkép |
 | `docs/HASZNALATI_UTMUTATO.md` | Magyar használat (bolt + admin) |
-| `docs/FEJLESZTESI_TERV.md` | Roadmap 1–18 |
+| `docs/FEJLESZTESI_TERV.md` | Roadmap 1–20 |
+| `docs/OMNIBUS_SUBSCRIPTIONS.md` | Ártörténet + ismétlődő rendelés |
 | `docs/API.md` | Management API |
 | `docs/PARTNEREK.md` | Belső partner ops |
 | `docs/EU_SHOP.md` | GDPR/SEO/ÁFA/invoice/track… |
@@ -143,6 +145,7 @@ ERP: külön venv, `:8010`. Whoopy `.env` ↔ ERP `.env` **ugyanaz** az `API_KEY
 17. **Marketing csomag** ✅ (`docs/MARKETING.md`)  
 18. **Logisztika + Compliance** ✅ (`docs/LOGISTICS_COMPLIANCE.md`)  
 19. **Storefront ops** ✅ (`docs/STOREFRONT_OPS.md`)  
+20. **Omnibus + ismétlődő rendelés** ✅ (`docs/OMNIBUS_SUBSCRIPTIONS.md`)  
 
 ### Érdemes következő iterációk (éles / külső)
 
@@ -150,8 +153,9 @@ ERP: külön venv, `:8010`. Whoopy `.env` ↔ ERP `.env` **ugyanaz** az `API_KEY
 2. Domain DNS + TLS (Caddy/Cloudflare) — `docs/DEPLOY.md`  
 3. Számlázz Agent kulcs + éles futár / csomagpont API  
 4. VIES élő ÁFA-szám validáció (most formátum-stub)  
+5. Ismétlődő rendelés: tárolt kártya / éles payment (most COD stub)
 
-**Feature backlog a tervezett 1–18 soron túl:** nincs kötelező következő csomag; a fentiek integráció/élesítés.
+**Feature backlog a tervezett 1–20 soron túl:** nincs kötelező következő csomag; a fentiek integráció/élesítés.
 
 ### Kerüld el
 

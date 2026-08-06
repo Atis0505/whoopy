@@ -20,7 +20,7 @@
 | GDPR export | `/account/export` JSON |
 | GDPR törlés / anonimizálás | `/account/delete` (confirm: `TORLES`) |
 | B2B ÁFA / reverse charge | Kosár `/cart/b2b` · `effective_vat_rate` · EU adószám formátum stub |
-| Omnibus 30 nap legalacsonyabb ár | `PriceHistory` · termékoldal · seed snapshot |
+| Omnibus 30 nap legalacsonyabb ár | `PriceHistory` · termékoldal · seed snapshot · **v15**: auto-log + admin riporter + guard (`docs/OMNIBUS_SUBSCRIPTIONS.md`) |
 
 ## Seed
 

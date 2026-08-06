@@ -186,6 +186,24 @@
     </p>
     {% if quote.item_count > 0 %}
     <p style="margin-top:1rem"><a class="btn" href="/checkout">{{ t('checkout') }}</a></p>
+    {% if user %}
+    <form method="post" action="/account/subscriptions/from-cart" style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:end">
+      <div class="field" style="margin:0">
+        <label>Ismétlődő rendelés a kosárból</label>
+        <select name="interval_days">
+          <option value="7">7 naponta</option>
+          <option value="14">14 naponta</option>
+          <option value="30" selected>30 naponta</option>
+          <option value="60">60 naponta</option>
+          <option value="90">90 naponta</option>
+        </select>
+      </div>
+      <button class="btn secondary" type="submit">Ismétlés beállítása</button>
+    </form>
+    {% if request.query_params.get('sub_error') %}<div class="flash-error">Ismétlés sikertelen.</div>{% endif %}
+    {% else %}
+    <p class="muted" style="font-size:0.85rem;margin-top:0.5rem"><a href="/login">Jelentkezz be</a> ismétlődő rendeléshez.</p>
+    {% endif %}
     {% endif %}
   </div>
 </section>

@@ -348,16 +348,102 @@ def inventory_update(
     offer_id: int,
     request: Request,
     stock: int = Form(...),
+    price: float = Form(0),
     db: Session = Depends(get_db),
 ):
     user = _require_staff(request, db)
     if isinstance(user, RedirectResponse):
         return user
+    from app.services.compliance import omnibus_discount_ok, set_offer_price
+
     offer = db.get(Offer, offer_id)
+    warn = ""
     if offer:
         offer.stock = max(0, stock)
+        if price and price > 0:
+            check = omnibus_discount_ok(db, offer.product_id, price)
+            set_offer_price(db, offer, price, source="admin_inventory")
+            if not check.get("ok"):
+                warn = "&omnibus=1"
         db.commit()
-    return RedirectResponse("/admin/inventory", status_code=303)
+    return RedirectResponse(f"/admin/inventory?ok=1{warn}", status_code=303)
+
+
+@router.get("/price-history", response_class=HTMLResponse)
+def price_history_page(request: Request, product_id: int = 0, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.models import Product
+    from app.services.compliance import lowest_price_30d, price_history_rows
+
+    rows = price_history_rows(db, product_id=product_id or None, limit=150)
+    products = {p.id: p for p in db.query(Product).filter(Product.id.in_({r.product_id for r in rows} or [-1])).all()}
+    lowest = lowest_price_30d(db, product_id) if product_id else None
+    return templates.TemplateResponse(
+        "admin/price_history.html",
+        {
+            "request": request,
+            "user": user,
+            "rows": rows,
+            "products": products,
+            "product_id": product_id or "",
+            "lowest": lowest,
+            "app_name": settings.app_name,
+        },
+    )
+
+
+@router.get("/subscriptions", response_class=HTMLResponse)
+def admin_subscriptions(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.models import Subscription
+
+    subs = (
+        db.query(Subscription)
+        .options(joinedload(Subscription.lines))
+        .order_by(Subscription.id.desc())
+        .limit(200)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "admin/subscriptions.html",
+        {"request": request, "user": user, "subscriptions": subs, "app_name": settings.app_name},
+    )
+
+
+@router.post("/subscriptions/run-due")
+def admin_subscriptions_run(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.subscriptions import process_due_subscriptions
+
+    result = process_due_subscriptions(db)
+    return RedirectResponse(
+        f"/admin/subscriptions?ok={result['processed']}&fail={result['failed']}",
+        status_code=303,
+    )
+
+
+@router.post("/subscriptions/{sub_id}/run-now")
+def admin_subscription_run_now(sub_id: int, request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.models import Subscription
+    from app.services.subscriptions import fulfill_subscription
+
+    sub = db.get(Subscription, sub_id)
+    if sub:
+        try:
+            fulfill_subscription(db, sub)
+        except ValueError as exc:
+            sub.last_error = str(exc)[:512]
+            db.commit()
+    return RedirectResponse("/admin/subscriptions", status_code=303)
 
 
 # ── Categories ───────────────────────────────────────────────────────────────

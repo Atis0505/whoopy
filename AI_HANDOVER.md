@@ -2,7 +2,7 @@
 
 > **Olvasd el session elején.** Részletes rendszerkép: [`docs/AI_SYSTEM.md`](docs/AI_SYSTEM.md)  
 > Használat (embernek): [`docs/HASZNALATI_UTMUTATO.md`](docs/HASZNALATI_UTMUTATO.md)  
-> Frissítve: 2026-08 · Schema **v14** · utolsó csomag: Storefront ops (banner/ticker/maintenance)
+> Frissítve: 2026-08 · Schema **v15** · utolsó csomag: Omnibus ártörténet + ismétlődő rendelés
 
 ---
 
@@ -49,7 +49,7 @@ Docker: `docker compose up --build` — `docs/DEPLOY.md`.
 
 ---
 
-## Hogyan haladtunk (roadmap 1–19 = kész)
+## Hogyan haladtunk (roadmap 1–20 = kész)
 
 | # | Csomag | Doc |
 |---|--------|-----|
@@ -61,11 +61,12 @@ Docker: `docker compose up --build` — `docs/DEPLOY.md`.
 | 17 | Marketing (Meta + Árukereső, UTM, affiliate, hero A/B) | `MARKETING.md` |
 | 18 | **Logisztika + Compliance** (futár/RMA stub, warehouse, CMP, GDPR export/törlés, B2B ÁFA, Omnibus) | `LOGISTICS_COMPLIANCE.md` |
 | 19 | **Storefront ops** (announcement, social ticker, maintenance 1-gomb, kampány toggle, free-ship, responsive) | `STOREFRONT_OPS.md` |
+| 20 | **Omnibus + ismétlődő rendelés** (PriceHistory auto-log/riporter/guard, Subscription) | `OMNIBUS_SUBSCRIPTIONS.md` |
 
-Tipikus commit minta a `main`-en: … → logistics/compliance → storefront ops.
+Tipikus commit minta a `main`-en: … → logistics/compliance → storefront ops → omnibus/subscriptions.
 
-**Schema:** `app/bootstrap.py` `SCHEMA_VERSION = "14"` + `.schema_version`.  
-Dev SQLite: version bump → **wipe + reseed**. Prod/Postgres: **soha nem wipe**.
+**Schema:** `app/bootstrap.py` `SCHEMA_VERSION = "15"` + `.schema_version`.  
+Dev SQLite: hiányzó kötelező oszlop → wipe; version bump → `create_all` + additive ALTER (zárolt DB-nél wipe nélkül). Prod/Postgres: **soha nem wipe**.
 
 ---
 
@@ -77,11 +78,12 @@ Dev SQLite: version bump → **wipe + reseed**. Prod/Postgres: **soha nem wipe**
 | EU extras | `routers/eu_shop.py` |
 | UX | `routers/customer_ux.py`, `services/customer_ux.py` |
 | Compliance | `routers/compliance.py`, `services/compliance.py`, `services/vat.py` |
+| Ismétlődő rendelés | `routers/subscriptions.py`, `services/subscriptions.py` |
 | Futár / RMA | `services/carriers.py`, `services/rma.py` |
 | Marketing | `services/marketing_feeds.py`, `services/attribution.py` |
 | Számlázz | `services/szamlazz.py` → `data/szamlazz_outbox/` |
-| Admin | `routers/admin*.py` |
-| Smoke | `tests/test_smoke.py` (~16 teszt) |
+| Admin | `routers/admin*.py` · ártörténet `/admin/price-history` · ismétlések `/admin/subscriptions` |
+| Smoke | `tests/test_smoke.py` |
 
 Outbox stubok (gitignore): `data/email_outbox/`, `szamlazz_outbox/`, `carrier_outbox/`, `rma_outbox/`.
 

@@ -92,7 +92,9 @@ def publish_staging(db: Session, staging_id: int) -> StagingListing:
     )
     if offer:
         offer.sku = row.sku or offer.sku
-        offer.price = list_price
+        from app.services.compliance import set_offer_price
+
+        set_offer_price(db, offer, list_price, source="staging")
         offer.cost_price = row.cost_price
         offer.stock = row.stock
         offer.lead_days = row.lead_days
@@ -110,6 +112,23 @@ def publish_staging(db: Session, staging_id: int) -> StagingListing:
                 active=True,
             )
         )
+        db.flush()
+        from app.services.compliance import record_offer_price
+
+        new_offer = (
+            db.query(Offer)
+            .filter(Offer.product_id == product.id, Offer.supplier_id == row.supplier_id)
+            .order_by(Offer.id.desc())
+            .first()
+        )
+        if new_offer:
+            record_offer_price(
+                db,
+                product_id=product.id,
+                offer_id=new_offer.id,
+                price=list_price,
+                source="staging",
+            )
 
     row.status = "published"
     row.published_product_id = product.id

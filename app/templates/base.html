@@ -22,37 +22,37 @@
   {% endif %}
   {% if announcement %}
   <div class="announce-bar" style="background:{{ announcement.bg }}" role="region" aria-label="Hirdetés">
+    {% if announcement.link %}
+    <a class="announce-inner wrap announce-clickable" href="{{ announcement.link }}">
+      <span>{{ announcement.text }}</span>
+      <span class="announce-cta">{{ announcement.label }} →</span>
+    </a>
+    {% else %}
     <div class="wrap announce-inner">
       <span>{{ announcement.text }}</span>
-      {% if announcement.link %}
-      <a href="{{ announcement.link }}">{{ announcement.label }}</a>
-      {% endif %}
     </div>
+    {% endif %}
   </div>
   {% endif %}
   {% if ticker_items %}
   <div class="social-ticker" aria-label="Élő ajánlatok és vásárlások">
     <div class="ticker-track">
       {% for it in ticker_items %}
-        {% if it.href %}
-        <a class="ticker-item ticker-{{ it.kind }}" href="{{ it.href }}">{{ it.text }}</a>
-        {% else %}
-        <span class="ticker-item ticker-{{ it.kind }}">{{ it.text }}</span>
-        {% endif %}
+        <a class="ticker-item ticker-{{ it.kind }}" href="{{ it.href or '/taxonomy' }}">{{ it.text }}</a>
       {% endfor %}
       {% for it in ticker_items %}
-        {% if it.href %}
-        <a class="ticker-item ticker-{{ it.kind }}" href="{{ it.href }}" aria-hidden="true">{{ it.text }}</a>
-        {% else %}
-        <span class="ticker-item ticker-{{ it.kind }}" aria-hidden="true">{{ it.text }}</span>
-        {% endif %}
+        <a class="ticker-item ticker-{{ it.kind }}" href="{{ it.href or '/taxonomy' }}" aria-hidden="true" tabindex="-1">{{ it.text }}</a>
       {% endfor %}
     </div>
   </div>
   {% endif %}
   <div class="topbar">
     <div class="wrap topbar-inner">
-      <div class="topbar-left">whoopy.hu · EU szállítás{% if business_hours %} · {{ business_hours }}{% endif %}</div>
+      <div class="topbar-left">
+        <a href="/">whoopy.hu</a>
+        · <a href="/taxonomy">EU szállítás</a>
+        {% if business_hours %} · <a href="/contact">{{ business_hours }}</a>{% endif %}
+      </div>
       <form method="post" action="/prefs" class="prefs-form">
         <input type="hidden" name="next" value="{{ request.url.path }}" />
         <label>{{ t('language') }}

@@ -260,3 +260,72 @@ def test_carrier_label_stub():
         assert sh.label_ref
     finally:
         db.close()
+
+
+def test_price_history_set_and_omnibus_guard():
+    from app.database import SessionLocal
+    from app.models import Offer, PriceHistory
+    from app.services.compliance import omnibus_discount_ok, set_offer_price
+
+    db = SessionLocal()
+    try:
+        offer = db.query(Offer).filter(Offer.active.is_(True)).first()
+        assert offer is not None
+        before = db.query(PriceHistory).filter(PriceHistory.offer_id == offer.id).count()
+        old = float(offer.price)
+        new = old + 111
+        assert set_offer_price(db, offer, new, source="test")
+        db.commit()
+        after = db.query(PriceHistory).filter(PriceHistory.offer_id == offer.id).count()
+        assert after == before + 1
+        # visszaállítás + guard: ugyanarra az árra mint a 30d low → nem OK mint „akció”
+        low_check = omnibus_discount_ok(db, offer.product_id, new)
+        assert "lowest_30d" in low_check
+        set_offer_price(db, offer, old, source="test")
+        db.commit()
+    finally:
+        db.close()
+
+
+def test_subscription_create_and_fulfill():
+    from datetime import datetime, timedelta
+
+    from app.database import SessionLocal
+    from app.models import Offer, Order, Subscription, User
+    from app.services.subscriptions import create_subscription, process_due_subscriptions
+
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.email == "vasarlo@whoopy.local").first()
+        offer = db.query(Offer).filter(Offer.active.is_(True), Offer.stock >= 2).first()
+        assert user and offer
+        sub = create_subscription(
+            db,
+            user,
+            lines=[(offer.id, 1)],
+            interval_days=30,
+            name="Smoke ismétlés",
+            email=user.email,
+            full_name="Smoke",
+            city="Budapest",
+            address="Teszt 1",
+            zip_code="1111",
+            start_in_days=0,
+        )
+        assert sub.id
+        # due immediately
+        sub.next_run_at = datetime.utcnow() - timedelta(minutes=1)
+        db.commit()
+        result = process_due_subscriptions(db, limit=10)
+        assert result["processed"] >= 1
+        db.refresh(sub)
+        assert sub.last_order_id
+        order = db.get(Order, sub.last_order_id)
+        assert order and order.order_number.startswith("TM-SUB-")
+        # cleanup: cancel
+        sub.active = False
+        db.commit()
+    finally:
+        db.close()
+
+    assert client.get("/account").status_code in (200, 302, 303)

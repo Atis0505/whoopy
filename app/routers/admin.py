@@ -147,20 +147,102 @@ def suppliers_list(request: Request, db: Session = Depends(get_db)):
     )
 
 
+@router.get("/suppliers/{supplier_id}", response_class=HTMLResponse)
+def supplier_detail(supplier_id: int, request: Request, db: Session = Depends(get_db)):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    supplier = (
+        db.query(Supplier)
+        .options(joinedload(Supplier.offers).joinedload(Offer.product))
+        .filter(Supplier.id == supplier_id)
+        .first()
+    )
+    if not supplier:
+        return RedirectResponse("/admin/suppliers", status_code=302)
+    offers = sorted(supplier.offers or [], key=lambda o: o.id, reverse=True)[:12]
+    return templates.TemplateResponse(
+        "admin/supplier_detail.html",
+        {
+            "request": request,
+            "user": user,
+            "supplier": supplier,
+            "offers": offers,
+            "offer_count": len(supplier.offers or []),
+            "rate_count": len(supplier.shipping_rates or []),
+            "feed_count": len(supplier.feed_sources or []),
+            "app_name": settings.app_name,
+        },
+    )
+
+
+@router.post("/suppliers/{supplier_id}")
+def supplier_update(
+    supplier_id: int,
+    request: Request,
+    name: str = Form(...),
+    code: str = Form(...),
+    email: str = Form(""),
+    phone: str = Form(""),
+    country: str = Form("HU"),
+    city: str = Form(""),
+    address: str = Form(""),
+    notes: str = Form(""),
+    active: str = Form(""),
+    preferred: str = Form(""),
+    dropship_available: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    supplier = db.get(Supplier, supplier_id)
+    if not supplier:
+        return RedirectResponse("/admin/suppliers", status_code=303)
+    code_n = code.strip()
+    clash = db.query(Supplier).filter(Supplier.code == code_n, Supplier.id != supplier_id).first()
+    if not clash:
+        supplier.code = code_n
+    supplier.name = name.strip()
+    supplier.email = email.strip()
+    supplier.phone = phone.strip()
+    supplier.country = (country or "HU").upper()[:2]
+    supplier.city = city.strip()
+    supplier.address = address.strip()
+    supplier.notes = notes.strip()
+    supplier.active = active == "1"
+    supplier.preferred = preferred == "1"
+    supplier.dropship_available = dropship_available == "1"
+    db.commit()
+    return RedirectResponse(f"/admin/suppliers/{supplier_id}?saved=1", status_code=303)
+
+
 @router.post("/suppliers/create")
 def suppliers_create(
     request: Request,
     code: str = Form(...),
     name: str = Form(...),
     email: str = Form(""),
+    phone: str = Form(""),
     country: str = Form("HU"),
     city: str = Form(""),
+    address: str = Form(""),
     db: Session = Depends(get_db),
 ):
     user = _require_admin_html(request, db)
     if isinstance(user, RedirectResponse):
         return user
-    db.add(Supplier(code=code.strip(), name=name.strip(), email=email.strip(), country=country.upper(), city=city.strip()))
+    db.add(
+        Supplier(
+            code=code.strip(),
+            name=name.strip(),
+            email=email.strip(),
+            phone=phone.strip(),
+            country=country.upper()[:2],
+            city=city.strip(),
+            address=address.strip(),
+        )
+    )
     db.commit()
     return RedirectResponse("/admin/suppliers", status_code=303)
 

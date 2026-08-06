@@ -2,7 +2,12 @@
 {% block page_title %}Készlet{% endblock %}
 {% block content %}
 <h1 style="font-family:var(--font-display)">Készlet</h1>
-<p class="muted">Alacsony készlet küszöb: ≤ {{ threshold }} db</p>
+<p class="muted">Alacsony készlet küszöb: ≤ {{ threshold }} db · Árváltozás → PriceHistory (Omnibus)</p>
+{% if request.query_params.get('omnibus') %}
+<div class="flash-error">Figyelem: az új ár nem alacsonyabb a 30 napos legalacsonyabbnál (Omnibus ellenőrzés).</div>
+{% elif request.query_params.get('ok') %}
+<div class="flash-ok">Készlet / ár mentve.</div>
+{% endif %}
 {% if low %}
 <div class="panel" style="border-color:#fca5a5">
   <h3>Alacsony készlet ({{ low|length }})</h3>
@@ -15,7 +20,7 @@
 {% endif %}
 <div class="panel">
   <table class="table">
-    <thead><tr><th>Termék</th><th>Beszállító</th><th>SKU</th><th>Készlet</th><th></th></tr></thead>
+    <thead><tr><th>Termék</th><th>Beszállító</th><th>SKU</th><th>Készlet / ár</th><th></th></tr></thead>
     <tbody>
     {% for o in offers %}
       <tr {% if o.stock <= threshold %}style="background:#fff7ed"{% endif %}>
@@ -25,6 +30,7 @@
         <td>
           <form method="post" action="/admin/inventory/{{ o.id }}" style="display:flex;gap:0.4rem;align-items:center">
             <input type="number" name="stock" value="{{ o.stock }}" min="0" style="width:5rem" />
+            <input type="number" name="price" value="{{ o.price|int }}" min="0" step="1" style="width:6rem" title="Listaár" />
             <button class="btn secondary" type="submit" style="padding:0.3rem 0.6rem;font-size:0.8rem">Ment</button>
           </form>
         </td>
