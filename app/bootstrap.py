@@ -7,15 +7,16 @@ from app.database import Base, engine
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = "11"
+SCHEMA_VERSION = "12"
 VERSION_FILE = BASE_DIR / ".schema_version"
 DB_PATH = BASE_DIR / "marketplace.db"
 
 # Dev wipe biztonsági háló: ha a kód új oszlopokat vár, de a SQLite még régi
 _REQUIRED_COLUMNS = {
     "store_settings": {"company_name", "invoice_footer", "chat_widget_html"},
-    "orders": {"invoice_status", "tax_total", "net_total", "access_token", "billing_city"},
-    "carts": {"gift_card_code", "delivery_mode"},
+    "orders": {"invoice_status", "tax_total", "net_total", "access_token", "billing_city", "utm_source"},
+    "carts": {"gift_card_code", "delivery_mode", "utm_source"},
+    "campaigns": {"ab_group", "impressions"},
 }
 
 

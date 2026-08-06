@@ -148,3 +148,17 @@ def test_pickup_points_api():
 def test_compare_and_recent_pages():
     assert client.get("/compare").status_code == 200
     assert client.get("/recent").status_code == 200
+
+
+def test_marketing_feeds():
+    r = client.get("/feeds/meta-catalog.xml")
+    assert r.status_code == 200
+    assert "rss" in r.text.lower() or "item" in r.text.lower()
+    r2 = client.get("/feeds/arukereso.xml")
+    assert r2.status_code == 200
+    assert "product" in r2.text.lower()
+
+
+def test_affiliate_redirect():
+    r = client.get("/go/aff/PARTNER10", params={"next": "/"}, follow_redirects=False)
+    assert r.status_code in (302, 303)

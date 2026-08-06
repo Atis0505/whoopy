@@ -83,7 +83,18 @@ def post_login_redirect(user: User) -> str:
 
 
 def store_context(request: Request, db: Session, **extra):
+    from app.services.attribution import apply_attribution_to_cart, capture_attribution, session_attribution
+
+    capture_attribution(request)
     cart = cart_for_request(request, db)
+    before = {k: getattr(cart, k, "") for k in ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "affiliate_code")}
+    apply_attribution_to_cart(cart, request.session)
+    after = {k: getattr(cart, k, "") for k in before}
+    if before != after:
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
     from app.models import Category
     from app.services.cart import quote_cart
     from app.config import settings

@@ -7,11 +7,11 @@
     {% if hero and hero.badge %}<span class="badge sale">{{ hero.badge }}</span>{% endif %}
     <h1>{{ hero.title if hero else t('hero_title') }}</h1>
     <p>{{ hero.subtitle if hero else t('hero_sub') }}</p>
-    <a class="btn" href="{{ hero.link_url if hero else '/taxonomy' }}">{{ t('browse_categories') }}</a>
+    <a class="btn" href="{% if hero %}/go/c/{{ hero.id }}{% else %}/taxonomy{% endif %}">{{ t('browse_categories') }}</a>
   </div>
   <div class="promo-side">
     {% for c in strip_campaigns[:2] %}
-    <a class="promo-card {% if loop.first %}orange{% else %}green{% endif %}" href="{{ c.link_url }}">
+    <a class="promo-card {% if loop.first %}orange{% else %}green{% endif %}" href="/go/c/{{ c.id }}">
       {% if c.badge %}<span class="badge sale">{{ c.badge }}</span>{% endif %}
       <h3>{{ c.title }}</h3>
       <p class="muted">{{ c.subtitle }}</p>
@@ -33,7 +33,7 @@
 {% if tile_campaigns %}
 <section class="campaign-tiles">
   {% for c in tile_campaigns %}
-  <a class="campaign-tile" href="{{ c.link_url }}">
+  <a class="campaign-tile" href="/go/c/{{ c.id }}">
     <span class="badge">{{ c.badge or t('campaigns') }}</span>
     <strong>{{ c.title }}</strong>
     <span class="muted">{{ c.subtitle }}</span>

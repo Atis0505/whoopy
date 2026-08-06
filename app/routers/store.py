@@ -36,6 +36,48 @@ def google_merchant_feed(db: Session = Depends(get_db)):
     return Response(content=xml, media_type="application/xml; charset=utf-8")
 
 
+@router.get("/feeds/meta-catalog.xml")
+def meta_catalog_feed(db: Session = Depends(get_db)):
+    from fastapi.responses import Response
+
+    from app.services.marketing_feeds import build_meta_catalog_xml
+
+    return Response(content=build_meta_catalog_xml(db), media_type="application/xml; charset=utf-8")
+
+
+@router.get("/feeds/arukereso.xml")
+def arukereso_feed(db: Session = Depends(get_db)):
+    from fastapi.responses import Response
+
+    from app.services.marketing_feeds import build_arukereso_xml
+
+    return Response(content=build_arukereso_xml(db), media_type="application/xml; charset=utf-8")
+
+
+@router.get("/go/aff/{code}")
+def affiliate_redirect(code: str, request: Request, next: str = "/", db: Session = Depends(get_db)):
+    from app.services.attribution import record_affiliate_click
+
+    request.session["affiliate_code"] = code.strip().upper()[:64]
+    request.session["utm_source"] = request.session.get("utm_source") or "affiliate"
+    request.session["utm_medium"] = request.session.get("utm_medium") or "partner"
+    request.session["utm_campaign"] = request.session.get("utm_campaign") or code.strip().upper()[:64]
+    record_affiliate_click(db, code)
+    dest = next if next.startswith("/") else "/"
+    return RedirectResponse(dest, status_code=303)
+
+
+@router.get("/go/c/{campaign_id}")
+def campaign_click(campaign_id: int, request: Request, db: Session = Depends(get_db)):
+    from app.services.attribution import bump_campaign_click
+
+    c = bump_campaign_click(db, campaign_id)
+    dest = (c.link_url if c and c.link_url else "/") or "/"
+    if not dest.startswith("/") and not dest.startswith("http"):
+        dest = "/"
+    return RedirectResponse(dest, status_code=303)
+
+
 def _enrich_products(db: Session, products: list[Product]) -> None:
     for p in products:
         buy = select_buybox_offer(db, p)
@@ -88,7 +130,7 @@ def home(
     min_price: float | None = None,
     max_price: float | None = None,
 ):
-    from app.services.merchandising import active_campaigns, bestsellers
+    from app.services.merchandising import active_campaigns, bestsellers, hero_for_session
 
     query = (
         db.query(Product)
@@ -139,7 +181,7 @@ def home(
             min_price=min_price,
             max_price=max_price,
             bestsellers=best,
-            hero_campaigns=active_campaigns(db, "hero"),
+            hero_campaigns=hero_for_session(db, request.session),
             strip_campaigns=active_campaigns(db, "strip"),
             tile_campaigns=active_campaigns(db, "tile"),
         ),

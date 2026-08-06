@@ -191,6 +191,12 @@ class Cart(Base):
     shipping_choices: Mapped[str] = mapped_column(String(512), default="")
     payment_preference: Mapped[str] = mapped_column(String(16), default="prepaid")  # prepaid|cod|invoice
     abandoned_email_sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    utm_source: Mapped[str] = mapped_column(String(128), default="")
+    utm_medium: Mapped[str] = mapped_column(String(128), default="")
+    utm_campaign: Mapped[str] = mapped_column(String(128), default="")
+    utm_content: Mapped[str] = mapped_column(String(128), default="")
+    utm_term: Mapped[str] = mapped_column(String(128), default="")
+    affiliate_code: Mapped[str] = mapped_column(String(64), default="", index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     items: Mapped[list["CartItem"]] = relationship(back_populates="cart", cascade="all, delete-orphan")
@@ -222,6 +228,10 @@ class Campaign(Base):
     link_url: Mapped[str] = mapped_column(String(512), default="/")
     # hero | strip | tile
     placement: Mapped[str] = mapped_column(String(16), default="strip")
+    # "" | A | B — hero A/B teszt
+    ab_group: Mapped[str] = mapped_column(String(8), default="")
+    impressions: Mapped[int] = mapped_column(Integer, default=0)
+    clicks: Mapped[int] = mapped_column(Integer, default=0)
     sort_order: Mapped[int] = mapped_column(Integer, default=10)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     starts_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -360,6 +370,12 @@ class Order(Base):
     loyalty_points_redeemed: Mapped[int] = mapped_column(Integer, default=0)
     loyalty_discount: Mapped[float] = mapped_column(Float, default=0)
     access_token: Mapped[str] = mapped_column(String(64), default="", index=True)
+    utm_source: Mapped[str] = mapped_column(String(128), default="", index=True)
+    utm_medium: Mapped[str] = mapped_column(String(128), default="")
+    utm_campaign: Mapped[str] = mapped_column(String(128), default="", index=True)
+    utm_content: Mapped[str] = mapped_column(String(128), default="")
+    utm_term: Mapped[str] = mapped_column(String(128), default="")
+    affiliate_code: Mapped[str] = mapped_column(String(64), default="", index=True)
     status: Mapped[str] = mapped_column(String(32), default="pending")
     payment_method: Mapped[str] = mapped_column(String(16), default="prepaid")
     # pending | awaiting | paid | failed | cancelled | refunded
@@ -636,3 +652,19 @@ class PickupPoint(Base):
     address: Mapped[str] = mapped_column(String(255), default="")
     country: Mapped[str] = mapped_column(String(2), default="HU")
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class AffiliatePartner(Base):
+    """Partner / affiliate kód — UTM-mel vagy /go/aff/{code} linkkel."""
+
+    __tablename__ = "affiliate_partners"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(255), default="")
+    commission_percent: Mapped[float] = mapped_column(Float, default=5.0)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    click_count: Mapped[int] = mapped_column(Integer, default=0)
+    order_count: Mapped[int] = mapped_column(Integer, default=0)
+    revenue_total: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

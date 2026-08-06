@@ -124,6 +124,12 @@ def create_order_from_cart(
         coupon_code=cart.coupon_code or "",
         lang=cart.lang or "hu",
         notes=notes.strip(),
+        utm_source=getattr(cart, "utm_source", "") or "",
+        utm_medium=getattr(cart, "utm_medium", "") or "",
+        utm_campaign=getattr(cart, "utm_campaign", "") or "",
+        utm_content=getattr(cart, "utm_content", "") or "",
+        utm_term=getattr(cart, "utm_term", "") or "",
+        affiliate_code=getattr(cart, "affiliate_code", "") or "",
     )
     db.add(order)
     db.flush()
@@ -198,6 +204,10 @@ def create_order_from_cart(
         if user:
             user.loyalty_points = int(user.loyalty_points or 0) + int(order.loyalty_points_earned)
             user.loyalty_tier = loyalty_tier_for(user.loyalty_points)
+
+    from app.services.attribution import record_affiliate_order
+
+    record_affiliate_order(db, order)
 
     db.commit()
     clear_cart(db, cart)

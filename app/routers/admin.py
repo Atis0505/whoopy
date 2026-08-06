@@ -9,6 +9,7 @@ from app.config import settings
 from app.database import get_db
 from app.deps import get_current_user, try_login
 from app.models import (
+    AffiliatePartner,
     Campaign,
     Category,
     Coupon,
@@ -572,6 +573,7 @@ def campaigns_create(
     badge: str = Form("Kampány"),
     link_url: str = Form("/"),
     placement: str = Form("strip"),
+    ab_group: str = Form(""),
     sort_order: int = Form(10),
     image_url: str = Form(""),
     db: Session = Depends(get_db),
@@ -579,6 +581,9 @@ def campaigns_create(
     user = _require_admin_html(request, db)
     if isinstance(user, RedirectResponse):
         return user
+    ab = (ab_group or "").strip().upper()
+    if ab not in ("", "A", "B"):
+        ab = ""
     db.add(
         Campaign(
             title=title.strip(),
@@ -586,6 +591,7 @@ def campaigns_create(
             badge=badge.strip(),
             link_url=link_url.strip() or "/",
             placement=placement if placement in ("hero", "strip", "tile") else "strip",
+            ab_group=ab,
             sort_order=sort_order,
             image_url=image_url.strip(),
             active=True,
@@ -593,6 +599,58 @@ def campaigns_create(
     )
     db.commit()
     return RedirectResponse("/admin/campaigns", status_code=303)
+
+
+@router.get("/marketing", response_class=HTMLResponse)
+def marketing_page(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.attribution import utm_report
+
+    base = settings.public_base_url.rstrip("/")
+    return templates.TemplateResponse(
+        "admin/marketing.html",
+        {
+            "request": request,
+            "user": user,
+            "app_name": settings.app_name,
+            "utm_rows": utm_report(db),
+            "affiliates": db.query(AffiliatePartner).order_by(AffiliatePartner.id).all(),
+            "campaigns": db.query(Campaign).order_by(Campaign.placement, Campaign.id).all(),
+            "feeds": {
+                "google": f"{base}/feeds/google-merchant.xml",
+                "meta": f"{base}/feeds/meta-catalog.xml",
+                "arukereso": f"{base}/feeds/arukereso.xml",
+            },
+            "ok": request.query_params.get("ok"),
+        },
+    )
+
+
+@router.post("/marketing/affiliates")
+def marketing_affiliate_create(
+    request: Request,
+    code: str = Form(...),
+    name: str = Form(""),
+    commission_percent: float = Form(5.0),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    code_n = code.strip().upper()
+    if code_n and not db.query(AffiliatePartner).filter(AffiliatePartner.code == code_n).first():
+        db.add(
+            AffiliatePartner(
+                code=code_n,
+                name=name.strip() or code_n,
+                commission_percent=commission_percent,
+                active=True,
+            )
+        )
+        db.commit()
+    return RedirectResponse("/admin/marketing?ok=1", status_code=303)
 
 
 @router.get("/webhooks", response_class=HTMLResponse)

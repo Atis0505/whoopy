@@ -36,7 +36,7 @@ Demo: `vasarlo@whoopy.local` / vasarlo123 · `dolgozo@whoopy.local` / worker123 
 
 - Partnerek = források, ahonnan Whoopy vásárol — nem self-listing eladók  
 - Admin: `/admin/partners`, `/admin/staging`, `/admin/feeds`, `/admin/procurement`, …  
-- Schema **v11** · Doc: `docs/PARTNEREK.md` · EU: `docs/EU_SHOP.md` · UX: `docs/UX.md` · Számlázz: `docs/SZAMLAZZ.md`
+- Schema **v12** · Doc: `docs/PARTNEREK.md` · EU: `docs/EU_SHOP.md` · UX: `docs/UX.md` · Marketing: `docs/MARKETING.md` · Számlázz: `docs/SZAMLAZZ.md`
 
 ## ERP
 
@@ -46,5 +46,5 @@ Demo: `vasarlo@whoopy.local` / vasarlo123 · `dolgozo@whoopy.local` / worker123 
 
 ## Roadmap
 
-Lásd `docs/FEJLESZTESI_TERV.md` — 1–16 kész (vásárlói élmény csomag).  
+Lásd `docs/FEJLESZTESI_TERV.md` — 1–17 kész (marketing csomag).  
 Következő opcionális: éles SimplePay, domain DNS, Számlázz kulcs, éles csomagpont API.

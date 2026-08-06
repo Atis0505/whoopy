@@ -23,6 +23,16 @@ def active_campaigns(db: Session, placement: str | None = None) -> list[Campaign
     return out
 
 
+def hero_for_session(db: Session, session: dict) -> list[Campaign]:
+    from app.services.attribution import bump_campaign_impression, pick_hero_campaigns
+
+    heroes = active_campaigns(db, "hero")
+    picked = pick_hero_campaigns(heroes, session)
+    if picked:
+        bump_campaign_impression(db, picked[0])
+    return picked
+
+
 def bestsellers(db: Session, limit: int = 8) -> list[Product]:
     return (
         db.query(Product)

@@ -5,13 +5,14 @@
 <div class="layout-2">
   <div class="panel">
     <table class="table">
-      <thead><tr><th>Cím</th><th>Hely</th><th>Badge</th><th>Aktív</th></tr></thead>
+      <thead><tr><th>Cím</th><th>Hely</th><th>A/B</th><th>Impr/Klikk</th><th>Aktív</th></tr></thead>
       <tbody>
       {% for c in campaigns %}
         <tr>
           <td><strong>{{ c.title }}</strong><div class="muted">{{ c.subtitle }}</div></td>
           <td>{{ c.placement }}</td>
-          <td>{{ c.badge }}</td>
+          <td>{{ c.ab_group or '—' }}</td>
+          <td>{{ c.impressions }} / {{ c.clicks }}</td>
           <td>{{ 'igen' if c.active else 'nem' }}</td>
         </tr>
       {% endfor %}
@@ -31,6 +32,13 @@
           <option value="hero">hero (fő banner)</option>
           <option value="strip">strip (oldalsáv kártya)</option>
           <option value="tile">tile (alsó csempesáv)</option>
+        </select>
+      </div>
+      <div class="field"><label>A/B csoport (hero)</label>
+        <select name="ab_group">
+          <option value="">—</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
         </select>
       </div>
       <div class="field"><label>Sorrend</label><input name="sort_order" type="number" value="10" /></div>

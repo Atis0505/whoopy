@@ -31,8 +31,10 @@ def seed_all(db: Session) -> None:
     get_store_settings(db)
     ensure_default_cms_pages(db)
     from app.services.customer_ux import seed_pickup_and_gifts
+    from app.services.attribution import seed_affiliates
 
     seed_pickup_and_gifts(db)
+    seed_affiliates(db)
 
     if db.query(Category).count() == 0:
         load_taxonomy_into_db(db)
@@ -403,6 +405,20 @@ def _seed_marketing(db: Session) -> None:
                     image_url="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&q=80",
                     link_url="/?q=headphones",
                     placement="hero",
+                    ab_group="A",
+                    sort_order=1,
+                    active=True,
+                    starts_at=datetime.utcnow() - timedelta(days=1),
+                    ends_at=datetime.utcnow() + timedelta(days=30),
+                ),
+                Campaign(
+                    title="Nyári hangzás — B változat",
+                    subtitle="A/B teszt hero: fejhallgatók és sport – kupon WELCOME10",
+                    badge="A/B · B",
+                    image_url="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=1200&q=80",
+                    link_url="/?q=headphones",
+                    placement="hero",
+                    ab_group="B",
                     sort_order=1,
                     active=True,
                     starts_at=datetime.utcnow() - timedelta(days=1),
