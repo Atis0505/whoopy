@@ -43,6 +43,7 @@ def seed_all(db: Session) -> None:
         _seed_marketing(db)
         _seed_marketplace_ops(db)
         _seed_ux_demos(db)
+        _seed_logistics_compliance(db)
         return
 
     suppliers = [
@@ -308,6 +309,39 @@ def seed_all(db: Session) -> None:
     _seed_marketing(db)
     _seed_marketplace_ops(db)
     _seed_ux_demos(db)
+    _seed_logistics_compliance(db)
+
+
+def _seed_logistics_compliance(db: Session) -> None:
+    """Raktárak + Omnibus árarchívum snapshot."""
+    from app.models import Warehouse
+    from app.services.compliance import snapshot_active_prices
+
+    if db.query(Warehouse).count() == 0:
+        db.add_all(
+            [
+                Warehouse(
+                    code="BUD-01",
+                    name="Budapest központ",
+                    country="HU",
+                    city="Budapest",
+                    address="Váci út 12.",
+                    active=True,
+                    is_default=True,
+                ),
+                Warehouse(
+                    code="DEB-02",
+                    name="Debrecen raktár",
+                    country="HU",
+                    city="Debrecen",
+                    address="Ipari park 3.",
+                    active=True,
+                    is_default=False,
+                ),
+            ]
+        )
+        db.commit()
+    snapshot_active_prices(db)
 
 
 def _seed_ux_demos(db: Session) -> None:

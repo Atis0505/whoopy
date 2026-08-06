@@ -645,3 +645,45 @@ def return_status(
         ret.updated_at = datetime.utcnow()
         db.commit()
     return RedirectResponse("/admin/returns", status_code=303)
+
+
+@router.post("/returns/{ret_id}/label")
+def return_label(
+    ret_id: int,
+    request: Request,
+    carrier: str = Form("gls"),
+    db: Session = Depends(get_db),
+):
+    user = _require_staff(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.rma import generate_return_label
+
+    ret = db.get(ReturnRequest, ret_id)
+    if ret:
+        generate_return_label(db, ret, carrier=carrier)
+    return RedirectResponse("/admin/returns", status_code=303)
+
+
+@router.post("/returns/{ret_id}/refund")
+def return_refund(
+    ret_id: int,
+    request: Request,
+    amount: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    user = _require_staff(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.rma import mark_refund
+
+    ret = db.get(ReturnRequest, ret_id)
+    if ret:
+        amt = None
+        if amount.strip():
+            try:
+                amt = float(amount.replace(",", "."))
+            except ValueError:
+                amt = None
+        mark_refund(db, ret, amount=amt)
+    return RedirectResponse("/admin/returns", status_code=303)

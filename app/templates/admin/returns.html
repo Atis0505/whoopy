@@ -1,10 +1,10 @@
 {% extends "admin/base_admin.html" %}
 {% block page_title %}Visszaküldések{% endblock %}
 {% block content %}
-<h1 style="font-family:var(--font-display)">Visszaküldési kérelmek</h1>
+<h1 style="font-family:var(--font-display)">Visszaküldési kérelmek (RMA)</h1>
 <div class="panel">
   <table class="table">
-    <thead><tr><th>Dátum</th><th>Rendelés</th><th>E-mail</th><th>Indok</th><th>Státusz</th><th>Művelet</th></tr></thead>
+    <thead><tr><th>Dátum</th><th>Rendelés</th><th>E-mail</th><th>Indok</th><th>Státusz / RMA</th><th>Művelet</th></tr></thead>
     <tbody>
     {% for r in returns %}
       {% set o = orders.get(r.order_id) %}
@@ -18,19 +18,39 @@
           {% endif %}
         </td>
         <td><a href="mailto:{{ r.email }}">{{ r.email }}</a></td>
-        <td style="max-width:22rem;white-space:pre-wrap">{{ r.reason }}</td>
-        <td>{{ r.status }}{% if r.admin_note %}<div class="muted" style="font-size:0.8rem">{{ r.admin_note }}</div>{% endif %}</td>
+        <td style="max-width:18rem;white-space:pre-wrap">{{ r.reason }}</td>
+        <td>
+          {{ r.status }}
+          {% if r.label_code %}<div class="muted" style="font-size:0.8rem">{{ r.label_code }} · {{ r.label_carrier }}</div>{% endif %}
+          {% if r.refund_status and r.refund_status != 'none' %}
+          <div class="muted" style="font-size:0.8rem">Refund: {{ r.refund_status }}{% if r.refund_amount %} · {{ r.refund_amount|huf }}{% endif %}</div>
+          {% endif %}
+          {% if r.admin_note %}<div class="muted" style="font-size:0.8rem">{{ r.admin_note }}</div>{% endif %}
+        </td>
         <td>
           <form method="post" action="/admin/returns/{{ r.id }}/status" style="display:flex;flex-direction:column;gap:0.35rem;min-width:10rem">
             <select name="status">
               <option value="requested" {% if r.status=='requested' %}selected{% endif %}>requested</option>
               <option value="approved" {% if r.status=='approved' %}selected{% endif %}>approved</option>
+              <option value="label_sent" {% if r.status=='label_sent' %}selected{% endif %}>label_sent</option>
               <option value="rejected" {% if r.status=='rejected' %}selected{% endif %}>rejected</option>
               <option value="received" {% if r.status=='received' %}selected{% endif %}>received</option>
               <option value="refunded" {% if r.status=='refunded' %}selected{% endif %}>refunded</option>
             </select>
             <input name="admin_note" placeholder="Megjegyzés" value="{{ r.admin_note }}" />
             <button class="btn ghost" type="submit">Mentés</button>
+          </form>
+          <form method="post" action="/admin/returns/{{ r.id }}/label" style="display:flex;gap:0.35rem;margin-top:0.4rem">
+            <select name="carrier">
+              <option value="gls">gls</option>
+              <option value="foxpost">foxpost</option>
+              <option value="packeta">packeta</option>
+            </select>
+            <button class="btn secondary" type="submit">RMA címke</button>
+          </form>
+          <form method="post" action="/admin/returns/{{ r.id }}/refund" style="display:flex;gap:0.35rem;margin-top:0.35rem">
+            <input name="amount" placeholder="összeg (üres=teljes)" style="width:7rem" />
+            <button class="btn" type="submit">Refund</button>
           </form>
         </td>
       </tr>

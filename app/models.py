@@ -35,6 +35,7 @@ class User(Base):
     loyalty_points: Mapped[int] = mapped_column(Integer, default=0)
     # standard | silver | gold
     loyalty_tier: Mapped[str] = mapped_column(String(16), default="standard")
+    gdpr_anonymized_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     orders: Mapped[list["Order"]] = relationship(back_populates="customer")
@@ -141,6 +142,7 @@ class Offer(Base):
     preferred_source: Mapped[bool] = mapped_column(Boolean, default=False)
     # pl. "Piros / M" — üres = alapváltozat
     variant_label: Mapped[str] = mapped_column(String(128), default="")
+    warehouse_id: Mapped[Optional[int]] = mapped_column(ForeignKey("warehouses.id"), nullable=True)
 
     product: Mapped[Product] = relationship(back_populates="offers")
     supplier: Mapped[Supplier] = relationship(back_populates="offers")
@@ -197,6 +199,9 @@ class Cart(Base):
     utm_content: Mapped[str] = mapped_column(String(128), default="")
     utm_term: Mapped[str] = mapped_column(String(128), default="")
     affiliate_code: Mapped[str] = mapped_column(String(64), default="", index=True)
+    is_b2b: Mapped[bool] = mapped_column(Boolean, default=False)
+    buyer_vat_id: Mapped[str] = mapped_column(String(32), default="")
+    reverse_charge: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     items: Mapped[list["CartItem"]] = relationship(back_populates="cart", cascade="all, delete-orphan")
@@ -376,6 +381,9 @@ class Order(Base):
     utm_content: Mapped[str] = mapped_column(String(128), default="")
     utm_term: Mapped[str] = mapped_column(String(128), default="")
     affiliate_code: Mapped[str] = mapped_column(String(64), default="", index=True)
+    is_b2b: Mapped[bool] = mapped_column(Boolean, default=False)
+    buyer_vat_id: Mapped[str] = mapped_column(String(32), default="")
+    reverse_charge: Mapped[bool] = mapped_column(Boolean, default=False)
     status: Mapped[str] = mapped_column(String(32), default="pending")
     payment_method: Mapped[str] = mapped_column(String(16), default="prepaid")
     # pending | awaiting | paid | failed | cancelled | refunded
@@ -446,6 +454,10 @@ class OrderShipment(Base):
     package_count: Mapped[int] = mapped_column(Integer, default=1)
     status: Mapped[str] = mapped_column(String(32), default="pending")
     tracking_code: Mapped[str] = mapped_column(String(128), default="")
+    carrier: Mapped[str] = mapped_column(String(32), default="")  # gls|foxpost|packeta|manual
+    label_ref: Mapped[str] = mapped_column(String(128), default="")
+    warehouse_id: Mapped[Optional[int]] = mapped_column(ForeignKey("warehouses.id"), nullable=True)
+    fulfilled_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     order: Mapped[Order] = relationship(back_populates="shipments")
 
@@ -603,6 +615,12 @@ class ReturnRequest(Base):
     reason: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(32), default="requested", index=True)
     admin_note: Mapped[str] = mapped_column(String(512), default="")
+    # RMA
+    label_code: Mapped[str] = mapped_column(String(128), default="")
+    label_carrier: Mapped[str] = mapped_column(String(32), default="")
+    label_path: Mapped[str] = mapped_column(String(512), default="")
+    refund_status: Mapped[str] = mapped_column(String(32), default="none")  # none|pending|refunded|rejected
+    refund_amount: Mapped[float] = mapped_column(Float, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
@@ -667,4 +685,40 @@ class AffiliatePartner(Base):
     click_count: Mapped[int] = mapped_column(Integer, default=0)
     order_count: Mapped[int] = mapped_column(Integer, default=0)
     revenue_total: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class Warehouse(Base):
+    __tablename__ = "warehouses"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(32), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    country: Mapped[str] = mapped_column(String(2), default="HU")
+    city: Mapped[str] = mapped_column(String(128), default="")
+    address: Mapped[str] = mapped_column(String(255), default="")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_default: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class PriceHistory(Base):
+    """Omnibus / 30 napos legalacsonyabb ár."""
+
+    __tablename__ = "price_history"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
+    offer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("offers.id"), nullable=True)
+    price: Mapped[float] = mapped_column(Float)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+
+class CookieConsentLog(Base):
+    __tablename__ = "cookie_consent_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    session_key: Mapped[str] = mapped_column(String(64), default="", index=True)
+    choice: Mapped[str] = mapped_column(String(32), default="necessary")  # necessary|analytics|marketing|all
+    analytics: Mapped[bool] = mapped_column(Boolean, default=False)
+    marketing: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

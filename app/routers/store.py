@@ -260,6 +260,9 @@ def product_detail(slug: str, request: Request, db: Session = Depends(get_db)):
         )
         _enrich_products(db, related)
     compare_ids = session_list_ids(request.session, "compare_ids")
+    from app.services.compliance import lowest_price_30d
+
+    lowest = lowest_price_30d(db, product.id)
     return templates.TemplateResponse(
         "store/product.html",
         store_context(
@@ -271,6 +274,7 @@ def product_detail(slug: str, request: Request, db: Session = Depends(get_db)):
             reviews=reviews,
             related=related,
             in_compare=product.id in compare_ids,
+            lowest_30d=lowest,
         ),
     )
 

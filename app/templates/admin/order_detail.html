@@ -1,7 +1,9 @@
 {% extends "admin/base_admin.html" %}
 {% block content %}
 <h1 style="font-family:var(--font-display)">{{ order.order_number }}</h1>
-<p class="muted">{{ order.created_at }} · {{ order.status }}</p>
+<p class="muted">{{ order.created_at }} · {{ order.status }}
+  {% if order.is_b2b %} · <span class="badge">B2B</span> {{ order.buyer_vat_id }}{% if order.reverse_charge %} · reverse charge{% endif %}{% endif %}
+</p>
 <div class="layout-2">
   <div class="panel">
     <h3>Vásárló</h3>
@@ -23,32 +25,52 @@
     </table>
   </div>
   <div class="panel">
-    <h3>Szállítmányok</h3>
+    <h3>Szállítmányok (partial fulfill)</h3>
     {% for s in order.shipments %}
     <div class="shipment">
       <strong>{{ s.supplier_name }}</strong>
       <div>{{ s.method }} · {{ s.weight_kg }} kg · {{ s.shipping_price|huf }}</div>
-      <div class="muted">Státusz: {{ s.status }}{% if s.tracking_code %} · {{ s.tracking_code }}{% endif %}</div>
+      <div class="muted">
+        Státusz: {{ s.status }}
+        {% if s.carrier %} · {{ s.carrier }}{% endif %}
+        {% if s.tracking_code %} · {{ s.tracking_code }}{% endif %}
+        {% if s.label_ref %} · címke: {{ s.label_ref }}{% endif %}
+        {% if s.warehouse_id %} · WH #{{ s.warehouse_id }}{% endif %}
+      </div>
       <form method="post" action="/admin/orders/{{ order.id }}/shipment/{{ s.id }}" style="margin-top:0.5rem">
         <div class="field"><label>Tracking</label><input name="tracking_code" value="{{ s.tracking_code }}" /></div>
         <div class="field"><label>Szállítmány státusz</label>
           <select name="shipment_status">
-            {% for st in ['pending','shipped','delivered','returned'] %}
+            {% for st in ['pending','labeled','shipped','delivered','returned'] %}
             <option value="{{ st }}" {% if s.status==st %}selected{% endif %}>{{ st }}</option>
             {% endfor %}
           </select>
         </div>
         <button class="btn secondary" type="submit">Tracking mentés</button>
       </form>
+      <form method="post" action="/admin/orders/{{ order.id }}/shipment/{{ s.id }}/label" style="display:flex;gap:0.35rem;margin-top:0.5rem;align-items:end">
+        <div class="field" style="margin:0;flex:1">
+          <label>Futár címke (stub)</label>
+          <select name="carrier">
+            {% for c in ['gls','foxpost','packeta','manual'] %}
+            <option value="{{ c }}" {% if s.carrier==c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn" type="submit">Címke</button>
+      </form>
+      <form method="post" action="/admin/orders/{{ order.id }}/shipment/{{ s.id }}/sync" style="margin-top:0.35rem">
+        <button class="btn ghost" type="submit">Tracking sync (stub)</button>
+      </form>
     </div>
     {% endfor %}
     <p><strong>Végösszeg:</strong> {{ order.grand_total|huf }}
-      {% if order.tax_total %}<br/><span class="muted">Nettó {{ order.net_total|huf }} · ÁFA {{ order.tax_total|huf }}</span>{% endif %}
+      {% if order.tax_total is not none %}<br/><span class="muted">Nettó {{ order.net_total|huf }} · ÁFA {{ order.tax_total|huf }} ({{ order.tax_rate_percent }}%)</span>{% endif %}
     </p>
     <form method="post" action="/admin/orders/{{ order.id }}/status">
       <div class="field"><label>Státusz módosítás</label>
         <select name="status">
-          {% for st in ['pending','paid','fulfilled','cancelled'] %}
+          {% for st in ['pending','paid','partial','fulfilled','cancelled','refunded'] %}
           <option value="{{ st }}" {% if order.status==st %}selected{% endif %}>{{ st }}</option>
           {% endfor %}
         </select>

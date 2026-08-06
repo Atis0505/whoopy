@@ -1,0 +1,38 @@
+{% extends "admin/base_admin.html" %}
+{% block page_title %}Raktárak{% endblock %}
+{% block content %}
+<h1 style="font-family:var(--font-display)">Raktárak</h1>
+<p class="muted">Multi-warehouse stub — szállítmányok a default raktárhoz kötődnek checkoutkor.</p>
+<div class="layout-2">
+  <div class="panel">
+    <table class="table">
+      <thead><tr><th>Kód</th><th>Név</th><th>Helyszín</th><th>Default</th><th>Aktív</th></tr></thead>
+      <tbody>
+      {% for w in warehouses %}
+        <tr>
+          <td><code>{{ w.code }}</code></td>
+          <td>{{ w.name }}</td>
+          <td class="muted">{{ w.city }}{% if w.country %} · {{ w.country }}{% endif %}</td>
+          <td>{% if w.is_default %}✓{% else %}—{% endif %}</td>
+          <td>{% if w.active %}igen{% else %}nem{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">Nincs raktár — seed vagy létrehozás alább.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>Új raktár</h3>
+    <form method="post" action="/admin/warehouses/create">
+      <div class="field"><label>Kód</label><input name="code" required placeholder="BUD-01" /></div>
+      <div class="field"><label>Név</label><input name="name" required placeholder="Budapest központ" /></div>
+      <div class="field"><label>Ország</label><input name="country" value="HU" maxlength="2" /></div>
+      <div class="field"><label>Város</label><input name="city" /></div>
+      <div class="field"><label>Cím</label><input name="address" /></div>
+      <label class="muted"><input type="checkbox" name="is_default" value="1" /> Alapértelmezett</label>
+      <p style="margin-top:0.75rem"><button class="btn" type="submit">Mentés</button></p>
+    </form>
+  </div>
+</div>
+{% endblock %}

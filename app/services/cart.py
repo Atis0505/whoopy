@@ -48,6 +48,7 @@ class CartQuote:
     tax_rate_percent: float = 27.0
     tax_total: float = 0.0
     net_total: float = 0.0
+    reverse_charge: bool = False
     shipments: list[ShipmentQuote] = field(default_factory=list)
     item_count: int = 0
     currency: str = "HUF"
@@ -333,7 +334,6 @@ def quote_cart(db: Session, cart: Cart, country: str | None = None) -> CartQuote
 
     from app.services.customer_ux import find_gift_card, gift_discount, loyalty_discount_amount
     from app.services.store_settings import get_store_settings
-    from app.services.vat import split_gross, vat_rate_for_country
 
     store = get_store_settings(db)
 
@@ -351,7 +351,6 @@ def quote_cart(db: Session, cart: Cart, country: str | None = None) -> CartQuote
     quote.gift_discount = gift_discount(card, payable_before_extra)
     after_gift = max(0.0, payable_before_extra - quote.gift_discount)
 
-    # Hűségpont: max a fennmaradó 50%-a (ne legyen 0 Ft mindennel)
     max_loyalty = after_gift * 0.5
     pts_req = int(getattr(cart, "loyalty_redeem_points", 0) or 0)
     used, ldisc = loyalty_discount_amount(
@@ -363,6 +362,22 @@ def quote_cart(db: Session, cart: Cart, country: str | None = None) -> CartQuote
     quote.loyalty_discount = ldisc
 
     quote.grand_total = round(max(0.0, after_gift - quote.loyalty_discount), 2)
-    quote.tax_rate_percent = vat_rate_for_country(country or cart.country, store.tax_rate_percent)
-    quote.net_total, quote.tax_total, _ = split_gross(quote.grand_total, quote.tax_rate_percent)
+
+    from app.services.vat import effective_vat_rate, split_gross
+
+    rate, reverse = effective_vat_rate(
+        country=country or cart.country,
+        fallback=store.tax_rate_percent,
+        is_b2b=bool(getattr(cart, "is_b2b", False)),
+        buyer_vat_id=getattr(cart, "buyer_vat_id", "") or "",
+        seller_country=getattr(store, "default_country", "HU") or "HU",
+    )
+    quote.tax_rate_percent = rate
+    quote.reverse_charge = reverse
+    if reverse:
+        # bruttó árakból nettó megjelenés: adó 0, nettó = grand
+        quote.net_total = quote.grand_total
+        quote.tax_total = 0.0
+    else:
+        quote.net_total, quote.tax_total, _ = split_gross(quote.grand_total, quote.tax_rate_percent)
     return quote

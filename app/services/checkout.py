@@ -130,6 +130,9 @@ def create_order_from_cart(
         utm_content=getattr(cart, "utm_content", "") or "",
         utm_term=getattr(cart, "utm_term", "") or "",
         affiliate_code=getattr(cart, "affiliate_code", "") or "",
+        is_b2b=bool(getattr(cart, "is_b2b", False)),
+        buyer_vat_id=getattr(cart, "buyer_vat_id", "") or "",
+        reverse_charge=bool(getattr(quote, "reverse_charge", False)),
     )
     db.add(order)
     db.flush()
@@ -164,6 +167,11 @@ def create_order_from_cart(
         sel = shipment.selected
         method = "pickup" if order.delivery_mode == "pickup" else (sel.method if sel else "courier")
         rate_name = order.pickup_point_label if order.delivery_mode == "pickup" else (sel.name if sel else "")
+        from app.models import Warehouse
+
+        wh = db.query(Warehouse).filter(Warehouse.is_default.is_(True), Warehouse.active.is_(True)).first()
+        if not wh:
+            wh = db.query(Warehouse).filter(Warehouse.active.is_(True)).first()
         db.add(
             OrderShipment(
                 order_id=order.id,
@@ -179,6 +187,7 @@ def create_order_from_cart(
                 cod_fee=sel.cod_fee if sel and order.delivery_mode != "pickup" else 0,
                 package_count=sel.package_count if sel else 1,
                 status="pending",
+                warehouse_id=wh.id if wh else None,
             )
         )
 

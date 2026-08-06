@@ -61,10 +61,45 @@ def sitemap_xml(db: Session = Depends(get_db)):
 # ── Cookie consent ───────────────────────────────────────────────────────────
 
 @router.post("/cookies/consent")
-def cookie_consent(request: Request, choice: str = Form("necessary")):
-    request.session["cookie_consent"] = choice if choice in ("necessary", "all") else "necessary"
-    next_url = request.headers.get("referer") or "/"
-    return RedirectResponse(next_url, status_code=303)
+def cookie_consent(
+    request: Request,
+    choice: str = Form("necessary"),
+    analytics: str = Form(""),
+    marketing: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    from app.deps import get_session_key
+    from app.models import CookieConsentLog
+
+    choice = choice if choice in ("necessary", "analytics", "marketing", "all", "custom") else "necessary"
+    if choice == "all":
+        analytics_on = marketing_on = True
+    elif choice == "necessary":
+        analytics_on = marketing_on = False
+    else:
+        analytics_on = analytics == "1" or choice == "analytics"
+        marketing_on = marketing == "1" or choice == "marketing"
+        if analytics_on and marketing_on:
+            choice = "all"
+        elif analytics_on:
+            choice = "analytics"
+        elif marketing_on:
+            choice = "marketing"
+        else:
+            choice = "necessary"
+    request.session["cookie_consent"] = choice
+    request.session["cookie_analytics"] = analytics_on
+    request.session["cookie_marketing"] = marketing_on
+    db.add(
+        CookieConsentLog(
+            session_key=get_session_key(request),
+            choice=choice,
+            analytics=analytics_on,
+            marketing=marketing_on,
+        )
+    )
+    db.commit()
+    return RedirectResponse(request.headers.get("referer", "/"), status_code=303)
 
 
 # ── Contact ──────────────────────────────────────────────────────────────────

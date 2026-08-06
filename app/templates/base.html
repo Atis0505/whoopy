@@ -142,12 +142,24 @@
   {% if not request.session.get('cookie_consent') %}
   <div class="cookie-banner" role="dialog" aria-label="Cookie tájékoztató">
     <p>A Whoopy cookie-kat használ a kosárhoz és a bejelentkezéshez (szükséges).
+      Analitika / marketing opcionális (Consent Mode stub).
       <a href="/pages/adatvedelem">Adatvédelem</a></p>
-    <form method="post" action="/cookies/consent" style="display:flex;gap:0.5rem;flex-wrap:wrap">
-      <button class="btn secondary" name="choice" value="necessary" type="submit">Csak szükséges</button>
-      <button class="btn" name="choice" value="all" type="submit">Elfogadom</button>
+    <form method="post" action="/cookies/consent" style="display:flex;flex-direction:column;gap:0.5rem">
+      <label class="muted" style="font-size:0.85rem"><input type="checkbox" name="analytics" value="1" /> Analitika</label>
+      <label class="muted" style="font-size:0.85rem"><input type="checkbox" name="marketing" value="1" /> Marketing</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn secondary" name="choice" value="necessary" type="submit">Csak szükséges</button>
+        <button class="btn ghost" name="choice" value="custom" type="submit">Kiválasztottak</button>
+        <button class="btn" name="choice" value="all" type="submit">Összes elfogadása</button>
+      </div>
     </form>
   </div>
+  {% endif %}
+  {% if request.session.get('cookie_analytics') %}
+  <script>window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};gtag('consent','update',{analytics_storage:'granted'});</script>
+  {% endif %}
+  {% if request.session.get('cookie_marketing') %}
+  <script>window.dataLayer=window.dataLayer||[];window.gtag=window.gtag||function(){dataLayer.push(arguments)};gtag('consent','update',{ad_storage:'granted'});</script>
   {% endif %}
 
   {% if chat_enabled %}

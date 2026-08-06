@@ -24,4 +24,6 @@ data/taxonomy/*.txt
 data/email_outbox/
 data/szamlazz_outbox/
 data/szamlazz_pdf/
+data/carrier_outbox/
+data/rma_outbox/
 

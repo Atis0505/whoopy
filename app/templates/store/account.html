@@ -22,6 +22,21 @@
       </label>
       <p><button class="btn ghost" type="submit">{{ t('apply') }}</button></p>
     </form>
+
+    <hr style="border:0;border-top:1px solid var(--line);margin:1.25rem 0" />
+    <h3>Adatok (GDPR)</h3>
+    {% if request.query_params.get('gdpr_error') %}
+    <div class="flash-error">Törléshez írd be: TORLES{% if request.query_params.get('gdpr_error')=='staff' %} (staff fiók nem törölhető így){% endif %}</div>
+    {% endif %}
+    <p><a class="btn secondary" href="/account/export">Adatok exportálása (JSON)</a></p>
+    <form method="post" action="/account/delete" style="margin-top:0.75rem" onsubmit="return confirm('Biztosan anonimizálod a fiókot?');">
+      <div class="field">
+        <label>Fiók törlése / anonimizálás — írd be: <code>TORLES</code></label>
+        <input name="confirm" placeholder="TORLES" autocomplete="off" />
+      </div>
+      <button class="btn ghost" type="submit">Fiók törlése</button>
+    </form>
+
     {% if user.is_staff %}
     <p style="margin-top:1rem">
       {% if user.role == 'admin' or user.is_admin %}

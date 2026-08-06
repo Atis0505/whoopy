@@ -1,7 +1,7 @@
 # Whoopy rendszerleírás — AI / fejlesztői handover
 
 > Célközönség: **másik AI agent** vagy új fejlesztő, aki nulláról folytatja a Whoopy ökoszisztémát.  
-> Frissítve: 2026-08 · Schema Whoopy **v12**
+> Frissítve: 2026-08 · Schema Whoopy **v13**
 
 ---
 
@@ -57,6 +57,7 @@
 | Számlázz.hu | `app/services/szamlazz.py` · `docs/SZAMLAZZ.md` (dry-run / Agent) |
 | Vásárlói UX | `app/routers/customer_ux.py`, `services/customer_ux.py` · `docs/UX.md` |
 | Marketing | `services/{marketing_feeds,attribution}.py` · `/admin/marketing` · `docs/MARKETING.md` |
+| Logisztika / Compliance | `services/{carriers,rma,compliance,vat}.py` · `routers/compliance.py` · `docs/LOGISTICS_COMPLIANCE.md` |
 
 ### ERP oldal
 
@@ -135,12 +136,13 @@ ERP: külön venv, `:8010`. Whoopy `.env` ↔ ERP `.env` **ugyanaz** az `API_KEY
 15. **Checkout E2E + Számlázz stub** ✅ (`docs/SZAMLAZZ.md`)  
 16. **Vásárlói élmény csomag** ✅ (`docs/UX.md`)  
 17. **Marketing csomag** ✅ (`docs/MARKETING.md`)  
+18. **Logisztika + Compliance** ✅ (`docs/LOGISTICS_COMPLIANCE.md`)  
 
 ### Érdemes következő iterációk
 
 1. SimplePay éles merchant + nyilvános IPN URL (üzleti / DNS)  
 2. Domain DNS + TLS (Caddy/Cloudflare) a `docs/DEPLOY.md` szerint  
-3. Számlázz Agent kulcs + éles csomagpont API
+3. Számlázz Agent kulcs + éles futár / csomagpont API
 
 ### Kerüld el
 

@@ -70,6 +70,24 @@
       </div>
     </form>
 
+    <form method="post" action="/cart/b2b" style="margin-top:1rem">
+      <div class="field">
+        <label><input type="checkbox" name="is_b2b" value="1" {% if cart.is_b2b %}checked{% endif %} /> B2B / céges vásárlás (EU ÁFA)</label>
+      </div>
+      <div class="field">
+        <label>EU adószám (pl. HU12345678)</label>
+        <input name="buyer_vat_id" value="{{ cart.buyer_vat_id }}" placeholder="HU…" {% if not cart.is_b2b %}disabled id="vat-id"{% else %}id="vat-id"{% endif %} />
+      </div>
+    {% if vat_error or request.query_params.get('vat_error') %}<div class="flash-error">Érvénytelen EU adószám formátum.</div>{% endif %}
+      {% if quote.reverse_charge %}<p class="muted" style="font-size:0.85rem">Reverse charge: ÁFA 0% (másik EU tagállam B2B).</p>{% endif %}
+      <button class="btn ghost" type="submit">B2B mentése</button>
+    </form>
+    <script>
+    document.querySelector('input[name=is_b2b]')?.addEventListener('change', function(){
+      document.getElementById('vat-id').disabled = !this.checked;
+    });
+    </script>
+
     <form method="post" action="/cart/delivery" style="margin-top:1rem" id="delivery-form">
       <div class="field">
         <label>Szállítás módja</label>
@@ -146,7 +164,11 @@
     {% if quote.cod_fee_total %}<div>{{ t('cod_fee') }}: {{ money(quote.cod_fee_total) }}</div>{% endif %}
     <div class="price" style="margin-top:0.5rem">{{ t('grand_total') }}: {{ money(quote.grand_total) }}</div>
     <p class="muted" style="font-size:0.85rem;margin-top:0.35rem">
+      {% if quote.reverse_charge %}
+      Nettó (reverse charge): {{ money(quote.net_total) }} · ÁFA 0%
+      {% else %}
       Nettó: {{ money(quote.net_total) }} · ÁFA ({{ quote.tax_rate_percent|round(1) }}%): {{ money(quote.tax_total) }}
+      {% endif %}
     </p>
     {% if quote.item_count > 0 %}
     <p style="margin-top:1rem"><a class="btn" href="/checkout">{{ t('checkout') }}</a></p>

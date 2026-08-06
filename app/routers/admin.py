@@ -550,7 +550,119 @@ def order_shipment_update(
         full = load_order(db, order_id)
         if full:
             emit_order_event(db, "shipment.updated", full)
+        _sync_order_fulfillment(db, order_id)
     return RedirectResponse(f"/admin/orders/{order_id}", status_code=303)
+
+
+@router.post("/orders/{order_id}/shipment/{shipment_id}/label")
+def order_shipment_label(
+    order_id: int,
+    shipment_id: int,
+    request: Request,
+    carrier: str = Form("gls"),
+    db: Session = Depends(get_db),
+):
+    user = _require_staff_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.models import OrderShipment
+    from app.services.carriers import create_shipping_label
+
+    sh = db.query(OrderShipment).filter(OrderShipment.id == shipment_id, OrderShipment.order_id == order_id).first()
+    if sh:
+        create_shipping_label(db, sh, carrier=carrier)
+        _sync_order_fulfillment(db, order_id)
+    return RedirectResponse(f"/admin/orders/{order_id}", status_code=303)
+
+
+@router.post("/orders/{order_id}/shipment/{shipment_id}/sync")
+def order_shipment_sync(
+    order_id: int,
+    shipment_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    user = _require_staff_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.models import OrderShipment
+    from app.services.carriers import sync_tracking
+
+    sh = db.query(OrderShipment).filter(OrderShipment.id == shipment_id, OrderShipment.order_id == order_id).first()
+    if sh:
+        sync_tracking(db, sh)
+        _sync_order_fulfillment(db, order_id)
+    return RedirectResponse(f"/admin/orders/{order_id}", status_code=303)
+
+
+def _sync_order_fulfillment(db: Session, order_id: int) -> None:
+    """Partial fulfill: ha minden shipment shipped/delivered → order fulfilled."""
+    from app.models import OrderShipment
+
+    order = db.get(Order, order_id)
+    if not order or not order.shipments:
+        return
+    statuses = {(s.status or "pending") for s in order.shipments}
+    done = {"shipped", "delivered"}
+    if statuses and statuses.issubset(done):
+        if order.status not in ("cancelled", "refunded"):
+            order.status = "fulfilled"
+            db.commit()
+    elif statuses & done and order.status not in ("cancelled", "refunded", "fulfilled"):
+        # részben teljesítve — status mezőben partial jelzés a UI-nak (paid/pending mellett)
+        if order.status in ("pending", "paid"):
+            order.status = "partial"
+            db.commit()
+
+
+@router.get("/warehouses", response_class=HTMLResponse)
+def warehouses_list(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.models import Warehouse
+
+    rows = db.query(Warehouse).order_by(Warehouse.is_default.desc(), Warehouse.code).all()
+    return templates.TemplateResponse(
+        "admin/warehouses.html",
+        {"request": request, "user": user, "warehouses": rows, "app_name": settings.app_name},
+    )
+
+
+@router.post("/warehouses/create")
+def warehouses_create(
+    request: Request,
+    code: str = Form(...),
+    name: str = Form(...),
+    country: str = Form("HU"),
+    city: str = Form(""),
+    address: str = Form(""),
+    is_default: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.models import Warehouse
+
+    code_n = code.strip().upper()[:32]
+    if code_n and not db.query(Warehouse).filter(Warehouse.code == code_n).first():
+        if is_default == "1":
+            for w in db.query(Warehouse).filter(Warehouse.is_default.is_(True)).all():
+                w.is_default = False
+        db.add(
+            Warehouse(
+                code=code_n,
+                name=name.strip()[:255],
+                country=(country or "HU").upper()[:2],
+                city=city.strip()[:128],
+                address=address.strip()[:255],
+                active=True,
+                is_default=is_default == "1",
+            )
+        )
+        db.commit()
+    return RedirectResponse("/admin/warehouses", status_code=303)
 
 
 @router.get("/campaigns", response_class=HTMLResponse)

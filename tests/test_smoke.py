@@ -162,3 +162,65 @@ def test_marketing_feeds():
 def test_affiliate_redirect():
     r = client.get("/go/aff/PARTNER10", params={"next": "/"}, follow_redirects=False)
     assert r.status_code in (302, 303)
+
+
+def test_cookie_consent_v2():
+    r = client.post("/cookies/consent", data={"choice": "all"}, follow_redirects=False)
+    assert r.status_code in (302, 303)
+
+
+def test_b2b_vat_and_omnibus():
+    from app.database import SessionLocal
+    from app.models import Offer, Warehouse
+    from app.services.compliance import lowest_price_30d
+    from app.services.vat import effective_vat_rate, validate_eu_vat_format
+
+    assert validate_eu_vat_format("HU12345678")
+    assert not validate_eu_vat_format("XX")
+    rate, reverse = effective_vat_rate(
+        country="DE", fallback=27.0, is_b2b=True, buyer_vat_id="DE123456789", seller_country="HU"
+    )
+    assert reverse and rate == 0.0
+
+    db = SessionLocal()
+    try:
+        assert db.query(Warehouse).filter(Warehouse.is_default.is_(True)).first() is not None
+        offer = db.query(Offer).filter(Offer.active.is_(True)).first()
+        assert offer is not None
+        assert lowest_price_30d(db, offer.product_id) is not None
+    finally:
+        db.close()
+
+    r = client.post("/cart/b2b", data={"is_b2b": "1", "buyer_vat_id": "HU12345678"}, follow_redirects=False)
+    assert r.status_code in (302, 303)
+
+
+def test_carrier_label_stub():
+    from app.database import SessionLocal
+    from app.models import Order, OrderShipment
+    from app.services.carriers import create_shipping_label
+
+    db = SessionLocal()
+    try:
+        sh = db.query(OrderShipment).first()
+        if not sh:
+            # create minimal via existing order if any
+            order = db.query(Order).first()
+            if not order:
+                return
+            sh = OrderShipment(
+                order_id=order.id,
+                supplier_id=1,
+                supplier_name="Demo",
+                method="courier",
+                status="pending",
+            )
+            db.add(sh)
+            db.commit()
+            db.refresh(sh)
+        result = create_shipping_label(db, sh, carrier="gls")
+        assert result.get("ok")
+        assert result.get("tracking")
+        assert sh.label_ref
+    finally:
+        db.close()
