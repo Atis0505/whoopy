@@ -47,6 +47,9 @@
   {% if order.tax_total %}
   <p class="muted">Nettó {{ money(order.net_total) }} · ÁFA ({{ order.tax_rate_percent }}%) {{ money(order.tax_total) }}</p>
   {% endif %}
+  {% if order.invoice_number %}
+  <p class="muted">Számlaszám: <strong>{{ order.invoice_number }}</strong> ({{ order.invoice_provider }})</p>
+  {% endif %}
   <p>
     <a class="btn secondary" href="/order/{{ order.order_number }}/invoice?email={{ order.email }}">Számla (nyomtatható)</a>
     <a class="btn secondary" href="/returns">Visszaküldés</a>

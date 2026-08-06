@@ -483,6 +483,23 @@ def order_status(
     return RedirectResponse(f"/admin/orders/{order_id}", status_code=303)
 
 
+@router.post("/orders/{order_id}/szamlazz")
+def order_szamlazz_issue(
+    order_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    user = _require_staff_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if order:
+        from app.services.szamlazz import issue_invoice
+
+        issue_invoice(db, order, force=True)
+    return RedirectResponse(f"/admin/orders/{order_id}", status_code=303)
+
+
 @router.post("/orders/{order_id}/shipment/{shipment_id}")
 def order_shipment_update(
     order_id: int,

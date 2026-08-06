@@ -343,6 +343,12 @@ class Order(Base):
     coupon_code: Mapped[str] = mapped_column(String(64), default="")
     lang: Mapped[str] = mapped_column(String(5), default="hu")
     notes: Mapped[str] = mapped_column(Text, default="")
+    # Számlázz.hu / HTML számla
+    invoice_status: Mapped[str] = mapped_column(String(32), default="none", index=True)  # none|pending|issued|failed|skipped
+    invoice_number: Mapped[str] = mapped_column(String(64), default="")
+    invoice_provider: Mapped[str] = mapped_column(String(32), default="")  # html|szamlazz
+    invoice_pdf_path: Mapped[str] = mapped_column(String(512), default="")
+    invoice_error: Mapped[str] = mapped_column(String(512), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     customer: Mapped[Optional[User]] = relationship(back_populates="orders")

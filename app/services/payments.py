@@ -58,6 +58,14 @@ def mark_order_paid(db: Session, order: Order, *, provider: str, payment_ref: st
 
     full = load_order(db, order.id) or order
     emit_order_event(db, "order.paid", full)
+    try:
+        from app.services.szamlazz import maybe_auto_invoice
+
+        maybe_auto_invoice(db, full)
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).exception("Számlázz auto-invoice failed for %s", order.order_number)
     return order
 
 

@@ -1,7 +1,7 @@
 # Whoopy rendszerleírás — AI / fejlesztői handover
 
 > Célközönség: **másik AI agent** vagy új fejlesztő, aki nulláról folytatja a Whoopy ökoszisztémát.  
-> Frissítve: 2026-08 · Schema Whoopy **v9**
+> Frissítve: 2026-08 · Schema Whoopy **v10**
 
 ---
 
@@ -54,6 +54,7 @@
 | Merchant | `app/services/google_feed.py` |
 | ERP bridge | `app/services/erp_bridge.py` (ping + autosync trigger) |
 | EU shop | `app/routers/eu_shop.py`, `services/{vat,email}.py` · `docs/EU_SHOP.md` |
+| Számlázz.hu | `app/services/szamlazz.py` · `docs/SZAMLAZZ.md` (dry-run / Agent) |
 
 ### ERP oldal
 
@@ -90,6 +91,7 @@ API key (dev): `whoopy-dev-api-key-change-me`
 | `docs/API.md` | Management API |
 | `docs/PARTNEREK.md` | Belső partner ops |
 | `docs/EU_SHOP.md` | GDPR, SEO, ÁFA, invoice, track, contact… |
+| `docs/SZAMLAZZ.md` | Számlázz.hu Agent stub / élesítés |
 | `docs/FIZETES.md` | Demo / Stripe / SimplePay |
 | `docs/KEPEK.md` | Feltöltés + CDN base |
 | `docs/WEBHOOKOK.md` | Outbound |
@@ -128,12 +130,13 @@ ERP: külön venv, `:8010`. Whoopy `.env` ↔ ERP `.env` **ugyanaz** az `API_KEY
 12. **Deploy docs + Docker** ✅  
 13. **whoopy_orders + presence + S3 + smoke** ✅  
 14. **EU webshop csomag** ✅ (`docs/EU_SHOP.md`)  
+15. **Checkout E2E + Számlázz stub** ✅ (`docs/SZAMLAZZ.md`)  
 
 ### Érdemes következő iterációk
 
 1. SimplePay éles merchant + nyilvános IPN URL (üzleti / DNS)  
 2. Domain DNS + TLS (Caddy/Cloudflare) a `docs/DEPLOY.md` szerint  
-3. Checkout E2E bővítés + NAV e-számla
+3. Számlázz Agent kulcs élesítés (`SZAMLAZZ_ENABLED` + kulcs)
 
 ### Kerüld el
 

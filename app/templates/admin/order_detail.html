@@ -55,6 +55,17 @@
       </div>
       <button class="btn" type="submit">Mentés</button>
     </form>
+    <hr style="border:0;border-top:1px solid var(--line);margin:1rem 0" />
+    <h3>Számla (Számlázz.hu)</h3>
+    <p class="muted" style="font-size:0.9rem">
+      Státusz: {{ order.invoice_status or 'none' }}
+      {% if order.invoice_number %} · {{ order.invoice_number }}{% endif %}
+      {% if order.invoice_error %}<br/>{{ order.invoice_error }}{% endif %}
+    </p>
+    <form method="post" action="/admin/orders/{{ order.id }}/szamlazz">
+      <button class="btn secondary" type="submit">Számla kiállítása / dry-run</button>
+    </form>
+    <p style="margin-top:0.5rem"><a href="/order/{{ order.order_number }}/invoice" target="_blank">HTML számla</a></p>
   </div>
 </div>
 {% endblock %}

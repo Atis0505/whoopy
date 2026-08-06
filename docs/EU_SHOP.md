@@ -9,6 +9,7 @@ Schema **v9**. Rövid áttekintés.
 | SEO | `/robots.txt`, `/sitemap.xml`, Product JSON-LD |
 | ÁFA (bruttó árak) | kosár/rendelés nettó+ÁFA; ország szerinti rate stub |
 | Számla (nyomtatható) | `/order/{n}/invoice` |
+| Számlázz.hu | stub / dry-run / éles — `docs/SZAMLAZZ.md` |
 | E-mail stub | SMTP vagy `data/email_outbox/` |
 | Tracking | `/track` + admin szállítmány tracking |
 | Kapcsolat | `/contact` |

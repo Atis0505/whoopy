@@ -74,6 +74,14 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = ""
     smtp_use_tls: bool = True
+    # Számlázz.hu Agent (https://docs.szamlazz.hu/) — üres kulcs = dry-run outbox
+    szamlazz_enabled: bool = False
+    szamlazz_agent_key: str = ""
+    szamlazz_api_url: str = "https://www.szamlazz.hu/szamla/"
+    szamlazz_eszamla: bool = True
+    szamlazz_download_pdf: bool = True
+    szamlazz_auto_on_paid: bool = True
+    szamlazz_timeout_sec: float = 30.0
 
     @property
     def is_production(self) -> bool:
