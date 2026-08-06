@@ -640,12 +640,21 @@ def customer_login_submit(
     password: str = Form(...),
     db: Session = Depends(get_db),
 ):
+    from app.services.store_settings import get_store_settings
+    from app.services.storefront_ops import storefront_is_closed
+
     user = try_login(db, email.strip().lower(), password)
     if not user:
         return templates.TemplateResponse(
             "store/login.html",
             store_context(request, db, error="bad_login"),
             status_code=401,
+        )
+    if storefront_is_closed(get_store_settings(db)) and user.role == "worker" and not user.is_admin:
+        return templates.TemplateResponse(
+            "store/login.html",
+            store_context(request, db, error="worker_closed"),
+            status_code=403,
         )
     request.session["user_id"] = user.id
     request.session["lang"] = user.preferred_lang or "hu"

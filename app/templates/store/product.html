@@ -69,8 +69,12 @@
       </div>
       <form method="post" action="/cart/add">
         <input type="hidden" name="offer_id" value="{{ o.id }}" />
-        <input type="number" name="quantity" value="1" min="1" max="{{ o.stock }}" style="width:4rem;margin-right:0.4rem" {% if o.stock < 1 %}disabled{% endif %} aria-label="Mennyiség" />
+        <input type="number" name="quantity" value="1" min="1" max="{{ o.stock }}" style="width:4rem;margin-right:0.4rem" {% if o.stock < 1 or not orders_enabled %}disabled{% endif %} aria-label="Mennyiség" />
+        {% if orders_enabled %}
         <button class="btn" type="submit" {% if o.stock < 1 %}disabled{% endif %}>{{ t('add_to_cart') }}</button>
+        {% else %}
+        <button class="btn" type="button" disabled title="Rendelésfogadás szünetel">Szünetel</button>
+        {% endif %}
       </form>
     </div>
     {% else %}

@@ -7,7 +7,7 @@ from app.database import Base, engine
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = "16"
+SCHEMA_VERSION = "17"
 VERSION_FILE = BASE_DIR / ".schema_version"
 DB_PATH = BASE_DIR / "marketplace.db"
 
@@ -22,7 +22,7 @@ _REQUIRED_COLUMNS = {
 
 # SQLite ADD COLUMN — storefront ops v14 + price history v15
 _STORE_SETTINGS_ALTERS = [
-    ("maintenance_message", "TEXT DEFAULT 'A bolt átmenetileg zárva van. Hamarosan visszatérünk.'"),
+    ("maintenance_message", "TEXT DEFAULT 'Jelenleg a boltunk inaktív, nem üzemel — rendeléseket sem fogadunk. Hamarosan visszatérünk.'"),
     ("announcement_enabled", "BOOLEAN DEFAULT 0"),
     ("announcement_text", "VARCHAR(512) DEFAULT ''"),
     ("announcement_link", "VARCHAR(512) DEFAULT ''"),
@@ -33,6 +33,11 @@ _STORE_SETTINGS_ALTERS = [
     ("ticker_enabled", "BOOLEAN DEFAULT 1"),
     ("business_hours", "VARCHAR(255) DEFAULT 'H–P 9:00–17:00'"),
     ("free_shipping_threshold_huf", "FLOAT DEFAULT 25000"),
+    ("storefront_status", "VARCHAR(16) DEFAULT 'open'"),
+    (
+        "orders_paused_message",
+        "TEXT DEFAULT 'Átmenetileg nem fogadunk új rendeléseket. Böngészhetsz, de a kosár és a vásárlás szünetel.'",
+    ),
 ]
 
 _PRICE_HISTORY_ALTERS = [
@@ -92,6 +97,21 @@ def _sqlite_apply_additive_alters() -> None:
                 "CREATE INDEX IF NOT EXISTS ix_offers_active_stock ON offers(active, stock)",
             ):
                 con.execute(stmt)
+
+            # v17: legacy maintenance_mode → storefront_status
+            cols = {r[1] for r in con.execute("pragma table_info(store_settings)").fetchall()}
+            if "storefront_status" in cols and "maintenance_mode" in cols:
+                con.execute(
+                    "UPDATE store_settings SET storefront_status='closed' "
+                    "WHERE maintenance_mode=1 AND (storefront_status IS NULL OR storefront_status='' OR storefront_status='open')"
+                )
+                con.execute(
+                    "UPDATE store_settings SET maintenance_mode=1 WHERE storefront_status='closed'"
+                )
+                con.execute(
+                    "UPDATE store_settings SET maintenance_mode=0 "
+                    "WHERE storefront_status IN ('open','catalog_only')"
+                )
             con.commit()
         finally:
             con.close()

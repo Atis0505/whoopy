@@ -1,11 +1,11 @@
-# Storefront ops (Whoopy) — schema v14
+# Storefront ops (Whoopy) — schema v14 + státusz v17
 
 | Funkció | Hol |
 |---------|-----|
 | Felső hirdetőszalag | Beállítások → ki/be, szöveg, link, szín, ütemezés · minden oldalon |
 | Social ticker | Futó sáv: friss vásárlások + havi kedvencek + `topbar` kampányok |
-| Bolt zárás 1 gombbal | Dashboard → „Bolt zárása” · maintenance 503 a vásárlóknak · admin/login nyitva |
-| Feed hide | Maintenance VAGY feed flag OFF → üres Google/Meta/Árukereső |
+| **Bolt státusz (3 fokozat)** | Dashboard / Beállítások · `storefront_status` |
+| Feed hide | `closed` VAGY feed flag OFF → üres Google/Meta/Árukereső |
 | Kampány toggle | `/admin/campaigns` → Bekapcsolva / Kikapcsolva |
 | Free-ship progress | Kosár · küszöb a Beállításokban |
 | Pending badge | Admin sidebar Rendelések |
@@ -13,4 +13,15 @@
 | DEMO badge | `environment != production` |
 | Ügyfélszolgálati órák | Beállítások → topbar + footer + contact |
 
-**Reszponzív:** mobil / tablet breakpointok a `style.css` + `admin.css` fájlokban (sticky header, wrap header, sticky admin nav).
+## Bolt státusz fokozatok
+
+| Státusz | Vásárló | Kosár / checkout | Admin | Dolgozó |
+|---------|---------|------------------|-------|---------|
+| `open` | teljes bolt | igen | igen | igen |
+| `catalog_only` | böngészés + banner | **nem** (gombok elrejtve, POST tiltva) | igen | igen |
+| `closed` | **egyoldalas** „bolt inaktív” (503) | — | **igen** (újra lehet nyitni) | **nem** (login tiltva) |
+
+Üzenetek: `maintenance_message` (zárás), `orders_paused_message` (rendelés szünet).  
+Legacy: `maintenance_mode=true` ≡ `closed`.
+
+**Reszponzív:** mobil / tablet breakpointok a `style.css` + `admin.css` fájlokban.

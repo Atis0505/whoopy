@@ -179,11 +179,12 @@ def test_announcement_and_ticker_on_home():
 def test_maintenance_blocks_store():
     from app.database import SessionLocal
     from app.services.store_settings import get_store_settings, touch_settings
+    from app.services.storefront_ops import set_storefront_status
 
     db = SessionLocal()
     try:
         store = get_store_settings(db)
-        store.maintenance_mode = True
+        set_storefront_status(store, "closed")
         touch_settings(store)
         db.commit()
     finally:
@@ -191,12 +192,36 @@ def test_maintenance_blocks_store():
 
     r = client.get("/", follow_redirects=False)
     assert r.status_code == 503
-    assert "zárva" in r.text.lower() or "Whoopy" in r.text
+    assert "nem üzemel" in r.text.lower() or "inaktív" in r.text.lower() or "Whoopy" in r.text
+
+    # dolgozó login tiltva
+    r_w = client.post(
+        "/login",
+        data={"email": "dolgozo@whoopy.local", "password": "worker123"},
+        follow_redirects=False,
+    )
+    assert r_w.status_code in (403, 401)
+    assert "dolgozó" in r_w.text.lower() or "zárva" in r_w.text.lower()
 
     db = SessionLocal()
     try:
         store = get_store_settings(db)
-        store.maintenance_mode = False
+        set_storefront_status(store, "catalog_only")
+        touch_settings(store)
+        db.commit()
+    finally:
+        db.close()
+
+    assert client.get("/").status_code == 200
+    r_cart = client.get("/cart", follow_redirects=False)
+    assert r_cart.status_code in (302, 303)
+    r_add = client.post("/cart/add", data={"offer_id": 1, "quantity": 1}, follow_redirects=False)
+    assert r_add.status_code in (302, 303, 403)
+
+    db = SessionLocal()
+    try:
+        store = get_store_settings(db)
+        set_storefront_status(store, "open")
         touch_settings(store)
         db.commit()
     finally:

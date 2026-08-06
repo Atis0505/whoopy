@@ -50,6 +50,11 @@ def _require_staff(request: Request, db: Session) -> User | RedirectResponse:
     user = get_current_user(request, db)
     if not user or not user.is_staff:
         return RedirectResponse("/login", status_code=303)
+    from app.services.storefront_ops import storefront_is_closed
+
+    if storefront_is_closed(get_store_settings(db)) and user.role == "worker" and not user.is_admin:
+        request.session.pop("user_id", None)
+        return RedirectResponse("/login?worker_closed=1", status_code=303)
     return user
 
 
@@ -109,14 +114,17 @@ def settings_save(
     erp_enabled: str = Form(""),
     erp_api_base: str = Form(""),
     google_feed_enabled: str = Form(""),
-    maintenance_mode: str = Form(""),
+    storefront_status: str = Form("open"),
     maintenance_message: str = Form(""),
+    orders_paused_message: str = Form(""),
     db: Session = Depends(get_db),
 ):
     user = _require_admin(request, db)
     if isinstance(user, RedirectResponse):
         return user
     from datetime import datetime
+
+    from app.services.storefront_ops import set_storefront_status
 
     store = get_store_settings(db)
     store.store_name = store_name.strip() or "Whoopy"
@@ -164,9 +172,11 @@ def settings_save(
     store.erp_enabled = erp_enabled == "1"
     store.erp_api_base = erp_api_base.strip() or store.erp_api_base
     store.google_feed_enabled = google_feed_enabled == "1"
-    store.maintenance_mode = maintenance_mode == "1"
+    set_storefront_status(store, storefront_status.strip() or "open")
     if maintenance_message.strip():
         store.maintenance_message = maintenance_message.strip()
+    if orders_paused_message.strip():
+        store.orders_paused_message = orders_paused_message.strip()
     touch_settings(store)
     db.commit()
     return RedirectResponse("/admin/settings?saved=1", status_code=303)

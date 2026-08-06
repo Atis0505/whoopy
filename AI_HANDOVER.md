@@ -2,7 +2,7 @@
 
 > **Olvasd el session elején.** Részletes rendszerkép: [`docs/AI_SYSTEM.md`](docs/AI_SYSTEM.md)  
 > Használat (embernek): [`docs/HASZNALATI_UTMUTATO.md`](docs/HASZNALATI_UTMUTATO.md)  
-> Frissítve: 2026-08 · Schema **v16** · roadmap **1–21 kész** · folytatás: élesítés + opcionális kód (`AI_HANDOVER` „Mi van még vissza”)
+> Frissítve: 2026-08 · Schema **v17** · bolt státusz fokozatok (open / catalog_only / closed)
 
 ---
 
@@ -66,7 +66,7 @@ Docker: `docker compose up --build` — `docs/DEPLOY.md`.
 
 Tipikus commit minta a `main`-en: … → omnibus/subscriptions → catalog scale.
 
-**Schema:** `app/bootstrap.py` `SCHEMA_VERSION = "16"` + `.schema_version`.  
+**Schema:** `app/bootstrap.py` `SCHEMA_VERSION = "17"` + `.schema_version`.  
 Dev SQLite: hiányzó kötelező oszlop → wipe; version bump → `create_all` + additive ALTER/INDEX (zárolt DB-nél wipe nélkül). Prod/Postgres: **soha nem wipe**.
 
 ---
@@ -152,7 +152,7 @@ A **1–21 feature sor kész.** Nincs kötelező következő kód-csomag. Priori
 | `docs/HASZNALATI_UTMUTATO.md` | Magyar használat |
 | `docs/FEJLESZTESI_TERV.md` | 1–21 tábla |
 | `docs/LOGISTICS_COMPLIANCE.md` | v13 logisztika/compliance |
-| `docs/STOREFRONT_OPS.md` | v14 banner / ticker / maintenance |
+| `docs/STOREFRONT_OPS.md` | v14 banner / ticker + **v17** bolt státusz fokozatok |
 | `docs/OMNIBUS_SUBSCRIPTIONS.md` | v15 ártörténet + ismétlés |
 | `docs/CATALOG_SCALE.md` | v16 pagination / index / sitemap |
 | `docs/UX.md` / `MARKETING.md` / `EU_SHOP.md` / `SZAMLAZZ.md` | Feature csomagok |

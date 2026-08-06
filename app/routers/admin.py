@@ -50,14 +50,24 @@ def _require_staff_html(request: Request, db: Session) -> User | RedirectRespons
     user = get_current_user(request, db)
     if not user or not user.is_staff:
         return RedirectResponse("/login", status_code=303)
+    # Teljes boltzáráskor dolgozó nem használhat admin felületet — csak admin
+    from app.services.store_settings import get_store_settings
+    from app.services.storefront_ops import storefront_is_closed
+
+    if storefront_is_closed(get_store_settings(db)) and user.role == "worker" and not user.is_admin:
+        request.session.pop("user_id", None)
+        return RedirectResponse("/login?worker_closed=1", status_code=303)
     return user
 
 
 @router.get("/login", response_class=HTMLResponse)
 def login_form(request: Request):
+    err = None
+    if request.query_params.get("worker_closed"):
+        err = "A bolt zárva van — dolgozói belépés szünetel. Csak admin nyithatja újra."
     return templates.TemplateResponse(
         "admin/login.html",
-        {"request": request, "error": None, "app_name": settings.app_name},
+        {"request": request, "error": err, "app_name": settings.app_name},
     )
 
 
@@ -68,12 +78,25 @@ def login_submit(
     password: str = Form(...),
     db: Session = Depends(get_db),
 ):
+    from app.services.store_settings import get_store_settings
+    from app.services.storefront_ops import storefront_is_closed
+
     user = try_login(db, email, password)
     if not user or not user.is_staff:
         return templates.TemplateResponse(
             "admin/login.html",
             {"request": request, "error": "Csak admin vagy dolgozó léphet be ide", "app_name": settings.app_name},
             status_code=401,
+        )
+    if storefront_is_closed(get_store_settings(db)) and user.role == "worker" and not user.is_admin:
+        return templates.TemplateResponse(
+            "admin/login.html",
+            {
+                "request": request,
+                "error": "A bolt zárva van — dolgozói belépés szünetel. Csak admin léphet be.",
+                "app_name": settings.app_name,
+            },
+            status_code=403,
         )
     request.session["user_id"] = user.id
     if user.role == "worker":
@@ -94,7 +117,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     if isinstance(user, RedirectResponse):
         return user
     from app.services.store_settings import get_store_settings
-    from app.services.storefront_ops import pending_order_count
+    from app.services.storefront_ops import get_storefront_status, pending_order_count
 
     store = get_store_settings(db)
     stats = {
@@ -116,20 +139,39 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "stats": stats,
             "recent": recent,
             "store": store,
+            "storefront_status": get_storefront_status(store),
             "app_name": settings.app_name,
         },
     )
 
 
-@router.post("/maintenance/toggle")
-def maintenance_toggle(request: Request, db: Session = Depends(get_db)):
+@router.post("/storefront-status")
+def storefront_status_set(request: Request, status: str = Form("open"), db: Session = Depends(get_db)):
     user = _require_admin_html(request, db)
     if isinstance(user, RedirectResponse):
         return user
     from app.services.store_settings import get_store_settings, touch_settings
+    from app.services.storefront_ops import set_storefront_status
 
     store = get_store_settings(db)
-    store.maintenance_mode = not bool(store.maintenance_mode)
+    set_storefront_status(store, status.strip())
+    touch_settings(store)
+    db.commit()
+    return RedirectResponse("/admin", status_code=303)
+
+
+@router.post("/maintenance/toggle")
+def maintenance_toggle(request: Request, db: Session = Depends(get_db)):
+    """Legacy: open ↔ closed. Új UI: /admin/storefront-status."""
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.store_settings import get_store_settings, touch_settings
+    from app.services.storefront_ops import STATUS_CLOSED, STATUS_OPEN, get_storefront_status, set_storefront_status
+
+    store = get_store_settings(db)
+    cur = get_storefront_status(store)
+    set_storefront_status(store, STATUS_OPEN if cur == STATUS_CLOSED else STATUS_CLOSED)
     touch_settings(store)
     db.commit()
     return RedirectResponse("/admin", status_code=303)

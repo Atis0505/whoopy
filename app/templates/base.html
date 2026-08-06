@@ -34,7 +34,14 @@
     {% endif %}
   </div>
   {% endif %}
-  {% if ticker_items %}
+  {% if storefront_status == 'catalog_only' or request.query_params.get('orders_paused') %}
+  <div class="announce-bar" style="background:#9a3412" role="status">
+    <div class="wrap announce-inner">
+      <span>{{ orders_paused_message or 'Átmenetileg nem fogadunk új rendeléseket. Böngészhetsz, a vásárlás szünetel.' }}</span>
+    </div>
+  </div>
+  {% endif %}
+  {% if ticker_items and orders_enabled %}
   <div class="social-ticker" aria-label="Élő ajánlatok és vásárlások">
     <div class="ticker-track">
       {% for it in ticker_items %}
@@ -103,7 +110,7 @@
           <a class="icon-btn" href="/account">{{ t('account') }}</a>
           {% if user.role == 'admin' or user.is_admin %}
           <a class="icon-btn" href="/admin">{{ t('admin') }}</a>
-          {% elif user.role == 'worker' %}
+          {% elif user.role == 'worker' and storefront_status != 'closed' %}
           <a class="icon-btn" href="/admin/orders">{{ t('worker') }}</a>
           {% endif %}
           <a class="icon-btn" href="/logout">{{ t('logout') }}</a>
@@ -111,7 +118,11 @@
           <a class="icon-btn" href="/login">{{ t('login') }}</a>
           <a class="icon-btn" href="/register">{{ t('register') }}</a>
         {% endif %}
+        {% if orders_enabled %}
         <a class="icon-btn cart" href="/cart">{{ t('cart') }} · {{ quote.item_count if quote else 0 }}</a>
+        {% else %}
+        <span class="icon-btn cart" style="opacity:0.45;cursor:not-allowed" title="Rendelés szünetel">{{ t('cart') }} · —</span>
+        {% endif %}
       </div>
     </div>
     {% if categories is defined and categories %}
@@ -145,7 +156,7 @@
       </div>
       <div>
         <h4>Vásárlás</h4>
-        <p><a href="/cart">{{ t('cart') }}</a></p>
+        {% if orders_enabled %}<p><a href="/cart">{{ t('cart') }}</a></p>{% endif %}
         <p><a href="/wishlist">Kívánságlista</a></p>
         <p><a href="/track">Rendeléskövetés</a></p>
         <p><a href="/returns">Visszaküldés</a></p>

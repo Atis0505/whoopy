@@ -11,6 +11,38 @@ from app.models import Campaign, Offer, Order, OrderLine, Product, StoreSettings
 from app.services.merchandising import active_campaigns
 from app.services.store_settings import get_store_settings
 
+STATUS_OPEN = "open"
+STATUS_CATALOG_ONLY = "catalog_only"
+STATUS_CLOSED = "closed"
+VALID_STATUSES = (STATUS_OPEN, STATUS_CATALOG_ONLY, STATUS_CLOSED)
+
+
+def get_storefront_status(store: StoreSettings | None) -> str:
+    if not store:
+        return STATUS_OPEN
+    status = (getattr(store, "storefront_status", None) or "").strip()
+    if status in VALID_STATUSES:
+        return status
+    # legacy: csak maintenance_mode flag
+    if getattr(store, "maintenance_mode", False):
+        return STATUS_CLOSED
+    return STATUS_OPEN
+
+
+def set_storefront_status(store: StoreSettings, status: str) -> None:
+    if status not in VALID_STATUSES:
+        status = STATUS_OPEN
+    store.storefront_status = status
+    store.maintenance_mode = status == STATUS_CLOSED
+
+
+def orders_enabled(store: StoreSettings | None) -> bool:
+    return get_storefront_status(store) == STATUS_OPEN
+
+
+def storefront_is_closed(store: StoreSettings | None) -> bool:
+    return get_storefront_status(store) == STATUS_CLOSED
+
 
 def announcement_active(store: StoreSettings | None) -> bool:
     if not store or not store.announcement_enabled:
@@ -196,6 +228,6 @@ def social_ticker_items(db: Session, *, limit: int = 12) -> list[dict]:
 
 def feeds_should_serve(db: Session) -> bool:
     store = get_store_settings(db)
-    if store.maintenance_mode:
+    if storefront_is_closed(store):
         return False
     return bool(store.google_feed_enabled)

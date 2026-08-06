@@ -48,9 +48,17 @@
   <div class="field"><label>ERP API base</label><input name="erp_api_base" value="{{ store.erp_api_base }}" /></div>
   <label class="muted"><input type="checkbox" name="erp_enabled" value="1" {% if store.erp_enabled %}checked{% endif %} /> ERP reverse-bridge (store flag)</label><br/>
   <label class="muted"><input type="checkbox" name="google_feed_enabled" value="1" {% if store.google_feed_enabled %}checked{% endif %} /> Katalógus feedek (Google / Meta / Árukereső)</label><br/>
-  <label class="muted"><input type="checkbox" name="maintenance_mode" value="1" {% if store.maintenance_mode %}checked{% endif %} /> Karbantartási mód (bolt zárva)</label>
-  <div class="field"><label>Karbantartási üzenet</label><textarea name="maintenance_message" rows="2">{{ store.maintenance_message }}</textarea></div>
-  <p class="muted" style="font-size:0.85rem">Maintenance ON esetén a feedek is kikapcsolnak (üres válasz), még ha a feed flag be is van kapcsolva.</p>
+  {% set st = store.storefront_status or ('closed' if store.maintenance_mode else 'open') %}
+  <div class="field"><label>Bolt státusz</label>
+    <select name="storefront_status">
+      <option value="open" {% if st=='open' %}selected{% endif %}>Nyitva — teljes bolt</option>
+      <option value="catalog_only" {% if st=='catalog_only' %}selected{% endif %}>Rendelés szünet — böngészés, nincs kosár</option>
+      <option value="closed" {% if st=='closed' %}selected{% endif %}>Zárva — egyoldalas inaktív (dolgozó se lép be)</option>
+    </select>
+  </div>
+  <div class="field"><label>Zárás üzenet (closed)</label><textarea name="maintenance_message" rows="2">{{ store.maintenance_message }}</textarea></div>
+  <div class="field"><label>Rendelés szünet üzenet</label><textarea name="orders_paused_message" rows="2">{{ store.orders_paused_message }}</textarea></div>
+  <p class="muted" style="font-size:0.85rem">Zárva esetén a feedek is kikapcsolnak. Admin továbbra is beléphet; dolgozó nem.</p>
 
   <p style="margin-top:1rem"><button class="btn" type="submit">Mentés</button></p>
   <p class="muted" style="font-size:0.85rem">Runtime env (nem szerkeszthető itt): payment={{ cfg.payment_provider }}, webhook={{ cfg.webhook_enabled }}, api_key set={{ 'igen' if cfg.api_key else 'nem' }}</p>

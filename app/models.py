@@ -262,9 +262,16 @@ class StoreSettings(Base):
     erp_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
     erp_api_base: Mapped[str] = mapped_column(String(255), default="http://127.0.0.1:8010/api/v1")
     google_feed_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    # open | catalog_only | closed  (maintenance_mode = closed legacy mirror)
+    storefront_status: Mapped[str] = mapped_column(String(16), default="open")
     maintenance_mode: Mapped[bool] = mapped_column(Boolean, default=False)
     maintenance_message: Mapped[str] = mapped_column(
-        Text, default="A bolt átmenetileg zárva van. Hamarosan visszatérünk."
+        Text,
+        default="Jelenleg a boltunk inaktív, nem üzemel — rendeléseket sem fogadunk. Hamarosan visszatérünk.",
+    )
+    orders_paused_message: Mapped[str] = mapped_column(
+        Text,
+        default="Átmenetileg nem fogadunk új rendeléseket. Böngészhetsz, de a kosár és a vásárlás szünetel.",
     )
     # Site-wide announcement / hirdetőszalag
     announcement_enabled: Mapped[bool] = mapped_column(Boolean, default=False)

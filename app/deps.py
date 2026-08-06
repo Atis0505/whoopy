@@ -142,6 +142,18 @@ def store_context(request: Request, db: Session, **extra):
     except Exception:
         pass
 
+    orders_enabled = True
+    storefront_status = "open"
+    orders_paused_message = ""
+    try:
+        from app.services.storefront_ops import get_storefront_status, orders_enabled as _orders_on
+
+        storefront_status = get_storefront_status(store)
+        orders_enabled = _orders_on(store)
+        orders_paused_message = (getattr(store, "orders_paused_message", "") or "") if store else ""
+    except Exception:
+        pass
+
     ctx = {
         "request": request,
         "user": get_current_user(request, db),
@@ -165,6 +177,9 @@ def store_context(request: Request, db: Session, **extra):
         "free_ship": free_ship,
         "demo_badge": is_dev,
         "business_hours": (getattr(store, "business_hours", "") or "") if store else "",
+        "orders_enabled": orders_enabled,
+        "storefront_status": storefront_status,
+        "orders_paused_message": orders_paused_message,
     }
     ctx.update(extra)
     return ctx

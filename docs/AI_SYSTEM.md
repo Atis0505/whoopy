@@ -1,7 +1,7 @@
 # Whoopy rendszerleírás — AI / fejlesztői handover
 
 > Célközönség: **másik AI agent** vagy új fejlesztő, aki nulláról folytatja a Whoopy ökoszisztémát.  
-> Frissítve: 2026-08 · Schema Whoopy **v16**
+> Frissítve: 2026-08 · Schema Whoopy **v17**
 
 ---
 
