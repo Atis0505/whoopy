@@ -17,7 +17,21 @@ MEDIA_PUBLIC_BASE=https://cdn.whoopy.hu
 ```
 
 Ha `MEDIA_PUBLIC_BASE` üres, a `PUBLIC_BASE_URL` érvényes.  
-CDN tipikusan reverse-proxy / Cloudflare cache a `/media/*` path-ra — a fájlok továbbra is a `data/uploads` volume-on vannak (vagy később object storage).
+CDN tipikusan reverse-proxy / Cloudflare cache a `/media/*` path-ra — a fájlok továbbra is a `data/uploads` volume-on vannak (vagy object storage).
+
+### S3 / Cloudflare R2 (opcionális)
+
+```env
+S3_ENDPOINT_URL=https://ACCOUNT.r2.cloudflarestorage.com
+S3_ACCESS_KEY=...
+S3_SECRET_KEY=...
+S3_BUCKET=whoopy-media
+S3_REGION=auto
+S3_PUBLIC_BASE=https://cdn.whoopy.hu
+```
+
+Ha kitöltve: feltöltés helyi + S3 put; a primary `image_url` a `S3_PUBLIC_BASE` URL lesz.  
+`pip install boto3` (benne a `requirements.txt`-ben).
 
 A feltöltött fájlok **nincsenek** a Gitben (`.gitignore`: `data/uploads/`).
 

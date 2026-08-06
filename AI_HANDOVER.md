@@ -46,5 +46,5 @@ Demo: `vasarlo@whoopy.local` / vasarlo123 · `dolgozo@whoopy.local` / worker123 
 
 ## Roadmap
 
-Lásd `docs/FEJLESZTESI_TERV.md` — 1–12 kész.  
-Következő opcionális: whoopy_orders pipeline, S3/R2, éles SimplePay merchant, E2E.
+Lásd `docs/FEJLESZTESI_TERV.md` — 1–13 kész.  
+Következő opcionális: checkout E2E, éles SimplePay merchant, domain DNS.

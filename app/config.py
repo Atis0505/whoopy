@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     public_base_url: str = "http://127.0.0.1:8090"
     # Media / CDN — ha üres, public_base_url; pl. https://cdn.whoopy.hu
     media_public_base: str = ""
+    # Optional S3 / Cloudflare R2 (ha kitöltve, feltöltés object storage-ba is megy)
+    s3_endpoint_url: str = ""  # R2: https://<accountid>.r2.cloudflarestorage.com
+    s3_access_key: str = ""
+    s3_secret_key: str = ""
+    s3_bucket: str = ""
+    s3_region: str = "auto"
+    s3_public_base: str = ""  # pl. https://cdn.whoopy.hu — object public URL prefix
     # Whoopy Management API (ERP / automation) — header: X-API-Key
     api_key: str = "whoopy-dev-api-key-change-me"
     # Payments: demo | stripe | simplepay | auto

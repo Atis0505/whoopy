@@ -127,12 +127,12 @@ ERP: külön venv, `:8010`. Whoopy `.env` ↔ ERP `.env` **ugyanaz** az `API_KEY
 
 ### Érdemes következő iterációk
 
-1. ERP webhook inbox → valódi `whoopy_orders` / procurement pipeline  
-2. MarketplacePresenceV2 mapping Whoopy `offer_id`-re (ár/készlet patch)  
-3. Object storage (S3/R2) feltöltés, nem csak CDN URL rewrite  
-4. SimplePay éles merchant + nyilvános IPN URL  
+1. ~~ERP webhook inbox → valódi `whoopy_orders`~~ ✅ (`whoopy_orders` + `/whoopy-sync/inbound-orders`)  
+2. ~~MarketplacePresenceV2 mapping Whoopy `offer_id`-re~~ ✅ (autosync írja)  
+3. ~~Object storage (S3/R2)~~ ✅ (opcionális env + boto3)  
+4. SimplePay éles merchant + nyilvános IPN URL (üzleti / DNS)  
 5. Domain DNS + TLS (Caddy/Cloudflare) a `docs/DEPLOY.md` szerint  
-6. E2E tesztek (checkout + payment + webhook)  
+6. ~~E2E smoke tesztek~~ ✅ (`tests/test_smoke.py`) — bővíthető checkout flow-val  
 
 ### Kerüld el
 

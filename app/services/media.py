@@ -44,6 +44,45 @@ def absolute_media_url(relative_or_absolute: str) -> str:
     return f"{base}{url}" if base else url
 
 
+def s3_enabled() -> bool:
+    return bool(settings.s3_bucket and settings.s3_access_key and settings.s3_secret_key)
+
+
+def upload_bytes_to_s3(key: str, data: bytes, content_type: str = "application/octet-stream") -> str | None:
+    """Opcionális S3/R2 feltöltés. Vissza: publikus URL vagy None."""
+    if not s3_enabled():
+        return None
+    try:
+        import boto3
+        from botocore.client import Config
+    except ImportError as exc:
+        raise HTTPException(500, "boto3 nincs telepítve (pip install boto3)") from exc
+
+    client_kwargs: dict = {
+        "aws_access_key_id": settings.s3_access_key,
+        "aws_secret_access_key": settings.s3_secret_key,
+        "region_name": settings.s3_region or "auto",
+        "config": Config(signature_version="s3v4"),
+    }
+    if settings.s3_endpoint_url:
+        client_kwargs["endpoint_url"] = settings.s3_endpoint_url
+    client = boto3.client("s3", **client_kwargs)
+    client.put_object(
+        Bucket=settings.s3_bucket,
+        Key=key,
+        Body=data,
+        ContentType=content_type,
+    )
+    if settings.s3_public_base:
+        return f"{settings.s3_public_base.rstrip('/')}/{key}"
+    if settings.media_public_base:
+        return f"{settings.media_public_base.rstrip('/')}/{key}"
+    # path-style guess
+    if settings.s3_endpoint_url:
+        return f"{settings.s3_endpoint_url.rstrip('/')}/{settings.s3_bucket}/{key}"
+    return f"https://{settings.s3_bucket}.s3.amazonaws.com/{key}"
+
+
 def disk_path(product_id: int, filename: str) -> Path:
     return UPLOAD_ROOT / str(product_id) / filename
 
@@ -89,13 +128,26 @@ async def save_product_image(
     dest.write_bytes(data)
 
     url = public_url(product.id, filename)
+    s3_url = None
+    try:
+        s3_url = upload_bytes_to_s3(
+            f"products/{product.id}/{filename}",
+            data,
+            content_type=file.content_type or "application/octet-stream",
+        )
+    except HTTPException:
+        raise
+    except Exception:
+        # S3 hiba ne akadályozza a helyi mentést
+        s3_url = None
+
     count = db.query(ProductImage).filter(ProductImage.product_id == product.id).count()
     is_primary = set_primary or count == 0
 
     if is_primary:
         for img in db.query(ProductImage).filter(ProductImage.product_id == product.id).all():
             img.is_primary = False
-        product.image_url = absolute_media_url(url)
+        product.image_url = s3_url or absolute_media_url(url)
 
     image = ProductImage(
         product_id=product.id,
