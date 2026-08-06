@@ -30,6 +30,9 @@ def seed_all(db: Session) -> None:
     _seed_users(db)
     get_store_settings(db)
     ensure_default_cms_pages(db)
+    from app.services.customer_ux import seed_pickup_and_gifts
+
+    seed_pickup_and_gifts(db)
 
     if db.query(Category).count() == 0:
         load_taxonomy_into_db(db)
@@ -37,6 +40,7 @@ def seed_all(db: Session) -> None:
     if db.query(Supplier).count() > 0:
         _seed_marketing(db)
         _seed_marketplace_ops(db)
+        _seed_ux_demos(db)
         return
 
     suppliers = [
@@ -301,6 +305,43 @@ def seed_all(db: Session) -> None:
     db.commit()
     _seed_marketing(db)
     _seed_marketplace_ops(db)
+    _seed_ux_demos(db)
+
+
+def _seed_ux_demos(db: Session) -> None:
+    """Variáns demo + vásárlói pontok a demo usernek."""
+    user = db.query(User).filter(User.email == "vasarlo@whoopy.local").first()
+    if user and (user.loyalty_points or 0) < 100:
+        user.loyalty_points = 500
+        user.loyalty_tier = "silver"
+
+    tee = db.query(Product).filter(Product.slug == "wireless-headphones-pro").first()
+    if not tee:
+        tee = db.query(Product).order_by(Product.id.asc()).first()
+    if tee and not (tee.variant_axes or "").strip():
+        tee.variant_axes = "Szín"
+        offers = db.query(Offer).filter(Offer.product_id == tee.id).all()
+        if offers:
+            offers[0].variant_label = "Fekete"
+            if len(offers) > 1:
+                offers[1].variant_label = "Fehér"
+            else:
+                # második változat ugyanattól a beszállítótól
+                o0 = offers[0]
+                db.add(
+                    Offer(
+                        product_id=tee.id,
+                        supplier_id=o0.supplier_id,
+                        sku=f"{o0.sku}-W",
+                        price=o0.price + 500,
+                        cost_price=o0.cost_price,
+                        stock=max(5, o0.stock // 2),
+                        lead_days=o0.lead_days,
+                        active=True,
+                        variant_label="Fehér",
+                    )
+                )
+    db.commit()
 
 
 def _seed_users(db: Session) -> None:

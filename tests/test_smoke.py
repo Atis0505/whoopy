@@ -129,3 +129,22 @@ def test_szamlazz_xml_build():
     assert "Teszt termék" in xml
     assert "TM-TEST-0001" in xml
     assert "27" in xml
+
+
+def test_search_and_suggest():
+    r = client.get("/search", params={"q": "a"})
+    assert r.status_code == 200
+    r2 = client.get("/api/suggest", params={"q": "a"})
+    assert r2.status_code == 200
+    assert "items" in r2.json()
+
+
+def test_pickup_points_api():
+    r = client.get("/api/pickup-points", params={"provider": "foxpost"})
+    assert r.status_code == 200
+    assert len(r.json().get("items", [])) >= 1
+
+
+def test_compare_and_recent_pages():
+    assert client.get("/compare").status_code == 200
+    assert client.get("/recent").status_code == 200

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Nemrég nézett – {{ app_name }}{% endblock %}
+{% block content %}
+<section style="margin:1.5rem 0">
+  <h1 style="font-family:var(--font-display)">Nemrég nézett</h1>
+  <div class="product-grid">
+  {% for p in products %}
+    <a class="product-card" href="/p/{{ p.slug }}">
+      <img src="{{ p.image_url or 'https://placehold.co/400x300' }}" alt="" />
+      <strong>{{ p.title }}</strong>
+      <div class="muted">{% if p.best_price %}{{ money(p.best_price) }}{% endif %}</div>
+    </a>
+  {% else %}
+    <p class="muted">Még nem néztél terméket ebben a böngészőben.</p>
+  {% endfor %}
+  </div>
+</section>
+{% endblock %}

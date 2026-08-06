@@ -54,13 +54,16 @@
         Whoopy<span>.hu</span>
       </a>
       {% block search %}
-      <form class="search-bar" action="/" method="get" role="search">
-        <input type="search" name="q" placeholder="{{ t('search') }} – termék, márka…" value="{{ q or '' }}" aria-label="{{ t('search') }}" />
+      <form class="search-bar" action="/search" method="get" role="search" id="search-form" style="position:relative">
+        <input type="search" name="q" id="search-q" placeholder="{{ t('search') }} – termék, márka…" value="{{ q or '' }}" aria-label="{{ t('search') }}" autocomplete="off" />
         <button type="submit">{{ t('search') }}</button>
+        <div id="suggest-box" class="suggest-box" hidden></div>
       </form>
       {% endblock %}
       <div class="header-actions">
         <a class="icon-btn" href="/taxonomy">{{ t('taxonomy') }}</a>
+        <a class="icon-btn" href="/compare">⇄</a>
+        <a class="icon-btn" href="/recent">⏱</a>
         <a class="icon-btn" href="/wishlist">♥</a>
         <a class="icon-btn" href="/track">Track</a>
         {% if user %}
@@ -141,5 +144,32 @@
     </form>
   </div>
   {% endif %}
+
+  {% if chat_enabled %}
+  <a class="chat-fab" href="/contact" title="Segítség">?</a>
+  {% endif %}
+  {% if chat_widget_html %}{{ chat_widget_html|safe }}{% endif %}
+
+  <script>
+  (function(){
+    const input = document.getElementById('search-q');
+    const box = document.getElementById('suggest-box');
+    if (!input || !box) return;
+    let t;
+    input.addEventListener('input', () => {
+      clearTimeout(t);
+      const q = input.value.trim();
+      if (q.length < 2) { box.hidden = true; return; }
+      t = setTimeout(async () => {
+        const r = await fetch('/api/suggest?q=' + encodeURIComponent(q));
+        const data = await r.json();
+        if (!(data.items||[]).length) { box.hidden = true; return; }
+        box.innerHTML = data.items.map(it => `<a href="${it.url}"><strong>${it.title}</strong><span>${it.brand||''}${it.price!=null?' · '+Math.round(it.price)+' Ft':''}</span></a>`).join('');
+        box.hidden = false;
+      }, 180);
+    });
+    document.addEventListener('click', (e) => { if (!box.contains(e.target) && e.target !== input) box.hidden = true; });
+  })();
+  </script>
 </body>
 </html>

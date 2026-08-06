@@ -314,3 +314,25 @@ code {
   .promo-row, .layout-2, .trust-bar, .footer-grid { grid-template-columns: 1fr; }
   .header-actions { justify-content: flex-start; flex-wrap: wrap; }
 }
+
+/* Customer UX */
+.suggest-box {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 40;
+  background: var(--panel, #fff); border: 1px solid var(--line, #ddd);
+  border-radius: 10px; margin-top: 4px; max-height: 320px; overflow: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+.suggest-box a {
+  display: flex; flex-direction: column; padding: .55rem .75rem;
+  text-decoration: none; color: inherit; border-bottom: 1px solid var(--line, #eee);
+}
+.suggest-box a:hover { background: rgba(0,0,0,.03); }
+.suggest-box span { font-size: .85rem; color: var(--muted, #666); }
+.chat-fab {
+  position: fixed; right: 1.1rem; bottom: 1.1rem; z-index: 50;
+  width: 3rem; height: 3rem; border-radius: 999px;
+  display: grid; place-items: center;
+  background: var(--accent, #1b4332); color: #fff; font-weight: 700;
+  text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,.18);
+}
+.chat-fab:hover { filter: brightness(1.08); }

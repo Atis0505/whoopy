@@ -136,7 +136,9 @@ def track_lookup(
     )
     if not order or order.email.lower() != email.strip().lower():
         return RedirectResponse("/track?error=1", status_code=303)
-    return RedirectResponse(f"/order/{order.order_number}", status_code=303)
+    request.session["last_order"] = order.order_number
+    tok = f"?t={order.access_token}" if order.access_token else ""
+    return RedirectResponse(f"/order/{order.order_number}{tok}", status_code=303)
 
 
 # ── Invoice ──────────────────────────────────────────────────────────────────
@@ -152,15 +154,17 @@ def order_invoice(order_number: str, request: Request, db: Session = Depends(get
     if not order:
         return RedirectResponse("/", status_code=302)
     user = get_current_user(request, db)
-    # guest: csak ha sessionban van recent order, vagy user sajátja
+    # guest: session, token, email query, vagy staff
+    token = request.query_params.get("t", "")
     if user and user.id == order.customer_id:
         pass
     elif request.session.get("last_order") == order.order_number:
         pass
+    elif token and order.access_token and token == order.access_token:
+        pass
     elif user and (user.is_admin or user.role in ("admin", "worker")):
         pass
     else:
-        # email query token egyszerű: ?email=
         email = request.query_params.get("email", "")
         if email.lower() != order.email.lower():
             return RedirectResponse(f"/track?error=1", status_code=303)

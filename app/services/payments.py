@@ -59,13 +59,21 @@ def mark_order_paid(db: Session, order: Order, *, provider: str, payment_ref: st
     full = load_order(db, order.id) or order
     emit_order_event(db, "order.paid", full)
     try:
+        from app.models import User
+        from app.services.customer_ux import loyalty_tier_for
         from app.services.szamlazz import maybe_auto_invoice
 
+        if order.customer_id and getattr(order, "loyalty_points_earned", 0):
+            user = db.get(User, order.customer_id)
+            if user:
+                user.loyalty_points = int(user.loyalty_points or 0) + int(order.loyalty_points_earned)
+                user.loyalty_tier = loyalty_tier_for(user.loyalty_points)
+                db.commit()
         maybe_auto_invoice(db, full)
     except Exception:
         import logging
 
-        logging.getLogger(__name__).exception("Számlázz auto-invoice failed for %s", order.order_number)
+        logging.getLogger(__name__).exception("Post-pay hooks failed for %s", order.order_number)
     return order
 
 

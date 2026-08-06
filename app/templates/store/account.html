@@ -11,6 +11,10 @@
     </p>
     <p><strong>{{ user.email }}</strong></p>
     {% if user.phone %}<p class="muted">{{ t('phone') }}: {{ user.phone }}</p>{% endif %}
+    <p>Hűségpont: <strong>{{ user.loyalty_points or 0 }}</strong>
+      <span class="badge">{{ user.loyalty_tier or 'standard' }}</span>
+    </p>
+    <p class="muted"><a href="/recent">Nemrég nézett</a> · <a href="/compare">Összehasonlítás</a> · <a href="/wishlist">Kívánságlista</a></p>
     <form method="post" action="/account/newsletter">
       <label class="muted">
         <input type="checkbox" name="newsletter" value="1" {% if user.newsletter_opt_in %}checked{% endif %} />

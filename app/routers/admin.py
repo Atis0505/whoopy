@@ -420,8 +420,34 @@ def newsletter_list(request: Request, db: Session = Depends(get_db)):
     subs = db.query(NewsletterSubscriber).order_by(NewsletterSubscriber.created_at.desc()).all()
     return templates.TemplateResponse(
         "admin/newsletter.html",
-        {"request": request, "user": user, "subs": subs, "app_name": settings.app_name},
+        {
+            "request": request,
+            "user": user,
+            "subs": subs,
+            "app_name": settings.app_name,
+            "sent": request.query_params.get("sent"),
+        },
     )
+
+
+@router.post("/newsletter/send")
+def newsletter_send(
+    request: Request,
+    subject: str = Form(...),
+    body: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.email import send_mail
+
+    subs = db.query(NewsletterSubscriber).filter(NewsletterSubscriber.active.is_(True)).all()
+    n = 0
+    for s in subs:
+        if send_mail(to=s.email, subject=subject.strip(), body=body.strip()):
+            n += 1
+    return RedirectResponse(f"/admin/newsletter?sent={n}", status_code=303)
 
 
 @router.get("/orders", response_class=HTMLResponse)

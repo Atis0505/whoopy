@@ -91,6 +91,11 @@ def settings_save(
     company_tax_id: str = Form(""),
     company_eu_vat: str = Form(""),
     invoice_footer: str = Form(""),
+    chat_enabled: str = Form(""),
+    chat_widget_html: str = Form(""),
+    loyalty_earn_per_100: float = Form(1.0),
+    loyalty_point_value_huf: float = Form(1.0),
+    pickup_fee_huf: float = Form(990.0),
     erp_enabled: str = Form(""),
     erp_api_base: str = Form(""),
     google_feed_enabled: str = Form(""),
@@ -116,6 +121,11 @@ def settings_save(
     store.company_tax_id = company_tax_id.strip()
     store.company_eu_vat = company_eu_vat.strip()
     store.invoice_footer = invoice_footer.strip()
+    store.chat_enabled = chat_enabled == "1"
+    store.chat_widget_html = chat_widget_html.strip()
+    store.loyalty_earn_per_100 = loyalty_earn_per_100
+    store.loyalty_point_value_huf = loyalty_point_value_huf
+    store.pickup_fee_huf = pickup_fee_huf
     store.erp_enabled = erp_enabled == "1"
     store.erp_api_base = erp_api_base.strip() or store.erp_api_base
     store.google_feed_enabled = google_feed_enabled == "1"
@@ -426,8 +436,53 @@ def abandoned_carts(request: Request, db: Session = Depends(get_db)):
     carts = [c for c in carts if c.items]
     return templates.TemplateResponse(
         "admin/abandoned_carts.html",
-        {"request": request, "user": user, "carts": carts, "app_name": settings.app_name},
+        {
+            "request": request,
+            "user": user,
+            "carts": carts,
+            "app_name": settings.app_name,
+            "sent": request.query_params.get("sent"),
+        },
     )
+
+
+@router.post("/abandoned-carts/send")
+def abandoned_carts_send(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.email import send_mail
+
+    cutoff = datetime.utcnow() - timedelta(hours=2)
+    carts = (
+        db.query(Cart)
+        .options(joinedload(Cart.items).joinedload(CartItem.offer).joinedload(Offer.product))
+        .filter(Cart.updated_at < cutoff, Cart.abandoned_email_sent_at.is_(None))
+        .order_by(Cart.updated_at.desc())
+        .limit(50)
+        .all()
+    )
+    n = 0
+    for c in carts:
+        if not c.items:
+            continue
+        # Nincs e-mail a kosáron — session guest: skip, hacsak nincs user a sessionben
+        # Demo: küldjük a support címre logként + outbox stub címzettként cart id
+        lines = "\n".join(
+            f"- {it.quantity}× {it.offer.product.title if it.offer and it.offer.product else it.offer_id}"
+            for it in c.items
+        )
+        to = settings.admin_email
+        ok = send_mail(
+            to=to,
+            subject=f"[Whoopy] Elhagyott kosár #{c.id}",
+            body=f"Kosár #{c.id} ({c.country}/{c.currency}) elhagyva.\n\n{lines}\n\nSession: {c.session_key}\n",
+        )
+        if ok:
+            c.abandoned_email_sent_at = datetime.utcnow()
+            n += 1
+    db.commit()
+    return RedirectResponse(f"/admin/abandoned-carts?sent={n}", status_code=303)
 
 
 # ── Integrations (honest) ────────────────────────────────────────────────────

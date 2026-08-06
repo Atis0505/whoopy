@@ -47,16 +47,28 @@ def send_mail(*, to: str, subject: str, body: str, html: str | None = None) -> b
 
 
 def order_confirmation_email(order) -> None:
+    from app.config import settings
+
     lines = "\n".join(
         f"- {ln.product_title} x{ln.quantity} = {ln.line_total:.0f} {order.currency}"
         for ln in (order.lines or [])
     )
+    base = settings.public_base_url.rstrip("/")
+    token = getattr(order, "access_token", "") or ""
+    track_url = f"{base}/order/{order.order_number}"
+    if token:
+        track_url = f"{track_url}?t={token}"
+    pickup = ""
+    if getattr(order, "delivery_mode", "") == "pickup" and getattr(order, "pickup_point_label", ""):
+        pickup = f"\nCsomagpont: {order.pickup_point_label}\n"
     body = (
         f"Kedves {order.full_name}!\n\n"
         f"Rendelésed megérkezett: {order.order_number}\n"
         f"Összeg: {order.grand_total:.0f} {order.currency}\n"
-        f"ÁFA ({order.tax_rate_percent}%): {getattr(order, 'tax_total', 0):.0f}\n\n"
+        f"ÁFA ({order.tax_rate_percent}%): {getattr(order, 'tax_total', 0):.0f}\n"
+        f"{pickup}\n"
         f"Tételek:\n{lines}\n\n"
+        f"Rendelésed követése (vendég link):\n{track_url}\n\n"
         f"Köszönjük a vásárlást!\nWhoopy.hu\n"
     )
     send_mail(to=order.email, subject=f"Whoopy rendelés {order.order_number}", body=body)

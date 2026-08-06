@@ -19,7 +19,8 @@ A bővítések **ebben a sorrendben** készülnek. Az 1. lépés (ERP kliens) el
 | 13 | **whoopy_orders + presence + S3 + smoke** | kész | ERP inbound DB, offer_id map, R2/S3, `tests/test_smoke.py` |
 | 14 | **EU webshop csomag** | kész | GDPR, SEO, ÁFA, invoice, e-mail, track, contact, FAQ, filters, wishlist, returns, reviews (`docs/EU_SHOP.md`) |
 | 15 | **Checkout E2E + Számlázz stub** | kész | Smoke checkout flow; Számlázz.hu Agent dry-run/éles hook (`docs/SZAMLAZZ.md`) |
+| 16 | **Vásárlói élmény csomag** | kész | Keresés, csomagpont, billing cím, track token, abandoned/newsletter mail, compare/recent, variáns, gift, loyalty, chat (`docs/UX.md`) |
 
-**A tervezett bővítési sor kész.** További ötletek: éles SimplePay merchant, domain DNS, Számlázz Agent kulcs élesítés.
+**A tervezett bővítési sor kész.** További ötletek: éles SimplePay merchant, domain DNS, Számlázz Agent kulcs, éles futár/csomagpont API.
 
-Rendszerleírás AI-nak: [`AI_SYSTEM.md`](AI_SYSTEM.md) · EU shop: [`EU_SHOP.md`](EU_SHOP.md) · Számlázz: [`SZAMLAZZ.md`](SZAMLAZZ.md) · Használat: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · API: [`API.md`](API.md) · Fizetés: [`FIZETES.md`](FIZETES.md) · Képek: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md) · Admin: [`ADMIN.md`](ADMIN.md) · Merchant: [`MERCHANT.md`](MERCHANT.md) · Prod: [`PROD.md`](PROD.md) · Deploy: [`DEPLOY.md`](DEPLOY.md) · Partnerek: [`PARTNEREK.md`](PARTNEREK.md)
+Rendszerleírás AI-nak: [`AI_SYSTEM.md`](AI_SYSTEM.md) · UX: [`UX.md`](UX.md) · EU shop: [`EU_SHOP.md`](EU_SHOP.md) · Számlázz: [`SZAMLAZZ.md`](SZAMLAZZ.md) · Használat: [`HASZNALATI_UTMUTATO.md`](HASZNALATI_UTMUTATO.md) · API: [`API.md`](API.md) · Fizetés: [`FIZETES.md`](FIZETES.md) · Képek: [`KEPEK.md`](KEPEK.md) · Webhook: [`WEBHOOKOK.md`](WEBHOOKOK.md) · Admin: [`ADMIN.md`](ADMIN.md) · Merchant: [`MERCHANT.md`](MERCHANT.md) · Prod: [`PROD.md`](PROD.md) · Deploy: [`DEPLOY.md`](DEPLOY.md) · Partnerek: [`PARTNEREK.md`](PARTNEREK.md)

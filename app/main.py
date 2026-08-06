@@ -11,7 +11,7 @@ from app.bootstrap import ensure_fresh_schema
 from app.config import BASE_DIR, settings
 from app.database import SessionLocal
 from app.middleware_security import ApiRateLimitMiddleware, SecurityHeadersMiddleware
-from app.routers import admin, admin_extra, admin_marketplace, api_v1, eu_shop, payments, store
+from app.routers import admin, admin_extra, admin_marketplace, api_v1, customer_ux, eu_shop, payments, store
 from app.seed import seed_all
 from app.services.media import ensure_upload_dirs
 
@@ -65,6 +65,7 @@ app.mount(
 )
 app.include_router(store.router)
 app.include_router(eu_shop.router)
+app.include_router(customer_ux.router)
 app.include_router(admin.router)
 app.include_router(admin_extra.router)
 app.include_router(admin_marketplace.router)

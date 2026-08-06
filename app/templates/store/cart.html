@@ -5,14 +5,15 @@
   <div class="panel">
     <h2>{{ t('cart') }}</h2>
     {% if coupon_error %}<div class="flash-error">{{ t('invalid_coupon') }}</div>{% endif %}
+    {% if gift_error %}<div class="flash-error">Érvénytelen ajándékutalvány.</div>{% endif %}
     {% if items %}
     <table class="table">
-      <thead><tr><th></th><th></th><th></th><th></th></tr></thead>
       <tbody>
       {% for item in items %}
         <tr>
           <td>
             <strong>{{ item.offer.product.title }}</strong>
+            {% if item.offer.variant_label %}<span class="badge">{{ item.offer.variant_label }}</span>{% endif %}
             <div class="muted">
               {{ item.offer.supplier.name }} ·
               {% if item.offer.product.ship_mode == 'separate' %}{{ t('separate') }}{% else %}{{ t('combinable') }}{% endif %}
@@ -40,6 +41,24 @@
       <button class="btn secondary" type="submit">{{ t('apply') }}</button>
     </form>
 
+    <form method="post" action="/cart/gift" style="display:flex;gap:0.5rem;margin-top:0.75rem;align-items:end">
+      <div class="field" style="flex:1;margin:0">
+        <label>Ajándékutalvány</label>
+        <input name="gift_card_code" value="{{ cart.gift_card_code }}" placeholder="WHOOPY5K" />
+      </div>
+      <button class="btn secondary" type="submit">{{ t('apply') }}</button>
+    </form>
+
+    {% if user and user.loyalty_points %}
+    <form method="post" action="/cart/loyalty" style="display:flex;gap:0.5rem;margin-top:0.75rem;align-items:end">
+      <div class="field" style="flex:1;margin:0">
+        <label>Hűségpont beváltás (elérhető: {{ user.loyalty_points }})</label>
+        <input type="number" name="loyalty_redeem_points" min="0" max="{{ user.loyalty_points }}" value="{{ cart.loyalty_redeem_points }}" />
+      </div>
+      <button class="btn secondary" type="submit">{{ t('apply') }}</button>
+    </form>
+    {% endif %}
+
     <form method="post" action="/cart/payment" style="margin-top:1rem">
       <div class="field">
         <label>{{ t('payment') }}</label>
@@ -50,6 +69,37 @@
         </select>
       </div>
     </form>
+
+    <form method="post" action="/cart/delivery" style="margin-top:1rem" id="delivery-form">
+      <div class="field">
+        <label>Szállítás módja</label>
+        <select name="delivery_mode" id="delivery_mode" onchange="togglePickup(this.value)">
+          <option value="courier" {% if cart.delivery_mode!='pickup' %}selected{% endif %}>Futár / házhoz</option>
+          <option value="pickup" {% if cart.delivery_mode=='pickup' %}selected{% endif %}>Csomagpont (Foxpost / Packeta / GLS)</option>
+        </select>
+      </div>
+      <div id="pickup-box" style="{% if cart.delivery_mode!='pickup' %}display:none{% endif %}">
+        <div class="field">
+          <label>Szolgáltató</label>
+          <select name="pickup_provider" id="pickup_provider">
+            <option value="foxpost" {% if cart.pickup_provider=='foxpost' %}selected{% endif %}>Foxpost</option>
+            <option value="packeta" {% if cart.pickup_provider=='packeta' %}selected{% endif %}>Packeta</option>
+            <option value="gls" {% if cart.pickup_provider=='gls' %}selected{% endif %}>GLS</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Keresés (város / név)</label>
+          <input type="search" id="pickup_q" placeholder="Budapest…" oninput="loadPickup()" />
+        </div>
+        <div class="field">
+          <label>Csomagpont</label>
+          <select name="pickup_point_id" id="pickup_point_id" onchange="syncPickupLabel()"></select>
+          <input type="hidden" name="pickup_point_label" id="pickup_point_label" value="{{ cart.pickup_point_label }}" />
+        </div>
+        {% if cart.pickup_point_label %}<p class="muted">Kiválasztva: {{ cart.pickup_point_label }}</p>{% endif %}
+      </div>
+      <button class="btn ghost" type="submit">Szállítás mentése</button>
+    </form>
     {% else %}
     <p>{{ t('empty_cart') }} <a href="/">{{ t('continue_shopping') }}</a></p>
     {% endif %}
@@ -57,6 +107,9 @@
 
   <div class="panel">
     <h2>{{ t('shipping_by_supplier') }}</h2>
+    {% if cart.delivery_mode == 'pickup' %}
+    <p class="muted">Csomagpont: {{ cart.pickup_point_label or '—' }} · díj a végösszegben</p>
+    {% else %}
     <form method="post" action="/cart/shipping">
       {% for s in quote.shipments %}
       <div class="shipment">
@@ -82,10 +135,13 @@
       <button class="btn ghost" type="submit">{{ t('apply') }}</button>
       {% endif %}
     </form>
+    {% endif %}
 
     <hr style="border:0;border-top:1px solid var(--line);margin:1rem 0" />
     <div>{{ t('subtotal') }}: {{ money(quote.items_subtotal) }}</div>
     {% if quote.discount_total %}<div>{{ t('discount') }}: −{{ money(quote.discount_total) }}</div>{% endif %}
+    {% if quote.gift_discount %}<div>Ajándékutalvány: −{{ money(quote.gift_discount) }}</div>{% endif %}
+    {% if quote.loyalty_discount %}<div>Hűségpont: −{{ money(quote.loyalty_discount) }} ({{ quote.loyalty_points_used }} pont)</div>{% endif %}
     <div>{{ t('shipping') }}: {{ money(quote.shipping_total) }}</div>
     {% if quote.cod_fee_total %}<div>{{ t('cod_fee') }}: {{ money(quote.cod_fee_total) }}</div>{% endif %}
     <div class="price" style="margin-top:0.5rem">{{ t('grand_total') }}: {{ money(quote.grand_total) }}</div>
@@ -97,4 +153,24 @@
     {% endif %}
   </div>
 </section>
+<script>
+function togglePickup(v){ document.getElementById('pickup-box').style.display = v==='pickup' ? '' : 'none'; if(v==='pickup') loadPickup(); }
+async function loadPickup(){
+  const p = document.getElementById('pickup_provider').value;
+  const q = document.getElementById('pickup_q').value;
+  const sel = document.getElementById('pickup_point_id');
+  const r = await fetch('/api/pickup-points?provider='+encodeURIComponent(p)+'&q='+encodeURIComponent(q));
+  const data = await r.json();
+  const current = {{ (cart.pickup_point_id or '')|tojson }};
+  sel.innerHTML = (data.items||[]).map(it => `<option value="${it.id}" ${it.id===current?'selected':''}>${it.label}</option>`).join('') || '<option value="">Nincs találat</option>';
+  syncPickupLabel();
+}
+function syncPickupLabel(){
+  const sel = document.getElementById('pickup_point_id');
+  const opt = sel.options[sel.selectedIndex];
+  document.getElementById('pickup_point_label').value = opt ? opt.text : '';
+}
+document.getElementById('pickup_provider')?.addEventListener('change', loadPickup);
+if (document.getElementById('delivery_mode')?.value === 'pickup') loadPickup();
+</script>
 {% endblock %}

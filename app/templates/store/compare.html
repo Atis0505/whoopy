@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Összehasonlítás – {{ app_name }}{% endblock %}
+{% block content %}
+<section style="margin:1.5rem 0">
+  <h1 style="font-family:var(--font-display)">Összehasonlítás</h1>
+  <p class="muted">Max. 4 termék. Termékoldalon add hozzá.</p>
+  {% if products %}
+  <div style="overflow-x:auto">
+  <table class="table">
+    <thead>
+      <tr>
+        <th></th>
+        {% for p in products %}
+        <th>
+          <a href="/p/{{ p.slug }}">{{ p.title }}</a>
+          <form method="post" action="/compare/toggle" style="margin-top:0.4rem">
+            <input type="hidden" name="product_id" value="{{ p.id }}" />
+            <button class="btn ghost" type="submit">Eltávolít</button>
+          </form>
+        </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Kép</td>
+        {% for p in products %}<td><img src="{{ p.image_url or 'https://placehold.co/160x120' }}" alt="" style="max-width:140px;border-radius:8px" /></td>{% endfor %}
+      </tr>
+      <tr>
+        <td>Márka</td>
+        {% for p in products %}<td>{{ p.brand or '—' }}</td>{% endfor %}
+      </tr>
+      <tr>
+        <td>Ár</td>
+        {% for p in products %}<td class="price">{% if p.best_price %}{{ money(p.best_price) }}{% else %}—{% endif %}</td>{% endfor %}
+      </tr>
+      <tr>
+        <td>Súly</td>
+        {% for p in products %}<td>{{ p.weight_kg }} kg</td>{% endfor %}
+      </tr>
+      <tr>
+        <td>Szállítás</td>
+        {% for p in products %}<td>{% if p.ship_mode=='separate' %}Külön{% else %}Összecsomagolható{% endif %}</td>{% endfor %}
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p>Üres. Böngéssz a <a href="/">főoldalon</a>.</p>
+  {% endif %}
+</section>
+{% endblock %}

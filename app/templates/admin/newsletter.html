@@ -1,7 +1,18 @@
 {% extends "admin/base_admin.html" %}
 {% block content %}
-<h1 style="font-family:var(--font-display)">Hírlevél feliratkozók</h1>
+<h1 style="font-family:var(--font-display)">Hírlevél</h1>
+{% if sent %}<div class="flash-ok">Elküldve / outbox: {{ sent }} címzett.</div>{% endif %}
+<div class="panel" style="margin-bottom:1.5rem;max-width:640px">
+  <h2 style="font-size:1.05rem">Kampány kiküldés</h2>
+  <p class="muted">Aktív feliratkozóknak (SMTP vagy data/email_outbox).</p>
+  <form method="post" action="/admin/newsletter/send">
+    <div class="field"><label>Tárgy</label><input name="subject" required placeholder="Heti ajánlatok" /></div>
+    <div class="field"><label>Szöveg</label><textarea name="body" rows="6" required></textarea></div>
+    <button class="btn" type="submit">Küldés az aktív feliratkozóknak</button>
+  </form>
+</div>
 <div class="panel">
+  <h2 style="font-size:1.05rem">Feliratkozók</h2>
   <table class="table">
     <thead><tr><th>E-mail</th><th>Nyelv</th><th>Forrás</th><th>Aktív</th><th>Dátum</th></tr></thead>
     <tbody>

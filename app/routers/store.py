@@ -176,6 +176,9 @@ def product_detail(slug: str, request: Request, db: Session = Depends(get_db)):
     )
     if not product:
         return RedirectResponse("/", status_code=302)
+    from app.services.customer_ux import push_recent_product, session_list_ids
+
+    push_recent_product(request.session, product.id)
     offers = []
     for o in product.offers:
         if not o.active:
@@ -214,6 +217,7 @@ def product_detail(slug: str, request: Request, db: Session = Depends(get_db)):
             .all()
         )
         _enrich_products(db, related)
+    compare_ids = session_list_ids(request.session, "compare_ids")
     return templates.TemplateResponse(
         "store/product.html",
         store_context(
@@ -224,6 +228,7 @@ def product_detail(slug: str, request: Request, db: Session = Depends(get_db)):
             buybox_offer=buy,
             reviews=reviews,
             related=related,
+            in_compare=product.id in compare_ids,
         ),
     )
 
@@ -289,6 +294,70 @@ def cart_coupon(request: Request, coupon_code: str = Form(""), db: Session = Dep
     return RedirectResponse("/cart", status_code=303)
 
 
+@router.post("/cart/gift")
+def cart_gift(request: Request, gift_card_code: str = Form(""), db: Session = Depends(get_db)):
+    from app.services.customer_ux import find_gift_card
+
+    cart = cart_for_request(request, db)
+    code = gift_card_code.strip().upper()
+    if code and not find_gift_card(db, code):
+        items = (
+            db.query(CartItem)
+            .options(
+                joinedload(CartItem.offer).joinedload(Offer.product),
+                joinedload(CartItem.offer).joinedload(Offer.supplier),
+            )
+            .filter(CartItem.cart_id == cart.id)
+            .all()
+        )
+        return templates.TemplateResponse(
+            "store/cart.html",
+            store_context(request, db, items=items, gift_error=True),
+            status_code=400,
+        )
+    cart.gift_card_code = code
+    db.commit()
+    return RedirectResponse("/cart", status_code=303)
+
+
+@router.post("/cart/loyalty")
+def cart_loyalty(request: Request, loyalty_redeem_points: int = Form(0), db: Session = Depends(get_db)):
+    cart = cart_for_request(request, db)
+    user = get_current_user(request, db)
+    pts = max(0, int(loyalty_redeem_points or 0))
+    if user:
+        pts = min(pts, int(user.loyalty_points or 0))
+    else:
+        pts = 0
+    cart.loyalty_redeem_points = pts
+    db.commit()
+    return RedirectResponse("/cart", status_code=303)
+
+
+@router.post("/cart/delivery")
+def cart_delivery(
+    request: Request,
+    delivery_mode: str = Form("courier"),
+    pickup_provider: str = Form(""),
+    pickup_point_id: str = Form(""),
+    pickup_point_label: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    cart = cart_for_request(request, db)
+    mode = delivery_mode if delivery_mode in ("courier", "pickup") else "courier"
+    cart.delivery_mode = mode
+    if mode == "pickup":
+        cart.pickup_provider = pickup_provider.strip()[:32]
+        cart.pickup_point_id = pickup_point_id.strip()[:64]
+        cart.pickup_point_label = pickup_point_label.strip()[:255]
+    else:
+        cart.pickup_provider = ""
+        cart.pickup_point_id = ""
+        cart.pickup_point_label = ""
+    db.commit()
+    return RedirectResponse("/cart", status_code=303)
+
+
 @router.post("/cart/payment")
 def cart_payment(request: Request, payment_preference: str = Form("prepaid"), db: Session = Depends(get_db)):
     cart = cart_for_request(request, db)
@@ -336,6 +405,13 @@ def checkout_submit(
     zip_code: str = Form(""),
     notes: str = Form(""),
     newsletter: str = Form(""),
+    billing_same: str = Form("1"),
+    billing_full_name: str = Form(""),
+    billing_country: str = Form(""),
+    billing_city: str = Form(""),
+    billing_address: str = Form(""),
+    billing_zip: str = Form(""),
+    billing_tax_id: str = Form(""),
     db: Session = Depends(get_db),
 ):
     cart = cart_for_request(request, db)
@@ -343,6 +419,7 @@ def checkout_submit(
     request.session["country"] = country.upper()
     cart.country = country.upper()
     db.commit()
+    same = billing_same == "1"
     try:
         order = create_order_from_cart(
             db,
@@ -356,6 +433,13 @@ def checkout_submit(
             zip_code=zip_code,
             notes=notes,
             customer_id=user.id if user else None,
+            billing_same=same,
+            billing_full_name=billing_full_name,
+            billing_country=billing_country,
+            billing_city=billing_city,
+            billing_address=billing_address,
+            billing_zip=billing_zip,
+            billing_tax_id=billing_tax_id,
         )
     except ValueError as exc:
         return templates.TemplateResponse(
@@ -399,6 +483,18 @@ def order_thanks(order_number: str, request: Request, db: Session = Depends(get_
     )
     if not order:
         return RedirectResponse("/", status_code=302)
+    user = get_current_user(request, db)
+    token = request.query_params.get("t", "")
+    allowed = False
+    if user and (user.id == order.customer_id or user.is_staff):
+        allowed = True
+    elif request.session.get("last_order") == order.order_number:
+        allowed = True
+    elif token and order.access_token and token == order.access_token:
+        allowed = True
+        request.session["last_order"] = order.order_number
+    if not allowed:
+        return RedirectResponse("/track?error=1", status_code=303)
     return templates.TemplateResponse("store/order.html", store_context(request, db, order=order))
 
 

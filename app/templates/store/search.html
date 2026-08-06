@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Keresés{% if q %}: {{ q }}{% endif %} – {{ app_name }}{% endblock %}
+{% block content %}
+<section style="margin:1.5rem 0">
+  <h1 style="font-family:var(--font-display)">Keresés</h1>
+  <form class="search-bar" action="/search" method="get" style="max-width:36rem;margin:1rem 0">
+    <input type="search" name="q" value="{{ q or '' }}" placeholder="Termék, márka, GTIN…" autofocus />
+    <button type="submit">Keresés</button>
+  </form>
+  <p class="muted">{{ products|length }} találat{% if q %} „{{ q }}”{% endif %}</p>
+  <div class="product-grid">
+  {% for p in products %}
+    <a class="product-card" href="/p/{{ p.slug }}">
+      <img src="{{ p.image_url or 'https://placehold.co/400x300' }}" alt="" />
+      <strong>{{ p.title }}</strong>
+      <div class="muted">{{ p.brand }}{% if p.best_price %} · {{ money(p.best_price) }}{% endif %}</div>
+    </a>
+  {% else %}
+    <p>Nincs találat.</p>
+  {% endfor %}
+  </div>
+</section>
+{% endblock %}

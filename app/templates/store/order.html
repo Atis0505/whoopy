@@ -12,7 +12,14 @@
     {% if order.payment_status %} · fizetés: {{ order.payment_status }}{% endif %}
     {% if order.payment_provider and order.payment_provider != 'none' %} ({{ order.payment_provider }}){% endif %}
     · {{ order.currency }}</p>
-  <p class="muted">{{ order.full_name }} · {{ order.email }} · {{ order.country }} {{ order.zip_code }} {{ order.city }}</p>
+  {% if order.delivery_mode == 'pickup' and order.pickup_point_label %}
+  <p><strong>Csomagpont:</strong> {{ order.pickup_point_label }} ({{ order.pickup_provider }})</p>
+  {% endif %}
+  {% if not order.billing_same and order.billing_full_name %}
+  <p class="muted">Számlázás: {{ order.billing_full_name }} · {{ order.billing_zip }} {{ order.billing_city }}, {{ order.billing_address }}
+    {% if order.billing_tax_id %} · adószám: {{ order.billing_tax_id }}{% endif %}
+  </p>
+  {% endif %}
   {% if order.coupon_code %}<p class="badge">{{ order.coupon_code }}</p>{% endif %}
   {% if order.payment_method == 'prepaid' and order.payment_status != 'paid' %}
   <p><a class="btn" href="/pay/{{ order.order_number }}">Online fizetés folytatása</a></p>

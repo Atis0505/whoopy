@@ -39,6 +39,9 @@ class ShipmentQuote:
 class CartQuote:
     items_subtotal: float = 0.0
     discount_total: float = 0.0
+    gift_discount: float = 0.0
+    loyalty_discount: float = 0.0
+    loyalty_points_used: int = 0
     shipping_total: float = 0.0
     cod_fee_total: float = 0.0
     grand_total: float = 0.0
@@ -49,8 +52,11 @@ class CartQuote:
     item_count: int = 0
     currency: str = "HUF"
     coupon_code: str = ""
+    gift_card_code: str = ""
     free_shipping_coupon: bool = False
     payment_preference: str = "prepaid"
+    delivery_mode: str = "courier"
+    pickup_point_label: str = ""
 
 
 def get_or_create_cart(db: Session, session_key: str, country: str = "HU") -> Cart:
@@ -109,7 +115,14 @@ def clear_cart(db: Session, cart: Cart) -> None:
     for item in list(cart.items):
         db.delete(item)
     cart.coupon_code = ""
+    cart.gift_card_code = ""
+    cart.loyalty_redeem_points = 0
+    cart.delivery_mode = "courier"
+    cart.pickup_provider = ""
+    cart.pickup_point_id = ""
+    cart.pickup_point_label = ""
     cart.shipping_choices = ""
+    cart.abandoned_email_sent_at = None
     db.commit()
 
 
@@ -189,7 +202,10 @@ def quote_cart(db: Session, cart: Cart, country: str | None = None) -> CartQuote
     quote = CartQuote(
         currency=cart.currency or "HUF",
         coupon_code=cart.coupon_code or "",
+        gift_card_code=getattr(cart, "gift_card_code", "") or "",
         payment_preference=payment_pref,
+        delivery_mode=getattr(cart, "delivery_mode", "courier") or "courier",
+        pickup_point_label=getattr(cart, "pickup_point_label", "") or "",
     )
     if not items:
         return quote
@@ -314,14 +330,39 @@ def quote_cart(db: Session, cart: Cart, country: str | None = None) -> CartQuote
 
     quote.shipping_total = round(quote.shipping_total, 2)
     quote.cod_fee_total = round(quote.cod_fee_total, 2)
-    quote.grand_total = round(
-        quote.items_subtotal - quote.discount_total + quote.shipping_total + quote.cod_fee_total,
-        2,
-    )
+
+    from app.services.customer_ux import find_gift_card, gift_discount, loyalty_discount_amount
     from app.services.store_settings import get_store_settings
     from app.services.vat import split_gross, vat_rate_for_country
 
     store = get_store_settings(db)
+
+    # Csomagpont: egy fix díj, courier szállítmány díjak helyett
+    if (getattr(cart, "delivery_mode", "") or "courier") == "pickup":
+        quote.shipping_total = float(getattr(store, "pickup_fee_huf", 990) or 990)
+        quote.cod_fee_total = 0.0 if payment_pref != "cod" else quote.cod_fee_total
+
+    payable_before_extra = max(
+        0.0,
+        quote.items_subtotal - quote.discount_total + quote.shipping_total + quote.cod_fee_total,
+    )
+
+    card = find_gift_card(db, getattr(cart, "gift_card_code", "") or "")
+    quote.gift_discount = gift_discount(card, payable_before_extra)
+    after_gift = max(0.0, payable_before_extra - quote.gift_discount)
+
+    # Hűségpont: max a fennmaradó 50%-a (ne legyen 0 Ft mindennel)
+    max_loyalty = after_gift * 0.5
+    pts_req = int(getattr(cart, "loyalty_redeem_points", 0) or 0)
+    used, ldisc = loyalty_discount_amount(
+        points=pts_req,
+        point_value=float(getattr(store, "loyalty_point_value_huf", 1) or 1),
+        max_amount=max_loyalty,
+    )
+    quote.loyalty_points_used = used
+    quote.loyalty_discount = ldisc
+
+    quote.grand_total = round(max(0.0, after_gift - quote.loyalty_discount), 2)
     quote.tax_rate_percent = vat_rate_for_country(country or cart.country, store.tax_rate_percent)
     quote.net_total, quote.tax_total, _ = split_gross(quote.grand_total, quote.tax_rate_percent)
     return quote

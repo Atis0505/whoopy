@@ -32,6 +32,9 @@ class User(Base):
     newsletter_opt_in: Mapped[bool] = mapped_column(Boolean, default=False)
     preferred_lang: Mapped[str] = mapped_column(String(5), default="hu")
     preferred_currency: Mapped[str] = mapped_column(String(3), default="HUF")
+    loyalty_points: Mapped[int] = mapped_column(Integer, default=0)
+    # standard | silver | gold
+    loyalty_tier: Mapped[str] = mapped_column(String(16), default="standard")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     orders: Mapped[list["Order"]] = relationship(back_populates="customer")
@@ -94,6 +97,8 @@ class Product(Base):
     sold_count: Mapped[int] = mapped_column(Integer, default=0)
     category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"), nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # pl. "Szín,Méret" — UI tengelyek; értékek az Offer.variant_label-ben
+    variant_axes: Mapped[str] = mapped_column(String(128), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     category: Mapped[Optional[Category]] = relationship(back_populates="products")
@@ -120,7 +125,7 @@ class ProductImage(Base):
 
 class Offer(Base):
     __tablename__ = "offers"
-    __table_args__ = (UniqueConstraint("product_id", "supplier_id", name="uq_product_supplier"),)
+    __table_args__ = (UniqueConstraint("product_id", "supplier_id", "variant_label", name="uq_product_supplier_variant"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), index=True)
@@ -134,6 +139,8 @@ class Offer(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     # buy-box: kézzel kiemelt forrás ehhez a termékhez
     preferred_source: Mapped[bool] = mapped_column(Boolean, default=False)
+    # pl. "Piros / M" — üres = alapváltozat
+    variant_label: Mapped[str] = mapped_column(String(128), default="")
 
     product: Mapped[Product] = relationship(back_populates="offers")
     supplier: Mapped[Supplier] = relationship(back_populates="offers")
@@ -173,9 +180,17 @@ class Cart(Base):
     currency: Mapped[str] = mapped_column(String(3), default="HUF")
     lang: Mapped[str] = mapped_column(String(5), default="hu")
     coupon_code: Mapped[str] = mapped_column(String(64), default="")
+    gift_card_code: Mapped[str] = mapped_column(String(64), default="")
+    loyalty_redeem_points: Mapped[int] = mapped_column(Integer, default=0)
+    # courier | pickup
+    delivery_mode: Mapped[str] = mapped_column(String(16), default="courier")
+    pickup_provider: Mapped[str] = mapped_column(String(32), default="")  # foxpost|packeta|gls
+    pickup_point_id: Mapped[str] = mapped_column(String(64), default="")
+    pickup_point_label: Mapped[str] = mapped_column(String(255), default="")
     # JSON-ish: "supplier_id:rate_id,supplier_id:rate_id"
     shipping_choices: Mapped[str] = mapped_column(String(512), default="")
     payment_preference: Mapped[str] = mapped_column(String(16), default="prepaid")  # prepaid|cod|invoice
+    abandoned_email_sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     items: Mapped[list["CartItem"]] = relationship(back_populates="cart", cascade="all, delete-orphan")
@@ -238,6 +253,11 @@ class StoreSettings(Base):
     company_tax_id: Mapped[str] = mapped_column(String(64), default="")  # adószám
     company_eu_vat: Mapped[str] = mapped_column(String(64), default="")  # HU12345678
     invoice_footer: Mapped[str] = mapped_column(Text, default="")
+    chat_widget_html: Mapped[str] = mapped_column(Text, default="")  # Tawk/Intercom snippet
+    chat_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    loyalty_earn_per_100: Mapped[float] = mapped_column(Float, default=1.0)  # pont / 100 Ft
+    loyalty_point_value_huf: Mapped[float] = mapped_column(Float, default=1.0)
+    pickup_fee_huf: Mapped[float] = mapped_column(Float, default=990.0)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
@@ -322,6 +342,24 @@ class Order(Base):
     city: Mapped[str] = mapped_column(String(128))
     address: Mapped[str] = mapped_column(String(255))
     zip_code: Mapped[str] = mapped_column(String(16), default="")
+    # Számlázási cím (ha üres / same → szállítási)
+    billing_same: Mapped[bool] = mapped_column(Boolean, default=True)
+    billing_full_name: Mapped[str] = mapped_column(String(255), default="")
+    billing_country: Mapped[str] = mapped_column(String(2), default="")
+    billing_city: Mapped[str] = mapped_column(String(128), default="")
+    billing_address: Mapped[str] = mapped_column(String(255), default="")
+    billing_zip: Mapped[str] = mapped_column(String(16), default="")
+    billing_tax_id: Mapped[str] = mapped_column(String(64), default="")
+    delivery_mode: Mapped[str] = mapped_column(String(16), default="courier")
+    pickup_provider: Mapped[str] = mapped_column(String(32), default="")
+    pickup_point_id: Mapped[str] = mapped_column(String(64), default="")
+    pickup_point_label: Mapped[str] = mapped_column(String(255), default="")
+    gift_card_code: Mapped[str] = mapped_column(String(64), default="")
+    gift_card_amount: Mapped[float] = mapped_column(Float, default=0)
+    loyalty_points_earned: Mapped[int] = mapped_column(Integer, default=0)
+    loyalty_points_redeemed: Mapped[int] = mapped_column(Integer, default=0)
+    loyalty_discount: Mapped[float] = mapped_column(Float, default=0)
+    access_token: Mapped[str] = mapped_column(String(64), default="", index=True)
     status: Mapped[str] = mapped_column(String(32), default="pending")
     payment_method: Mapped[str] = mapped_column(String(16), default="prepaid")
     # pending | awaiting | paid | failed | cancelled | refunded
@@ -371,6 +409,7 @@ class OrderLine(Base):
     line_total: Mapped[float] = mapped_column(Float)
     weight_kg: Mapped[float] = mapped_column(Float, default=0)
     ship_mode: Mapped[str] = mapped_column(String(16), default="combinable")
+    variant_label: Mapped[str] = mapped_column(String(128), default="")
 
     order: Mapped[Order] = relationship(back_populates="lines")
 
@@ -568,3 +607,32 @@ class PricingRule(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     priority: Mapped[int] = mapped_column(Integer, default=100)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class GiftCard(Base):
+    __tablename__ = "gift_cards"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    initial_amount: Mapped[float] = mapped_column(Float, default=0)
+    balance: Mapped[float] = mapped_column(Float, default=0)
+    currency: Mapped[str] = mapped_column(String(3), default="HUF")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class PickupPoint(Base):
+    """Csomagpont stub (Foxpost / Packeta / GLS) — éles API később."""
+
+    __tablename__ = "pickup_points"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    provider: Mapped[str] = mapped_column(String(32), index=True)  # foxpost|packeta|gls
+    external_id: Mapped[str] = mapped_column(String(64), index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    city: Mapped[str] = mapped_column(String(128), default="", index=True)
+    zip_code: Mapped[str] = mapped_column(String(16), default="")
+    address: Mapped[str] = mapped_column(String(255), default="")
+    country: Mapped[str] = mapped_column(String(2), default="HU")
+    active: Mapped[bool] = mapped_column(Boolean, default=True)

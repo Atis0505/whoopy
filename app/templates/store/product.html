@@ -33,17 +33,25 @@
       {{ product.weight_kg }} kg ·
       {% if product.ship_mode == 'separate' %}{{ t('separate') }}{% else %}{{ t('combinable') }}{% endif %}
     </p>
-    <form method="post" action="/wishlist/add" style="margin-top:0.8rem">
+    <form method="post" action="/wishlist/add" style="margin-top:0.8rem;display:inline-block">
       <input type="hidden" name="product_id" value="{{ product.id }}" />
       <button class="btn secondary" type="submit">♥ Kívánságlistára</button>
+    </form>
+    <form method="post" action="/compare/toggle" style="margin-top:0.8rem;display:inline-block;margin-left:0.4rem">
+      <input type="hidden" name="product_id" value="{{ product.id }}" />
+      <button class="btn ghost" type="submit">{% if in_compare %}Összehasonlításból ki{% else %}⇄ Összehasonlítás{% endif %}</button>
     </form>
   </div>
   <div class="panel">
     <h2>{{ t('supplier_offers') }}</h2>
+    {% if product.variant_axes %}
+    <p class="muted">Változatok: {{ product.variant_axes }}</p>
+    {% endif %}
     {% for o in offers %}
     <div class="offer-row">
       <div>
         <strong>{{ o.supplier.name }}</strong>
+        {% if o.variant_label %}<span class="badge">{{ o.variant_label }}</span>{% endif %}
         <div class="muted">SKU {{ o.sku }} · {{ o.lead_days }} {{ t('days') }} · {{ t('stock') }} {{ o.stock }}</div>
         <div class="price">
           {{ money(o.display_price) }}

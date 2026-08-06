@@ -3,11 +3,17 @@
 {% block content %}
 <h1 style="font-family:var(--font-display)">Elhagyott kosarak</h1>
 <p class="muted">2 óránál régebben frissített, nem üres kosarak.</p>
+{% if sent %}<div class="flash-ok">Emlékeztető kiküldve / outbox: {{ sent }}</div>{% endif %}
+<form method="post" action="/admin/abandoned-carts/send" style="margin-bottom:1rem">
+  <button class="btn secondary" type="submit">Emlékeztetők küldése (még nem küldöttek)</button>
+</form>
 <div class="panel">
   {% for c in carts %}
   <div class="shipment" style="margin-bottom:0.8rem">
     <strong>Cart #{{ c.id }}</strong>
-    <span class="muted">· {{ c.updated_at }} · {{ c.country }} · {{ c.currency }}</span>
+    <span class="muted">· {{ c.updated_at }} · {{ c.country }} · {{ c.currency }}
+      {% if c.abandoned_email_sent_at %} · e-mail: {{ c.abandoned_email_sent_at }}{% endif %}
+    </span>
     <ul>
       {% for it in c.items %}
       <li>{{ it.quantity }}× {{ it.offer.product.title if it.offer and it.offer.product else it.offer_id }}</li>

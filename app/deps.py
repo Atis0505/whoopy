@@ -97,6 +97,14 @@ def store_context(request: Request, db: Session, **extra):
     def money(amount_huf: float) -> str:
         return format_money(db, amount_huf, currency)
 
+    store = None
+    try:
+        from app.services.store_settings import get_store_settings
+
+        store = get_store_settings(db)
+    except Exception:
+        store = None
+
     ctx = {
         "request": request,
         "user": get_current_user(request, db),
@@ -112,6 +120,8 @@ def store_context(request: Request, db: Session, **extra):
         "money": money,
         "app_name": settings.app_name,
         "app_domain": settings.app_domain,
+        "chat_enabled": bool(getattr(store, "chat_enabled", True)) if store else True,
+        "chat_widget_html": (getattr(store, "chat_widget_html", "") or "") if store else "",
     }
     ctx.update(extra)
     return ctx
