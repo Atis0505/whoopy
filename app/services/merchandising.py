@@ -41,3 +41,34 @@ def bestsellers(db: Session, limit: int = 8) -> list[Product]:
         .limit(limit)
         .all()
     )
+
+
+def showcase_products(db: Session, limit: int = 14) -> list[Product]:
+    """Főoldali váltakozó termékképes sáv — képes, aktív termékek."""
+    q = (
+        db.query(Product)
+        .filter(
+            Product.active.is_(True),
+            Product.image_url != "",
+            Product.image_url.isnot(None),
+        )
+        .order_by(Product.sold_count.desc(), Product.created_at.desc())
+        .limit(limit)
+    )
+    rows = q.all()
+    if len(rows) < 6:
+        # kevés bestseller → egészítsük fel bármilyen képes termékkel
+        have = {p.id for p in rows}
+        extra = (
+            db.query(Product)
+            .filter(
+                Product.active.is_(True),
+                Product.image_url != "",
+                ~Product.id.in_(have or [-1]),
+            )
+            .order_by(Product.id.desc())
+            .limit(max(0, limit - len(rows)))
+            .all()
+        )
+        rows = rows + extra
+    return rows

@@ -49,6 +49,62 @@
   <div class="trust-item"><span>🏪</span> {{ t('trust_multi') }}</div>
 </div>
 
+{% if showcase_products %}
+<section class="product-showcase" aria-label="Kínálatunkból">
+  <div class="showcase-head">
+    <div>
+      <h2>Kínálatunkból</h2>
+      <p class="muted">Váltakozó válogatás — kattints a termékre</p>
+    </div>
+    <a class="btn ghost" href="/taxonomy">Összes kategória →</a>
+  </div>
+
+  {% set slides = showcase_products[:5] %}
+  {% if slides|length > 1 %}
+  <div class="showcase-banner" data-showcase-banner>
+    {% for p in slides %}
+    <a class="showcase-slide{% if loop.first %} is-active{% endif %}" href="/p/{{ p.slug }}" data-slide="{{ loop.index0 }}">
+      <img src="{{ p.image_url }}" alt="{{ p.title }}" loading="{% if loop.first %}eager{% else %}lazy{% endif %}" />
+      <div class="showcase-slide-copy">
+        <span class="badge sale">Whoopy válogatás</span>
+        <strong>{{ p.title }}</strong>
+        <span class="muted">{{ p.brand }}{% if p.best_price %} · {{ money(p.best_price) }}{% endif %}</span>
+      </div>
+    </a>
+    {% endfor %}
+    <div class="showcase-dots" role="tablist" aria-label="Váltakozó termékek">
+      {% for p in slides %}
+      <button type="button" class="showcase-dot{% if loop.first %} is-active{% endif %}" data-goto="{{ loop.index0 }}" aria-label="{{ p.title }}"></button>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="showcase-marquee" data-showcase-marquee>
+    <div class="showcase-track">
+      {% for p in showcase_products %}
+      <a class="showcase-tile" href="/p/{{ p.slug }}">
+        <img src="{{ p.image_url }}" alt="{{ p.title }}" loading="lazy" />
+        <span class="showcase-cap">
+          <strong>{{ p.title }}</strong>
+          {% if p.best_price %}<em>{{ money(p.best_price) }}</em>{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+      {% for p in showcase_products %}
+      <a class="showcase-tile" href="/p/{{ p.slug }}" aria-hidden="true" tabindex="-1">
+        <img src="{{ p.image_url }}" alt="" loading="lazy" />
+        <span class="showcase-cap">
+          <strong>{{ p.title }}</strong>
+          {% if p.best_price %}<em>{{ money(p.best_price) }}</em>{% endif %}
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 {% if bestsellers %}
 <section>
   <div class="section-head">
@@ -131,4 +187,28 @@
   {% include "partials/pager.html" %}
   {% endif %}
 </section>
+{% if showcase_products and showcase_products|length > 1 %}
+<script>
+(() => {
+  const root = document.querySelector('[data-showcase-banner]');
+  if (!root) return;
+  const slides = [...root.querySelectorAll('.showcase-slide')];
+  const dots = [...root.querySelectorAll('.showcase-dot')];
+  if (slides.length < 2) return;
+  let i = 0;
+  let timer;
+  const show = (n) => {
+    i = (n + slides.length) % slides.length;
+    slides.forEach((el, idx) => el.classList.toggle('is-active', idx === i));
+    dots.forEach((el, idx) => el.classList.toggle('is-active', idx === i));
+  };
+  const tick = () => { show(i + 1); };
+  const arm = () => { clearInterval(timer); timer = setInterval(tick, 4500); };
+  dots.forEach((d) => d.addEventListener('click', () => { show(+d.dataset.goto); arm(); }));
+  root.addEventListener('mouseenter', () => clearInterval(timer));
+  root.addEventListener('mouseleave', arm);
+  arm();
+})();
+</script>
+{% endif %}
 {% endblock %}

@@ -151,7 +151,7 @@ def home(
     page: int = 1,
 ):
     from app.services.catalog import list_brands, list_catalog, pager_query
-    from app.services.merchandising import active_campaigns, bestsellers, hero_for_session
+    from app.services.merchandising import active_campaigns, bestsellers, hero_for_session, showcase_products
 
     result = list_catalog(
         db,
@@ -170,6 +170,11 @@ def home(
     roots = db.query(Category).filter(Category.parent_id.is_(None)).order_by(Category.name).all()
     best = bestsellers(db, limit=8)
     _enrich_products(db, best)
+    showcase = []
+    show_showcase = page <= 1 and not q and not brand and not category and in_stock != "1"
+    if show_showcase:
+        showcase = showcase_products(db, limit=14)
+        _enrich_products(db, showcase)
     filter_params = {
         "q": q,
         "category": category or "",
@@ -194,6 +199,7 @@ def home(
             min_price=min_price,
             max_price=max_price,
             bestsellers=best,
+            showcase_products=showcase,
             hero_campaigns=hero_for_session(db, request.session),
             strip_campaigns=active_campaigns(db, "strip"),
             tile_campaigns=active_campaigns(db, "tile"),

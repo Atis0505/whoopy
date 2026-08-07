@@ -19,6 +19,8 @@ def test_home_ok():
     r = client.get("/")
     assert r.status_code == 200
     assert "Whoopy" in r.text or "whoopy" in r.text.lower()
+    # showcase sáv (képes termékek) — seed mellett jelenik meg
+    assert "product-showcase" in r.text or "showcase-marquee" in r.text or "Whoopy" in r.text
 
 
 def test_admin_requires_login():
