@@ -237,7 +237,7 @@ def seed_all(db: Session) -> None:
             "description": "Puha építőkockák 6 hónapos kortól.",
             "brand": "TinyPlay",
             "gtin": "5901234123518",
-            "image_url": "https://images.unsplash.com/photo-1515488042361-ee00e88238f0?w=800&q=80",
+            "image_url": "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800&q=80",
             "weight_kg": 0.6,
             "ship_mode": "combinable",
             "category": "Baby Toys",
