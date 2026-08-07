@@ -50,7 +50,7 @@ Nagy katalógus (lapozás): [`CATALOG_SCALE.md`](CATALOG_SCALE.md).
 A termékoldalon válaszd az **ajánlatot** (beszállító / variáns), majd kosár.  
 Ismétlés: kosárból vagy a fiókban egy korábbi rendelésnél „Ismétlés” (7–90 nap).
 
-További oldalak: `/contact`, `/faq`, `/track`, `/returns`, jogi CMS (`/pages/…`).
+További oldalak: `/contact`, `/faq`, `/track`, `/returns`, jogi CMS (`/pages/…` — ÁSZF, adatvédelem, sütik, impresszum, szállítás, elállás, rólunk). Részletek: [`LEGAL.md`](LEGAL.md).
 
 ### 1.3 Kosár és checkout
 

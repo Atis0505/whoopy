@@ -73,7 +73,7 @@ def _sitemap_urlset(db: Session, base: str, *, offset: int, limit: int, static: 
     urls: list[str] = []
     if static and offset == 0:
         urls = [f"{base}/", f"{base}/taxonomy", f"{base}/contact", f"{base}/faq", f"{base}/track"]
-        for slug in ("aszf", "adatvedelem", "impressum", "szallitas", "visszakuldes", "rolunk"):
+        for slug in ("aszf", "adatvedelem", "impressum", "szallitas", "visszakuldes", "rolunk", "sutik"):
             urls.append(f"{base}/pages/{slug}")
     products = (
         db.query(Product.slug)

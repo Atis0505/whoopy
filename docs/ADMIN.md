@@ -33,8 +33,12 @@ Demo dolgozó: `dolgozo@whoopy.local` / `worker123`
 
 ## Bolt CMS
 
-Publikált oldalak: `/pages/aszf`, `/pages/adatvedelem`, `/pages/rolunk` (seed).
+Jogi / tájékoztató oldalak (seed + startup sync, `app/content/legal_pages.py`):
+`/pages/aszf`, `adatvedelem`, `sutik`, `impressum`, `szallitas`, `visszakuldes`, `rolunk`.
 
+Cégadatokat (név, cím, adószám, e-mail) a **Beállításokban** töltsd ki — a CMS szövegek `{{company_name}}` stb. placeholdereket cserélnek.
+
+Ha kézzel szerkeszted az oldalt az adminban és **eltávolítod** a `<!-- whoopy-legal:vN -->` megjegyzést, a sync nem írja felül.
 ## Megjegyzés
 
 Ez **nem** teljes Shopify parity (nincs themes editor, app store, POS) — a bolt backoffice magja van meg, amit a sidebar ígér.

@@ -156,5 +156,7 @@ A **1–21 feature sor kész.** Nincs kötelező következő kód-csomag. Priori
 | `docs/OMNIBUS_SUBSCRIPTIONS.md` | v15 ártörténet + ismétlés |
 | `docs/CATALOG_SCALE.md` | v16 pagination / index / sitemap |
 | `docs/CATEGORY_BROWSE.md` | Alkategória-kártyák küszöb szerint |
-| `docs/UX.md` / `MARKETING.md` / `EU_SHOP.md` / `SZAMLAZZ.md` | Feature csomagok |
+| `docs/LEGAL.md` | ÁSZF / GDPR / elállás / sütik / impresszum / Rólunk |
+| `docs/EU_SHOP.md` | EU webshop funkciók + jogi sync pointer |
+| `docs/UX.md` / `MARKETING.md` / `SZAMLAZZ.md` | Feature csomagok |
 | `docs/PARTNEREK.md` / `API.md` / `ADMIN.md` / `PROD.md` / `DEPLOY.md` | Ops |

@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.content.legal_pages import LEGAL_CONTENT_VERSION, default_legal_pages
 from app.models import CmsPage, StoreSettings
+
+_LEGAL_MARKER_RE = re.compile(r"<!--\s*whoopy-legal:v(\d+)\s*-->")
 
 
 def get_store_settings(db: Session) -> StoreSettings:
@@ -29,45 +33,73 @@ def get_store_settings(db: Session) -> StoreSettings:
     return row
 
 
-def ensure_default_cms_pages(db: Session) -> None:
-    defaults = [
-        (
-            "aszf",
-            "Általános szerződési feltételek",
-            "<p>Ez egy minta ÁSZF oldal a Whoopy demóhoz. Cseréld le a saját jogi szövegedre.</p>",
-        ),
-        (
-            "adatvedelem",
-            "Adatvédelmi tájékoztató",
-            "<p>Minta adatvédelmi oldal (GDPR). Cookie-k: session (kosár, belépés), preferenciák.</p>",
-        ),
-        (
-            "rolunk",
-            "Rólunk",
-            "<p><strong>Whoopy.hu</strong> – többbeszállítós marketplace demó Google Taxonomy alapokon.</p>",
-        ),
-        (
-            "impressum",
-            "Impresszum",
-            "<p><strong>Whoopy Kft.</strong> (minta)<br/>Székhely: Budapest<br/>Adószám: —<br/>E-mail: info@whoopy.hu<br/>"
-            "DE/AT Impressum: cseréld a saját cégadatokra.</p>",
-        ),
-        (
-            "szallitas",
-            "Szállítási tájékoztató",
-            "<p>EU országokba szállítunk. A kosárban országonkénti díjak és átfutási idők jelennek meg beszállítónként.</p>",
-        ),
-        (
-            "visszakuldes",
-            "Elállás és visszaküldés",
-            "<p>Fogyasztóként 14 napos elállási jogod van. Kérelmet a <a href='/returns'>/returns</a> oldalon indíthatsz.</p>",
-        ),
-    ]
-    for slug, title, body in defaults:
-        if db.query(CmsPage).filter(CmsPage.slug == slug).first():
+def _body_version(body: str) -> int | None:
+    m = _LEGAL_MARKER_RE.search(body or "")
+    return int(m.group(1)) if m else None
+
+
+def _should_refresh_legal(body: str) -> bool:
+    """Frissítjük a seed/jogi sablont, ha nincs marker, régi verzió, vagy rövid placeholder."""
+    ver = _body_version(body)
+    if ver is None:
+        return True
+    if ver < LEGAL_CONTENT_VERSION:
+        return True
+    return False
+
+
+def ensure_default_cms_pages(db: Session, *, force: bool = False) -> int:
+    """Létrehozza / frissíti a jogi CMS oldalakat. Vissza: frissített/létrehozott darabszám.
+
+    Ha az admin eltávolítja a ``<!-- whoopy-legal:vN -->`` markert ÉS force=False,
+    a tartalom megmarad (egyéni szerkesztés). Marker nélküli régi seed placeholder-eket
+    viszont felülírjuk.
+    """
+    updated = 0
+    for slug, title, body in default_legal_pages():
+        marked = f"<!-- whoopy-legal:v{LEGAL_CONTENT_VERSION} -->\n{body.strip()}\n"
+        row = db.query(CmsPage).filter(CmsPage.slug == slug).first()
+        if row is None:
+            db.add(CmsPage(slug=slug, title=title, body=marked, published=True))
+            updated += 1
             continue
-        db.add(CmsPage(slug=slug, title=title, body=body, published=True))
-    db.commit()
+        if force or _should_refresh_legal(row.body or ""):
+            # Marker nélküli, de hosszú (valószínűleg kézzel írt) tartalom: ne írjuk felül
+            if (
+                not force
+                and _body_version(row.body or "") is None
+                and len((row.body or "").strip()) > 400
+                and "minta" not in (row.body or "").lower()
+                and "cseréld" not in (row.body or "").lower()
+            ):
+                continue
+            row.title = title
+            row.body = marked
+            row.published = True
+            row.updated_at = datetime.utcnow()
+            updated += 1
+    if updated:
+        db.commit()
+    return updated
+
+
+def render_cms_placeholders(body: str, store: StoreSettings) -> str:
+    """{{company_name}} stb. behelyettesítése a CMS HTML-be."""
+    mapping = {
+        "store_name": store.store_name or settings.app_name,
+        "company_name": store.company_name or "Whoopy Kft.",
+        "company_address": store.company_address or "— (add meg a Beállításokban)",
+        "company_tax_id": store.company_tax_id or "—",
+        "company_eu_vat": store.company_eu_vat or "—",
+        "support_email": store.support_email or "info@whoopy.hu",
+        "support_phone": store.support_phone or "—",
+        "business_hours": store.business_hours or "H–P 9:00–17:00",
+        "domain": store.domain or settings.app_domain,
+    }
+    out = body or ""
+    for key, val in mapping.items():
+        out = out.replace("{{" + key + "}}", val)
+    return out
 
 
 def touch_settings(row: StoreSettings) -> None:

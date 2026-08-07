@@ -102,6 +102,17 @@ def on_startup():
 
     ensure_fresh_schema()
     ensure_upload_dirs()
+    # Jogi CMS oldalak mindig (még seed nélkül is) — verziókövetett sablon sync
+    db_legal = SessionLocal()
+    try:
+        from app.services.store_settings import ensure_default_cms_pages
+
+        n = ensure_default_cms_pages(db_legal)
+        if n:
+            logger.info("Legal CMS pages synced: %s", n)
+    finally:
+        db_legal.close()
+
     if settings.seed_on_startup:
         db = SessionLocal()
         try:

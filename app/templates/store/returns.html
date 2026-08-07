@@ -3,7 +3,10 @@
 {% block content %}
 <section class="panel" style="margin:1.5rem 0;max-width:560px">
   <h1 style="font-family:var(--font-display)">Visszaküldés / elállás</h1>
-  <p class="muted">EU 14 napos elállási jog. Részletek: <a href="/pages/visszakuldes">tájékoztató</a>.</p>
+  <p class="muted">EU fogyasztóként 14 napos elállási jogod van (kivételekkel).
+    Részletes tájékoztató és minta nyilatkozat:
+    <a href="/pages/visszakuldes">Elállás és visszaküldés</a> ·
+    <a href="/pages/aszf">ÁSZF</a>.</p>
   {% if ok %}<div class="flash-ok">Kérelmed rögzítve — e-mailben jelezzük a következő lépést.</div>{% endif %}
   {% if error %}<div class="flash-error">Rendelés nem található.</div>{% endif %}
   <form method="post" action="/returns">

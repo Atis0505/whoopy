@@ -457,6 +457,16 @@ code {
 .cookie-banner a { color: #7dd3fc; }
 .faq-item { border-bottom: 1px solid var(--line); padding: 0.75rem 0; }
 .faq-item summary { cursor: pointer; font-weight: 700; }
+.cms-body { line-height: 1.55; }
+.cms-body h2 { font-size: 1.15rem; margin: 1.4rem 0 0.55rem; }
+.cms-body h3 { font-size: 1.05rem; margin: 1.1rem 0 0.4rem; }
+.cms-body ul, .cms-body ol { margin: 0.4rem 0 0.8rem 1.2rem; }
+.cms-body li { margin: 0.25rem 0; }
+.cms-body table { width: 100%; border-collapse: collapse; margin: 0.75rem 0 1rem; font-size: 0.92rem; }
+.cms-body th, .cms-body td { border: 1px solid var(--line); padding: 0.45rem 0.55rem; text-align: left; vertical-align: top; }
+.cms-body th { background: #f8fafc; }
+.cms-body .muted { color: var(--muted, #64748b); }
+.cms-body pre { overflow-x: auto; }
 .filter-bar label { font-size: 0.85rem; font-weight: 650; }
 .pager {
   display: flex;

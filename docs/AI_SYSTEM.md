@@ -53,7 +53,7 @@
 | Képek | `app/services/media.py` + `/media/products` |
 | Merchant | `app/services/google_feed.py` |
 | ERP bridge | `app/services/erp_bridge.py` (ping + autosync trigger) |
-| EU shop | `app/routers/eu_shop.py`, `services/{vat,email}.py` · `docs/EU_SHOP.md` |
+| EU shop | `app/routers/eu_shop.py`, `services/{vat,email}.py`, `content/legal_pages.py` · `docs/EU_SHOP.md`, `docs/LEGAL.md` |
 | Számlázz.hu | `app/services/szamlazz.py` · `docs/SZAMLAZZ.md` (dry-run / Agent) |
 | Vásárlói UX | `app/routers/customer_ux.py`, `services/customer_ux.py` · `docs/UX.md` |
 | Marketing | `services/{marketing_feeds,attribution}.py` · `/admin/marketing` · `docs/MARKETING.md` |
@@ -99,6 +99,7 @@ API key (dev): `whoopy-dev-api-key-change-me`
 | `docs/API.md` | Management API |
 | `docs/PARTNEREK.md` | Belső partner ops |
 | `docs/EU_SHOP.md` | GDPR/SEO/ÁFA/invoice/track… |
+| `docs/LEGAL.md` | ÁSZF, adatvédelem, elállás, sütik, impresszum, Rólunk |
 | `docs/UX.md` | Keresés, pickup, gift, loyalty… |
 | `docs/MARKETING.md` | Meta/Árukereső, UTM, affiliate, A/B |
 | `docs/LOGISTICS_COMPLIANCE.md` | Futár/RMA stub, warehouse, CMP, B2B, Omnibus |
@@ -141,7 +142,7 @@ ERP: külön venv, `:8010`. Whoopy `.env` ↔ ERP `.env` **ugyanaz** az `API_KEY
 11. **SimplePay sandbox hardening** ✅  
 12. **Deploy docs + Docker** ✅  
 13. **whoopy_orders + presence + S3 + smoke** ✅  
-14. **EU webshop csomag** ✅ (`docs/EU_SHOP.md`)  
+14. **EU webshop csomag** ✅ (`docs/EU_SHOP.md`, `docs/LEGAL.md`)  
 15. **Checkout E2E + Számlázz stub** ✅ (`docs/SZAMLAZZ.md`)  
 16. **Vásárlói élmény csomag** ✅ (`docs/UX.md`)  
 17. **Marketing csomag** ✅ (`docs/MARKETING.md`)  

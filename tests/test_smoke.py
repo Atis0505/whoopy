@@ -71,6 +71,19 @@ def test_faq_contact_pages():
     assert client.get("/track").status_code == 200
 
 
+def test_legal_cms_pages():
+    for slug in ("aszf", "adatvedelem", "impressum", "szallitas", "visszakuldes", "rolunk", "sutik"):
+        r = client.get(f"/pages/{slug}")
+        assert r.status_code == 200, slug
+        assert len(r.text) > 800, slug
+    r = client.get("/pages/aszf")
+    assert "szerződés" in r.text.lower() or "ÁSZF" in r.text
+    r2 = client.get("/pages/rolunk")
+    assert "családi" in r2.text.lower()
+    r3 = client.get("/pages/adatvedelem")
+    assert "GDPR" in r3.text or "adat" in r3.text.lower()
+
+
 def test_checkout_cod_to_invoice():
     """Kosár → COD checkout → rendelés oldal → HTML számla."""
     from app.database import SessionLocal
@@ -100,6 +113,7 @@ def test_checkout_cod_to_invoice():
             "address": "Teszt utca 1",
             "zip_code": "1111",
             "notes": "smoke",
+            "accept_terms": "1",
         },
         follow_redirects=False,
     )

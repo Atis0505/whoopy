@@ -503,10 +503,22 @@ def checkout_submit(
     billing_address: str = Form(""),
     billing_zip: str = Form(""),
     billing_tax_id: str = Form(""),
+    accept_terms: str = Form(""),
     db: Session = Depends(get_db),
 ):
     cart = cart_for_request(request, db)
     user = get_current_user(request, db)
+    if accept_terms != "1":
+        return templates.TemplateResponse(
+            "store/checkout.html",
+            store_context(
+                request,
+                db,
+                error="A rendeléshez el kell fogadnod az ÁSZF-et és az adatvédelmi tájékoztatót.",
+                prefill=user,
+            ),
+            status_code=400,
+        )
     request.session["country"] = country.upper()
     cart.country = country.upper()
     db.commit()
@@ -758,7 +770,14 @@ def newsletter_subscribe(
 
 @router.get("/pages/{slug}", response_class=HTMLResponse)
 def cms_page(slug: str, request: Request, db: Session = Depends(get_db)):
+    from app.services.store_settings import get_store_settings, render_cms_placeholders
+
     page = db.query(CmsPage).filter(CmsPage.slug == slug, CmsPage.published.is_(True)).first()
     if not page:
         return RedirectResponse("/", status_code=302)
-    return templates.TemplateResponse("store/cms_page.html", store_context(request, db, page=page))
+    store = get_store_settings(db)
+    body_html = render_cms_placeholders(page.body or "", store)
+    return templates.TemplateResponse(
+        "store/cms_page.html",
+        store_context(request, db, page=page, body_html=body_html),
+    )

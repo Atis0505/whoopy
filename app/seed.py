@@ -28,7 +28,14 @@ from app.seed_auth import hash_password
 def seed_all(db: Session) -> None:
     ensure_currency_rates(db)
     _seed_users(db)
-    get_store_settings(db)
+    store = get_store_settings(db)
+    if not (store.company_address or "").strip():
+        store.company_address = "Magyarország (székhely – szerkeszd a Beállításokban)"
+    if not (store.support_email or "").strip():
+        store.support_email = "info@whoopy.hu"
+    if not (store.company_name or "").strip():
+        store.company_name = "Whoopy Kft."
+    db.commit()
     ensure_default_cms_pages(db)
     from app.services.customer_ux import seed_pickup_and_gifts
     from app.services.attribution import seed_affiliates

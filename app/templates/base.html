@@ -177,6 +177,7 @@
         <h4>Jogi</h4>
         <p><a href="/pages/aszf">ÁSZF</a></p>
         <p><a href="/pages/adatvedelem">Adatvédelem</a></p>
+        <p><a href="/pages/sutik">Sütik</a></p>
         <p><a href="/pages/impressum">Impresszum</a></p>
         <p><a href="/pages/szallitas">Szállítás</a></p>
         <p><a href="/pages/visszakuldes">Elállás / visszaküldés</a></p>
@@ -197,7 +198,8 @@
   {% if not request.session.get('cookie_consent') %}
   <div class="cookie-banner" role="dialog" aria-label="Cookie tájékoztató">
     <p>A Whoopy cookie-kat használ a kosárhoz és a bejelentkezéshez (szükséges).
-      Analitika / marketing opcionális (Consent Mode stub).
+      Analitika / marketing opcionális.
+      <a href="/pages/sutik">Süti tájékoztató</a> ·
       <a href="/pages/adatvedelem">Adatvédelem</a></p>
     <form method="post" action="/cookies/consent" style="display:flex;flex-direction:column;gap:0.5rem">
       <label class="muted" style="font-size:0.85rem"><input type="checkbox" name="analytics" value="1" /> Analitika</label>

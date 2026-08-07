@@ -39,6 +39,13 @@
 
       <div class="field" style="margin-top:1rem"><label>{{ t('notes') }}</label><textarea name="notes" rows="3"></textarea></div>
       <label class="muted"><input type="checkbox" name="newsletter" value="1" /> {{ t('newsletter_cta') }}</label>
+      <label style="display:block;margin-top:0.85rem">
+        <input type="checkbox" name="accept_terms" value="1" required />
+        Elolvastam és elfogadom az
+        <a href="/pages/aszf" target="_blank" rel="noopener">ÁSZF</a>-et,
+        az <a href="/pages/adatvedelem" target="_blank" rel="noopener">adatvédelmi tájékoztatót</a>
+        és az <a href="/pages/visszakuldes" target="_blank" rel="noopener">elállási tájékoztatót</a>.
+      </label>
       <p style="margin-top:1rem"><button class="btn" type="submit">{{ t('place_order') }}</button></p>
     </form>
   </div>
