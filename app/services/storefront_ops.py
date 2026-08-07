@@ -44,6 +44,40 @@ def storefront_is_closed(store: StoreSettings | None) -> bool:
     return get_storefront_status(store) == STATUS_CLOSED
 
 
+PREVIEW_SESSION_KEY = "storefront_preview"
+
+
+def preview_flag_on(request) -> bool:
+    try:
+        return bool(request.session.get(PREVIEW_SESSION_KEY))
+    except Exception:
+        return False
+
+
+def is_admin_user(user) -> bool:
+    if not user:
+        return False
+    return bool(getattr(user, "is_admin", False) or getattr(user, "role", "") == "admin")
+
+
+def admin_preview_active(request, db: Session | None = None) -> bool:
+    """Admin session + előnézet flag — zárt/szünetelt bolt mellett is teljes vevői nézet."""
+    if not preview_flag_on(request):
+        return False
+    from app.deps import get_current_user
+    from app.database import SessionLocal
+
+    own = db is None
+    if own:
+        db = SessionLocal()
+    try:
+        user = get_current_user(request, db)
+        return is_admin_user(user)
+    finally:
+        if own:
+            db.close()
+
+
 def announcement_active(store: StoreSettings | None) -> bool:
     if not store or not store.announcement_enabled:
         return False

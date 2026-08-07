@@ -230,6 +230,46 @@ def test_maintenance_blocks_store():
     assert client.get("/").status_code == 200
 
 
+def test_admin_preview_bypasses_closed():
+    from app.database import SessionLocal
+    from app.services.store_settings import get_store_settings, touch_settings
+    from app.services.storefront_ops import set_storefront_status
+
+    db = SessionLocal()
+    try:
+        set_storefront_status(get_store_settings(db), "closed")
+        touch_settings(get_store_settings(db))
+        db.commit()
+    finally:
+        db.close()
+
+    assert client.get("/", follow_redirects=False).status_code == 503
+
+    r = client.post(
+        "/login",
+        data={"email": "admin@whoopy.local", "password": "admin1234"},
+        follow_redirects=False,
+    )
+    assert r.status_code in (302, 303)
+
+    r2 = client.get("/admin/preview", follow_redirects=False)
+    assert r2.status_code in (302, 303)
+    assert (r2.headers.get("location") or "").endswith("/")
+
+    r3 = client.get("/")
+    assert r3.status_code == 200
+    assert "előnézet" in r3.text.lower()
+
+    client.get("/admin/preview/exit")
+    db = SessionLocal()
+    try:
+        set_storefront_status(get_store_settings(db), "open")
+        touch_settings(get_store_settings(db))
+        db.commit()
+    finally:
+        db.close()
+
+
 def test_b2b_vat_and_omnibus():
     from app.database import SessionLocal
     from app.models import Offer, Warehouse

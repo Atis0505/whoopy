@@ -160,6 +160,30 @@ def storefront_status_set(request: Request, status: str = Form("open"), db: Sess
     return RedirectResponse("/admin", status_code=303)
 
 
+@router.get("/preview")
+def preview_enter(request: Request, db: Session = Depends(get_db)):
+    """Vevői előnézet — új tabból; session flag, a külvilág státusza nem változik."""
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.storefront_ops import PREVIEW_SESSION_KEY
+
+    request.session[PREVIEW_SESSION_KEY] = True
+    return RedirectResponse("/", status_code=303)
+
+
+@router.get("/preview/exit")
+@router.post("/preview/exit")
+def preview_exit(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin_html(request, db)
+    if isinstance(user, RedirectResponse):
+        return user
+    from app.services.storefront_ops import PREVIEW_SESSION_KEY
+
+    request.session.pop(PREVIEW_SESSION_KEY, None)
+    return RedirectResponse("/admin", status_code=303)
+
+
 @router.post("/maintenance/toggle")
 def maintenance_toggle(request: Request, db: Session = Depends(get_db)):
     """Legacy: open ↔ closed. Új UI: /admin/storefront-status."""

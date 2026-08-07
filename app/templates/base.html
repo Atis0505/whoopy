@@ -20,6 +20,16 @@
   {% if demo_badge %}
   <div class="demo-badge" title="Fejlesztői / demó környezet">DEMO</div>
   {% endif %}
+  {% if preview_mode %}
+  <div class="preview-bar" role="status">
+    <div class="wrap preview-bar-inner">
+      <span><strong>Vevői előnézet</strong> — te admin vagy; a bolt a külvilág felé
+        {% if storefront_status == 'closed' %}ZÁRVA{% elif storefront_status == 'catalog_only' %}RENDELÉS SZÜNET{% else %}nyitva{% endif %}
+        marad.</span>
+      <a class="btn secondary" href="/admin/preview/exit" style="padding:0.35rem 0.75rem;font-size:0.85rem;white-space:nowrap">Kilépés az előnézetből</a>
+    </div>
+  </div>
+  {% endif %}
   {% if announcement %}
   <div class="announce-bar" style="background:{{ announcement.bg }}" role="region" aria-label="Hirdetés">
     {% if announcement.link %}
@@ -34,7 +44,7 @@
     {% endif %}
   </div>
   {% endif %}
-  {% if storefront_status == 'catalog_only' or request.query_params.get('orders_paused') %}
+  {% if (storefront_status == 'catalog_only' or request.query_params.get('orders_paused')) and not preview_mode %}
   <div class="announce-bar" style="background:#9a3412" role="status">
     <div class="wrap announce-inner">
       <span>{{ orders_paused_message or 'Átmenetileg nem fogadunk új rendeléseket. Böngészhetsz, a vásárlás szünetel.' }}</span>

@@ -145,11 +145,17 @@ def store_context(request: Request, db: Session, **extra):
     orders_enabled = True
     storefront_status = "open"
     orders_paused_message = ""
+    preview_mode = False
     try:
-        from app.services.storefront_ops import get_storefront_status, orders_enabled as _orders_on
+        from app.services.storefront_ops import (
+            admin_preview_active,
+            get_storefront_status,
+            orders_enabled as _orders_on,
+        )
 
         storefront_status = get_storefront_status(store)
-        orders_enabled = _orders_on(store)
+        preview_mode = admin_preview_active(request, db)
+        orders_enabled = _orders_on(store) or preview_mode
         orders_paused_message = (getattr(store, "orders_paused_message", "") or "") if store else ""
     except Exception:
         pass
@@ -180,6 +186,7 @@ def store_context(request: Request, db: Session, **extra):
         "orders_enabled": orders_enabled,
         "storefront_status": storefront_status,
         "orders_paused_message": orders_paused_message,
+        "preview_mode": preview_mode,
     }
     ctx.update(extra)
     return ctx

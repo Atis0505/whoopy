@@ -1,4 +1,4 @@
-"""Storefront státusz: open / catalog_only / closed."""
+"""Storefront státusz: open / catalog_only / closed + admin vevői előnézet."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from app.services.store_settings import get_store_settings
 from app.services.storefront_ops import (
     STATUS_CATALOG_ONLY,
     STATUS_CLOSED,
+    admin_preview_active,
     get_storefront_status,
 )
 
@@ -93,9 +94,12 @@ class MaintenanceMiddleware(BaseHTTPMiddleware):
         try:
             store = get_store_settings(db)
             status = get_storefront_status(store)
+            preview = admin_preview_active(request, db)
             request.state.storefront_status = status
-            request.state.orders_enabled = status == "open"
-            request.state.maintenance_mode = status == STATUS_CLOSED
+            request.state.preview_mode = preview
+            # Előnézetben a vevői UI úgy viselkedik, mintha nyitva lenne
+            request.state.orders_enabled = status == "open" or preview
+            request.state.maintenance_mode = status == STATUS_CLOSED and not preview
             try:
                 from app.services.storefront_ops import pending_order_count
 
@@ -103,7 +107,7 @@ class MaintenanceMiddleware(BaseHTTPMiddleware):
             except Exception:
                 request.state.pending_orders = 0
 
-            if status == STATUS_CLOSED:
+            if status == STATUS_CLOSED and not preview:
                 if _path_allowed_when_closed(path):
                     return await call_next(request)
                 msg = (
@@ -112,15 +116,12 @@ class MaintenanceMiddleware(BaseHTTPMiddleware):
                 ).replace("<", "&lt;")
                 return HTMLResponse(_CLOSED_HTML.format(message=msg), status_code=503)
 
-            if status == STATUS_CATALOG_ONLY and _is_order_path(path):
-                # meglévő rendelés megtekintés / számla OK
+            if status == STATUS_CATALOG_ONLY and not preview and _is_order_path(path):
                 if path.startswith("/order/") or path.startswith("/pay/webhook"):
                     return await call_next(request)
                 if path.startswith("/pay/") and request.method == "GET":
-                    # félbehagyott fizetés oldal — engedjük
                     return await call_next(request)
                 if request.method in ("POST", "PUT", "PATCH", "DELETE") or path in ("/cart", "/checkout") or path.startswith("/cart"):
-                    # UI: redirect haza; API-szerű: 403 szöveg
                     accept = (request.headers.get("accept") or "").lower()
                     if "text/html" in accept or request.method == "GET":
                         return RedirectResponse("/?orders_paused=1", status_code=303)

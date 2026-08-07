@@ -33,8 +33,13 @@
         <input type="hidden" name="status" value="closed" />
         <button class="btn secondary" type="submit" style="background:#b91c1c;border-color:#b91c1c;color:#fff" {% if st=='closed' %}disabled{% endif %}>Bolt zárása</button>
       </form>
+      <a class="btn secondary" href="/admin/preview" target="_blank" rel="noopener" title="Új tabon nyílik; a külvilág státusza változatlan">Vevői előnézet ↗</a>
     </div>
   </div>
+  <p class="muted" style="font-size:0.85rem;margin:0.75rem 0 0">
+    <strong>Vevői előnézet:</strong> admin sessionben új tabon a teljes bolt (kosárral), még ha a státusz Zárva / Rendelés szünet is.
+    A látogatók továbbra is a nyilvános státuszt kapják. Kilépés: a sárga sáv „Kilépés az előnézetből” gombja.
+  </p>
 </div>
 
 <div class="admin-grid" style="margin:1rem 0 1.5rem">
