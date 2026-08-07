@@ -23,6 +23,28 @@ def test_home_ok():
     assert "product-showcase" in r.text or "showcase-marquee" in r.text or "Whoopy" in r.text
 
 
+def test_category_browse_mode_products_when_few():
+    from app.database import SessionLocal
+    from app.models import Category
+    from app.services.category_browse import resolve_browse_mode
+
+    db = SessionLocal()
+    try:
+        electronics = db.query(Category).filter(Category.google_id == 267).first()
+        assert electronics is not None
+        browse = resolve_browse_mode(db, electronics)
+        # seed: 2 termék Electronics alatt → termék mód + chip-ek
+        assert browse["mode"] == "products"
+        assert browse["total_products"] >= 2
+        assert browse["show_child_chips"] is True
+    finally:
+        db.close()
+
+    r = client.get("/c/267")
+    assert r.status_code == 200
+    assert "Headphones" in r.text or "Audio" in r.text or "Wireless" in r.text
+
+
 def test_admin_requires_login():
     r = client.get("/admin", follow_redirects=False)
     assert r.status_code in (302, 303, 307)

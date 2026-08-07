@@ -155,5 +155,6 @@ A **1–21 feature sor kész.** Nincs kötelező következő kód-csomag. Priori
 | `docs/STOREFRONT_OPS.md` | v14 banner / ticker + **v17** bolt státusz fokozatok |
 | `docs/OMNIBUS_SUBSCRIPTIONS.md` | v15 ártörténet + ismétlés |
 | `docs/CATALOG_SCALE.md` | v16 pagination / index / sitemap |
+| `docs/CATEGORY_BROWSE.md` | Alkategória-kártyák küszöb szerint |
 | `docs/UX.md` / `MARKETING.md` / `EU_SHOP.md` / `SZAMLAZZ.md` | Feature csomagok |
 | `docs/PARTNEREK.md` / `API.md` / `ADMIN.md` / `PROD.md` / `DEPLOY.md` | Ops |

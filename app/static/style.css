@@ -122,6 +122,50 @@ code {
   border: 1px solid #bae6fd;
 }
 .cat-chip:hover, .cat-chip.active { background: var(--whoopy); color: white; border-color: var(--whoopy); }
+.cat-chip-row { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
+.cat-breadcrumb { font-size: 0.9rem; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+.cat-breadcrumb a { color: var(--whoopy-dark); font-weight: 650; }
+
+.cat-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem;
+  padding-bottom: 2rem;
+}
+.cat-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.cat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+  border-color: #bae6fd;
+}
+.cat-card-img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  background: #e2e8f0;
+}
+.cat-card-body {
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.cat-card-body strong {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
 
 /* Hero / promo */
 .promo-row {

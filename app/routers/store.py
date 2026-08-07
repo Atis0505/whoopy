@@ -211,15 +211,30 @@ def home(
 
 
 @router.get("/c/{google_id}", response_class=HTMLResponse)
-def category_page(google_id: int, request: Request, page: int = 1, db: Session = Depends(get_db)):
+def category_page(
+    google_id: int,
+    request: Request,
+    page: int = 1,
+    view: str = "",
+    db: Session = Depends(get_db),
+):
     from app.services.catalog import list_catalog, pager_query
+    from app.services.category_browse import resolve_browse_mode
 
     cat = db.query(Category).filter(Category.google_id == google_id).first()
     if not cat:
         return RedirectResponse("/", status_code=302)
-    result = list_catalog(db, page=page, category_path_prefix=cat.full_path, sort="newest")
-    products = result.items
-    _enrich_products(db, products)
+
+    force_products = view.strip().lower() in ("products", "all", "list")
+    browse = resolve_browse_mode(db, cat, force_products=force_products)
+    products: list = []
+    result = None
+    if browse["mode"] == "products" or force_products:
+        result = list_catalog(db, page=page, category_path_prefix=cat.full_path, sort="newest")
+        products = result.items
+        _enrich_products(db, products)
+        browse["mode"] = "products"
+
     children = db.query(Category).filter(Category.parent_id == cat.id).order_by(Category.name).all()
     return templates.TemplateResponse(
         "store/category.html",
@@ -231,7 +246,9 @@ def category_page(google_id: int, request: Request, page: int = 1, db: Session =
             products=products,
             pager=result,
             pager_base=f"/c/{google_id}",
-            pager_qs=lambda p: pager_query({}, p),
+            pager_qs=lambda p: pager_query({"view": "products"} if force_products else {}, p),
+            browse=browse,
+            force_products=force_products,
         ),
     )
 

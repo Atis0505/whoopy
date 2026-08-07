@@ -1,31 +1,80 @@
 {% extends "base.html" %}
 {% block title %}{{ category.name }} – {{ app_name }}{% endblock %}
 {% block content %}
-<section style="padding:1.5rem 0">
+<section class="category-page" style="padding:1.5rem 0">
+  {% if browse and browse.ancestors %}
+  <nav class="cat-breadcrumb muted" aria-label="Útvonal">
+    <a href="/taxonomy">Kategóriák</a>
+    {% for a in browse.ancestors %}
+      <span aria-hidden="true">/</span>
+      {% if a.id == category.id %}
+      <span>{{ a.name }}</span>
+      {% else %}
+      <a href="/c/{{ a.google_id }}">{{ a.name }}</a>
+      {% endif %}
+    {% endfor %}
+  </nav>
+  {% else %}
   <p class="muted">{{ category.full_path }}</p>
-  <h1 style="font-family:var(--font-display)">{{ category.name }}</h1>
-  {% if children %}
-  <div class="nav" style="margin:1rem 0">
+  {% endif %}
+
+  <div class="section-head" style="margin-top:0.5rem">
+    <div>
+      <h1 style="font-family:var(--font-display);margin:0">{{ category.name }}</h1>
+      <p class="muted" style="margin:0.35rem 0 0">
+        {% if browse %}{{ browse.total_products }} termék ebben az ágban{% endif %}
+      </p>
+    </div>
+    {% if browse and browse.has_children and browse.mode == 'subcategories' %}
+    <a class="btn ghost" href="/c/{{ category.google_id }}?view=products">Összes termék listája →</a>
+    {% elif browse and browse.has_children and force_products %}
+    <a class="btn ghost" href="/c/{{ category.google_id }}">Alkategóriák →</a>
+    {% endif %}
+  </div>
+
+  {% if browse and browse.mode == 'subcategories' %}
+  <p class="muted" style="margin:0 0 1rem">Válassz alkategóriát — a Google Taxonomy szerinti következő szint.</p>
+  <div class="cat-card-grid">
+    {% for card in browse.subcategory_cards %}
+    <a class="cat-card" href="/c/{{ card.category.google_id }}">
+      <img class="cat-card-img" src="{{ card.image_url }}" alt="" loading="lazy" />
+      <div class="cat-card-body">
+        <strong>{{ card.category.name }}</strong>
+        <span class="muted">{{ card.product_count }} termék</span>
+      </div>
+    </a>
+    {% else %}
+    <p class="muted">Nincs alkategória termékkel.</p>
+    {% endfor %}
+  </div>
+
+  {% else %}
+
+  {% if browse and browse.show_child_chips and children %}
+  <div class="cat-chip-row" style="margin:0.75rem 0 1.1rem">
+    <span class="muted" style="font-size:0.85rem;margin-right:0.35rem">Alkategóriák:</span>
     {% for ch in children %}
-    <a class="badge" href="/c/{{ ch.google_id }}">{{ ch.name }}</a>
+    <a class="cat-chip" href="/c/{{ ch.google_id }}">{{ ch.name }}</a>
     {% endfor %}
   </div>
   {% endif %}
+
   <div class="grid">
     {% for p in products %}
     <a class="product-card" href="/p/{{ p.slug }}">
-      <img class="thumb" src="{{ p.image_url or 'https://placehold.co/600x400/ebe3d4/14213d?text=Product' }}" alt="{{ p.title }}" />
+      <img class="thumb" src="{{ p.image_url or 'https://placehold.co/600x400/e2e8f0/0f172a?text=Whoopy' }}" alt="{{ p.title }}" loading="lazy" />
       <div class="body">
         <strong>{{ p.title }}</strong>
         {% if p.best_price %}<div class="price">{{ money(p.best_price) }}</div>{% endif %}
       </div>
     </a>
     {% else %}
-    <p>—</p>
+    <p class="muted">Ebben a kategóriában még nincs termék.</p>
     {% endfor %}
   </div>
   {% if pager and pager.pages > 1 %}
   {% include "partials/pager.html" %}
+  {% endif %}
   {% endif %}
 </section>
 {% endblock %}

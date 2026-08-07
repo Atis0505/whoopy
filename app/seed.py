@@ -38,6 +38,9 @@ def seed_all(db: Session) -> None:
 
     if db.query(Category).count() == 0:
         load_taxonomy_into_db(db)
+    else:
+        # Új curated node-ok (pl. Electronics > Video) wipe nélkül
+        load_taxonomy_into_db(db)
 
     if db.query(Supplier).count() > 0:
         _seed_marketing(db)
